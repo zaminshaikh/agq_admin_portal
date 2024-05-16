@@ -11,6 +11,37 @@ import './scss/examples.scss'
 
 import type { State } from './store'
 
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// import 'firebase/auth'
+// import 'firebase/firestore'
+// import {useAuthState} from 'react-firebase-hooks/auth'
+// import {useCollectionData} from 'react-firebase-hooks/firestore'
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyAAzHGFJAMXNvdYfwbh8AA4lUY2F0sodIw",
+
+  authDomain: "team-shaikh-app-52dc5.firebaseapp.com",
+
+  projectId: "team-shaikh-app-52dc5",
+
+  storageBucket: "team-shaikh-app-52dc5.appspot.com",
+
+  messagingSenderId: "957281597606",
+
+  appId: "1:957281597606:web:fd7925b8181c535118dc67",
+
+  measurementId: "G-YLKP5N287Q"
+
+};
+
+// Initialize Firebase
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 
@@ -23,6 +54,7 @@ const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 const EmailApp = React.lazy(() => import('./views/apps/email/EmailApp'))
 
 const App = () => {
+  
   const { isColorModeSet, setColorMode } = useColorModes(
     'coreui-pro-react-admin-template-theme-default',
   )
@@ -70,3 +102,5 @@ const App = () => {
 }
 
 export default App
+export { app, analytics } // firebase application instance
+
