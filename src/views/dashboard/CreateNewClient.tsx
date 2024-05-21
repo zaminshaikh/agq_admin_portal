@@ -1,4 +1,4 @@
-import { CButton, CCol, CContainer, CFormCheck, CFormInput, CHeader, CInputGroup, CInputGroupText, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CMultiSelect, CRow } from "@coreui/react-pro"
+import { CButton, CCol, CContainer, CFormCheck, CFormInput, CInputGroup, CInputGroupText, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CMultiSelect, CRow } from "@coreui/react-pro"
 import { useState } from "react";
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -39,7 +39,6 @@ const initialClientState: User = {
     appEmail: '',
     initEmail: '',
     totalAssets: 0,
-    formattedAssets: '',
     assets: {
         agq: {
             personal: 0,
@@ -215,7 +214,7 @@ const CreateNewClient: React.FC<ShowModalProps> = ({showModal, setShowModal, use
                 <CModalBody className="px-5">
                     <CInputGroup className="mb-3 py-3">
                         <CInputGroupText>Client's First Name</CInputGroupText>
-                        <CFormInput id="first-name" invalid={!inputValidationStatus.firstName}
+                        <CFormInput id="first-name"
                             onChange={(e) =>{
                                 setInputValidationStatus({...inputValidationStatus, firstName: true})
                                 const newClientState = {

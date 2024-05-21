@@ -1,4 +1,4 @@
-import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentChangeType, DocumentData, addDoc, setDoc} from 'firebase/firestore'
+import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentChangeType, DocumentData, addDoc, setDoc, deleteDoc} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
 import config from '../config.json'
@@ -21,7 +21,6 @@ export interface User {
     beneficiaryLastName: string;
     connectedUsers: string[];
     totalAssets: number,
-    formattedAssets: string,
     assets: {
         [key: string]: any;
         agq: {
@@ -71,7 +70,7 @@ export class DatabaseService {
     /**
      * Asynchronously generates a unique hash for a given name.
      *
-     * @param name - The name to be hashed. It should be a string.
+     * @param user - The name to be hashed. It should be a string.
      *
      * This function performs the following steps:
      * 1. If `cidArray` is empty, it initializes it by calling `initCIDArray`.
@@ -85,27 +84,27 @@ export class DatabaseService {
      *
      * @returns {Promise<string>} Returns a Promise that resolves to the unique hash.
      */
-    async hash(name: string) {
+    async hash(user: string) {
         if (this.cidArray.length === 0) {
             await this.initCIDArray();
         }
 
         const encoder = new TextEncoder();
-        const data = encoder.encode(name);
+        const data = encoder.encode(user);
         const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         let numHash = parseInt(hashHex.substring(0, 8), 16) % 100000000;
 
-        while (this.cidArray.includes(numHash.toString())) {
+        while (this.cidArray.includes(numHash.toString().padEnd(8, '0'))) {
             numHash = (numHash + 1) % 100000000;
         }
 
-        this.cidArray.push(numHash.toString());
+        const numHashStr = numHash.toString().padEnd(8, '0');
+        this.cidArray.push(numHashStr);
 
-        return numHash.toString();
+        return numHashStr;
     }
-
     /**
      * Fetches all users from the 'testUsers' collection in Firestore.
      * For each user, it also fetches their total assets from the 'assets' subcollection.
@@ -135,13 +134,30 @@ export class DatabaseService {
             const data = userDoc.data()
 
             // Get a reference to the 'assets' subcollection for this user
-            const assetsDoc = doc(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID)
+            const generalAssetsDoc = doc(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID)
 
             // Fetch the 'assets' document
-            const assetsSnapshot = await getDoc(assetsDoc)
+            const generalAssetsSnapshot = await getDoc(generalAssetsDoc)
 
             // Get the data from the 'assets' document
-            const assetsData = assetsSnapshot.data()
+            const generalAssetsData = generalAssetsSnapshot.data()
+
+                        // Get a reference to the 'assets' subcollection for this user
+            const agqAssetsDoc = doc(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION, config.ASSETS_AGQ_DOC_ID)
+
+            // Fetch the 'assets' document
+            const agqAssetsSnapshot = await getDoc(agqAssetsDoc)
+
+            // Get the data from the 'assets' document
+            const agqAssetsData = agqAssetsSnapshot.data()
+            
+            const ak1AssetsDoc = doc(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION, config.ASSETS_AK1_DOC_ID)
+
+            // Fetch the 'assets' document
+            const ak1AssetsSnapshot = await getDoc(ak1AssetsDoc)
+
+            // Get the data from the 'assets' document
+            const ak1AssetsData = ak1AssetsSnapshot.data()
 
             // Push a new user object to the array, with properties from the document data and the 'assets' data
             users.push({
@@ -151,34 +167,33 @@ export class DatabaseService {
                 lastName: data.name.last ?? '',
                 companyName: data.name.company ?? '',
                 address: data.address ?? '',
-                dob: data.dob ?? null,
+                dob: data.dob?.toDate() ?? null,
                 initEmail: data.initEmail ?? data.email ?? '',
-                appEmail: data.appEmail ?? data.initEmail ?? 'User has not signed up yet',
+                appEmail: data.appEmail ?? data.email ?? 'User has not logged in yet',
                 connectedUsers: data.connectedUsers ?? [],
-                totalAssets: assetsData ? assetsData.total : 0,
-                formattedAssets: assetsData ? formatCurrency(assetsData.total) : formatCurrency(0),
+                totalAssets: generalAssetsData ? generalAssetsData.total : 0,
                 phoneNumber: data.phoneNumber ?? '',
-                firstDepositDate: data.firstDepositDate ?? null,
-                beneficiaryFirstName: '',
-                beneficiaryLastName: '',
+                firstDepositDate: data.firstDepositDate?.toDate() ?? null,
+                beneficiaryFirstName: data.beneficiaryFirstName ?? '',
+                beneficiaryLastName: data.beneficiaryLastName ?? '',
                 assets: {
                     agq: {
-                        personal: 0,
-                        company: 0,
-                        ira: 0,
-                        rothIra: 0,
-                        sepIra: 0,
-                        nuviewCashIra: 0,
-                        nuviewCashRothIra: 0
+                        personal: agqAssetsData?.personal ?? 0,
+                        company: agqAssetsData?.company ?? 0,
+                        ira: agqAssetsData?.ira ?? 0,
+                        rothIra: agqAssetsData?.rothIra ?? 0,
+                        sepIra: agqAssetsData?.sepIra ?? 0,
+                        nuviewCashIra: agqAssetsData?.nuviewCashIra ?? 0,
+                        nuviewCashRothIra: agqAssetsData?.nuviewCashRothIra ?? 0
                     },
                     ak1: {
-                        personal: 0,
-                        company: 0,
-                        ira: 0,
-                        rothIra: 0,
-                        sepIra: 0,
-                        nuviewCashIra: 0,
-                        nuviewCashRothIra: 0
+                        personal: ak1AssetsData?.personal ?? 0,
+                        company: ak1AssetsData?.company ?? 0,
+                        ira: ak1AssetsData?.ira ?? 0,
+                        rothIra: ak1AssetsData?.rothIra ?? 0,
+                        sepIra: ak1AssetsData?.sepIra ?? 0,
+                        nuviewCashIra: ak1AssetsData?.nuviewCashIra ?? 0,
+                        nuviewCashRothIra: ak1AssetsData?.nuviewCashRothIra ?? 0
                     }
                 }
             })
@@ -228,10 +243,11 @@ export class DatabaseService {
         };
 
         ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets'].forEach(key => {
+                if (newUser.appEmail === '') {delete newUserDocData[key]; return;}
                 delete newUserDocData[key];
         });
 
-        const newUserDocId = await this.hash(newUserDocData.name.first + '-' + newUserDocData.name.last);
+        const newUserDocId = await this.hash(newUser.firstName + '-' + newUser.lastName + '-' + newUser.initEmail);
 
         // Create a reference with the new ID.
         const docRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, newUserDocId);
@@ -272,6 +288,12 @@ export class DatabaseService {
         console.log('agq doc:', JSON.stringify(agqDoc));
         console.log('ak1 doc:', JSON.stringify(ak1Doc));
 
+    }
+
+    deleteClient = async (cid: string | undefined) => {
+        if (cid === undefined || cid === null ||cid === '' ) { console.log('no value'); return }
+        const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        await deleteDoc(clientRef);
     }
 
 }
