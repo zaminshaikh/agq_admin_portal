@@ -4,6 +4,13 @@ import 'firebase/firestore'
 import config from '../config.json'
 import 'firebase/firestore'
 
+/**
+ * User interface representing a client in the Firestore database.
+ *  
+ * .cid - The document ID of the user (the Client ID)
+ * 
+ * .uid - The user's UID, or the empty string if they have not signed up
+ */
 export interface User {
     [key: string]: any;
     cid: string;
@@ -26,25 +33,82 @@ export interface User {
         agq: {
         personal: number;
         company: number;
-        ira: number;
-        rothIra: number;
-        sepIra: number;
-        nuviewCashIra: number;
-        nuviewCashRothIra: number;
+        trad: number;
+        roth: number;
+        sep: number;
+        nuviewTrad: number;
+        nuviewRoth: number;
         };
         ak1: {
         personal: number;
         company: number;
-        ira: number;
-        rothIra: number;
-        sepIra: number;
-        nuviewCashIra: number;
-        nuviewCashRothIra: number;
+        trad: number;
+        roth: number;
+        sep: number;
+        nuviewTrad: number;
+        nuviewRoth: number;
         };
     };
 }
 
-// Formats a number into USD currency representation
+export const emptyUser: User = {
+    firstName: '',
+    lastName: '',
+    companyName: '',
+    address: '',
+    dob: undefined,
+    phoneNumber: '',
+    firstDepositDate: undefined,
+    beneficiaryFirstName: '',
+    beneficiaryLastName: '',
+    connectedUsers: [],
+    cid: '',
+    uid: '',
+    appEmail: '',
+    initEmail: '',
+    totalAssets: 0,
+    assets: {
+        agq: {
+            personal: 0,
+            company: 0,
+            trad: 0,
+            roth: 0,
+            sep: 0,
+            nuviewTrad: 0,
+            nuviewRoth: 0,
+        },
+        ak1: {
+            personal: 0,
+            company: 0,
+            trad: 0,
+            roth: 0,
+            sep: 0,
+            nuviewTrad: 0,
+            nuviewRoth: 0,
+        },
+    },
+};
+
+
+
+/**
+ * Formats a number as a currency string.
+ *
+ * This function takes a number as input and returns a string that represents
+ * the number formatted as a currency in US dollars. The formatting is done
+ * using the built-in `Intl.NumberFormat` object with 'en-US' locale and 'USD'
+ * as the currency.
+ *
+ * @param amount - The number to be formatted as currency.
+ * @returns The formatted currency string.
+ *
+ * @example
+ * ```typescript
+ * const amount = 1234.56;
+ * const formattedAmount = formatCurrency(amount);
+ * console.log(formattedAmount);  // Outputs: "$1,234.56"
+ * ```
+ */
 export const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
@@ -59,6 +123,14 @@ export class DatabaseService {
         this.cidArray = [];
     }
 
+    /**
+     * Asynchronously initializes the `cidArray` property with all the Client IDs from the 'testUsers' collection in Firestore.
+     *
+     * This function performs the following steps:
+     * 1. It fetches all documents from the 'testUsers' collection in Firestore.
+     * 2. It iterates over each document in the query snapshot and adds the document ID to the `cidArray`.
+     * 3. It logs the `cidArray` to the console.
+     */
     async initCIDArray() {
         const querySnapshot = await getDocs(this.usersCollection);
         for (const doc of querySnapshot.docs) {
@@ -122,7 +194,7 @@ export class DatabaseService {
      */
     getUsers = async () => {
 
-        // Fetch all documents from the 'testUsers' collection
+        // Fetch all documents from the users collection
         const querySnapshot = await getDocs(this.usersCollection)
 
         // Initialize an empty array to hold the user objects
@@ -134,38 +206,30 @@ export class DatabaseService {
             const data = userDoc.data()
 
             // Get a reference to the 'assets' subcollection for this user
-            const generalAssetsDoc = doc(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID)
+            const assetsSubcollection = collection(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION)
 
-            // Fetch the 'assets' document
+            // References to each doc in assets subcollection, one for each fund and a general overview doc
+            const generalAssetsDoc = doc(assetsSubcollection, config.ASSETS_GENERAL_DOC_ID)
+            const agqAssetsDoc = doc(assetsSubcollection, config.ASSETS_AGQ_DOC_ID)
+            const ak1AssetsDoc = doc(assetsSubcollection, config.ASSETS_AK1_DOC_ID)
+
+            // Use the references to fetch the snapshots of the documents
             const generalAssetsSnapshot = await getDoc(generalAssetsDoc)
-
-            // Get the data from the 'assets' document
-            const generalAssetsData = generalAssetsSnapshot.data()
-
-                        // Get a reference to the 'assets' subcollection for this user
-            const agqAssetsDoc = doc(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION, config.ASSETS_AGQ_DOC_ID)
-
-            // Fetch the 'assets' document
             const agqAssetsSnapshot = await getDoc(agqAssetsDoc)
-
-            // Get the data from the 'assets' document
-            const agqAssetsData = agqAssetsSnapshot.data()
-            
-            const ak1AssetsDoc = doc(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION, config.ASSETS_AK1_DOC_ID)
-
-            // Fetch the 'assets' document
             const ak1AssetsSnapshot = await getDoc(ak1AssetsDoc)
 
-            // Get the data from the 'assets' document
+            // Get the data from the snapshots
+            const generalAssetsData = generalAssetsSnapshot.data()
+            const agqAssetsData = agqAssetsSnapshot.data()
             const ak1AssetsData = ak1AssetsSnapshot.data()
 
-            // Push a new user object to the array, with properties from the document data and the 'assets' data
+            // Push a new user object to the array, with properties from the document data and the 'assets' subcollection data
             users.push({
                 cid: userDoc.id,
                 uid: data.uid ?? '',
-                firstName: data.name.first ?? '',
-                lastName: data.name.last ?? '',
-                companyName: data.name.company ?? '',
+                firstName: data.name?.first ?? '',
+                lastName: data.name?.last ?? '',
+                companyName: data.name?.company ?? '',
                 address: data.address ?? '',
                 dob: data.dob?.toDate() ?? null,
                 initEmail: data.initEmail ?? data.email ?? '',
@@ -180,20 +244,20 @@ export class DatabaseService {
                     agq: {
                         personal: agqAssetsData?.personal ?? 0,
                         company: agqAssetsData?.company ?? 0,
-                        ira: agqAssetsData?.ira ?? 0,
-                        rothIra: agqAssetsData?.rothIra ?? 0,
-                        sepIra: agqAssetsData?.sepIra ?? 0,
-                        nuviewCashIra: agqAssetsData?.nuviewCashIra ?? 0,
-                        nuviewCashRothIra: agqAssetsData?.nuviewCashRothIra ?? 0
+                        trad: agqAssetsData?.trad ?? 0,
+                        roth: agqAssetsData?.roth ?? 0,
+                        sep: agqAssetsData?.sep ?? 0,
+                        nuviewTrad: agqAssetsData?.nuviewTrad ?? 0,
+                        nuviewRoth: agqAssetsData?.nuviewRoth ?? 0
                     },
                     ak1: {
                         personal: ak1AssetsData?.personal ?? 0,
                         company: ak1AssetsData?.company ?? 0,
-                        ira: ak1AssetsData?.ira ?? 0,
-                        rothIra: ak1AssetsData?.rothIra ?? 0,
-                        sepIra: ak1AssetsData?.sepIra ?? 0,
-                        nuviewCashIra: ak1AssetsData?.nuviewCashIra ?? 0,
-                        nuviewCashRothIra: ak1AssetsData?.nuviewCashRothIra ?? 0
+                        trad: ak1AssetsData?.trad ?? 0,
+                        roth: ak1AssetsData?.roth ?? 0,
+                        sep: ak1AssetsData?.sep ?? 0,
+                        nuviewTrad: ak1AssetsData?.nuviewTrad ?? 0,
+                        nuviewRoth: ak1AssetsData?.nuviewRoth ?? 0
                     }
                 }
             })
@@ -233,67 +297,104 @@ export class DatabaseService {
      */
     createUser = async (newUser: User) => {
 
+        // Using the passed email, first name, and initial email to create a unique 8 digit CID using our hash function
+        const newUserDocId = await this.hash(newUser.firstName + '-' + newUser.lastName + '-' + newUser.initEmail);
+
+        // Since the CID is unique, this will create a unique user in the database
+        await this.setUser(newUser, newUserDocId);
+    }
+
+    /**
+     * Asynchronously sets the user doc in the Firestore database for the given CID
+     * 
+     * @param user 
+     * @param cid 
+     * 
+     */
+    setUser = async (user: User, cid: string) => {
+        // Create a new DocumentData object from the newUser object, with a name property that is an object containing first, last, and company properties.
         const newUserDocData: DocumentData = {
-            ...newUser,
+            ...user,
             name: {
-                first: newUser.firstName,
-                last: newUser.lastName,
-                company: newUser.companyName,
+                first: user.firstName,
+                last: user.lastName,
+                company: user.companyName,
             },
         };
 
+        // Delete these unused properties from the newUserDocData object
         ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets'].forEach(key => {
-                if (newUser.appEmail === '') {delete newUserDocData[key]; return;}
+                if (user.appEmail === '') {delete newUserDocData[key]; return;}
                 delete newUserDocData[key];
         });
 
-        const newUserDocId = await this.hash(newUser.firstName + '-' + newUser.lastName + '-' + newUser.initEmail);
+        // Create a reference with the CID.
+        const docRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
 
-        // Create a reference with the new ID.
-        const docRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, newUserDocId);
-        console.log(`${docRef}`)
-
-        // Create the document with the new ID.
+        // Updates/Creates the document with the CID
         await setDoc(docRef, newUserDocData);
 
-        console.log('Document written with ID: ', newUserDocId);
+        console.log('Document written with ID: ', cid);
 
+        // Create the asset documents from user
         let agqDoc = {
-            ...newUser.assets.agq,
+            ...user.assets.agq,
             fund: 'AGQ',
-            total: Object.values(newUser.assets.agq).reduce((sum, value) => sum + value, 0),
+            // Calculate sum of the subfields of the fund (personal, company, trad, roth etc.)
+            total: Object.values(user.assets.agq).reduce((sum, value) => sum + value, 0), 
         }
 
         let ak1Doc = {
-            ...newUser.assets.ak1,
+            ...user.assets.ak1,
             fund: 'AK1',
-            total: Object.values(newUser.assets.ak1).reduce((sum, value) => sum + value, 0),
+            total: Object.values(user.assets.ak1).reduce((sum, value) => sum + value, 0),
         }
 
         let general = {
-            ytd: 0,
+            ytd: user.ytd ?? 0, 
             total: agqDoc.total + ak1Doc.total
         }
 
+        // Create a reference to the assets subcollection for user
+        // If none exists, it will create one
         const assetCollectionRef = collection(docRef, config.ASSETS_SUBCOLLECTION)
-
+        
+        // Create references to the documents in the subcollection
         const agqRef = doc(assetCollectionRef, config.ASSETS_AGQ_DOC_ID)
         const ak1Ref = doc(assetCollectionRef, config.ASSETS_AK1_DOC_ID)
         const genRef = doc(assetCollectionRef, config.ASSETS_GENERAL_DOC_ID)
 
+        // Set the documents in the subcollection
         await setDoc(agqRef, agqDoc)
         await setDoc(ak1Ref, ak1Doc)
         await setDoc(genRef, general)
 
         console.log('agq doc:', JSON.stringify(agqDoc));
         console.log('ak1 doc:', JSON.stringify(ak1Doc));
-
     }
 
-    deleteClient = async (cid: string | undefined) => {
+
+    /**
+     * Asynchronously deletes a user from the Firestore database.
+     *
+     * @param cid - The Client ID of the user to be deleted.
+     *
+     * @returns {Promise<void>} Returns a Promise that resolves when the user has been deleted from the Firestore database.
+     */
+    deleteUser = async (cid: string | undefined) => {
         if (cid === undefined || cid === null ||cid === '' ) { console.log('no value'); return }
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
         await deleteDoc(clientRef);
+    }
+
+    /**
+     * Updates the given user in the Firestore database.
+     * 
+     * @param updatedUser 
+     *
+     */
+    updateUser = async (updatedUser: User) => {
+        await this.setUser(updatedUser, updatedUser.cid);
     }
 
 }

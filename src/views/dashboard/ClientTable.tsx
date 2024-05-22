@@ -1,14 +1,16 @@
-import { CButton, CCardBody, CCol, CCollapse, CContainer, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CRow, CSmartTable, CSpinner } from '@coreui/react-pro';
+import { CButton, CCardBody, CCol, CCollapse, CContainer, CRow, CSmartTable, CSpinner } from '@coreui/react-pro';
 import { DatabaseService, User, formatCurrency } from 'src/db/database.ts';
 import { useEffect, useState } from 'react';
-import CreateNewClient from './CreateNewClient';
+import CreateClient from './CreateNewClient';
 import { DisplayDetails } from './DisplayDetails';
 import { DeleteClient } from './DeleteClient';
+import { EditClient } from './EditClient';
 
 const UsersTable = () => {
     const [showCreateNewClientModal, setShowCreateNewClientModal] = useState(false);
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
+    const [showEditClientModal, setShowEditClientModal] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
     const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
@@ -57,9 +59,6 @@ const UsersTable = () => {
         {
             key: 'totalAssets',
             label: 'Total Assets',
-            // formatter: (cellContent: number) => {
-            //     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cellContent);
-            // }
         },
         {
             key: 'show_details',
@@ -83,9 +82,10 @@ const UsersTable = () => {
     
     return (
         <CContainer>
-            {showDisplayDetailsModal && <DisplayDetails showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} user={currentUser}/>}
+            {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} currentUser={currentUser}/>}
+            {showDisplayDetailsModal && <DisplayDetails showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} users={users} currentUser={currentUser}/>}
             {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} user={currentUser}/>}
-            {showCreateNewClientModal && <CreateNewClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} users={users}/>} 
+            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} users={users}/>} 
             <div className="d-grid gap-2">
                 <CButton color='primary' onClick={() => setShowCreateNewClientModal(true)}>Add Client +</CButton>
             </div> 
@@ -138,8 +138,12 @@ const UsersTable = () => {
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
-                                    <CButton size="sm" color="warning" className="ml-1" variant="outline">
-                                        Edit Client
+                                    <CButton size="sm" color="warning" className="ml-1" variant="outline"
+                                    onClick={() => {
+                                        setShowEditClientModal(true);
+                                        setCurrentUser(users.find(user => user.cid === item.cid))
+                                    }}>
+                                        Edit Client 
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">

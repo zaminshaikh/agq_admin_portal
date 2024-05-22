@@ -55,7 +55,7 @@ import avatar6 from 'src/assets/images/avatars/6.jpg'
 import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
-import UsersTable from './UsersTable'
+import UsersTable from './ClientTable'
 
 const Dashboard = () => {
   const { t } = useTranslation()
