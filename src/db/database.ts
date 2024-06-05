@@ -28,6 +28,7 @@ export interface User {
     beneficiaryLastName: string;
     connectedUsers: string[];
     totalAssets: number,
+    activities?: Activity[];
     assets: {
         [key: string]: any;
         agq: {
@@ -49,6 +50,14 @@ export interface User {
         nuviewRoth: number;
         };
     };
+}
+
+export interface Activity {
+    amount: number;
+    fund: string;
+    recipient: string;
+    time: Date;
+    type: string;
 }
 
 export const emptyUser: User = {
@@ -106,7 +115,6 @@ export const emptyUser: User = {
  * ```typescript
  * const amount = 1234.56;
  * const formattedAmount = formatCurrency(amount);
- * console.log(formattedAmount);  // Outputs: "$1,234.56"
  * ```
  */
 export const formatCurrency = (amount: number): string => {
@@ -136,7 +144,6 @@ export class DatabaseService {
         for (const doc of querySnapshot.docs) {
             this.cidArray.push(doc.id);
         }
-        console.log(this.cidArray);
     }
 
     /**
@@ -323,7 +330,7 @@ export class DatabaseService {
         };
 
         // Delete these unused properties from the newUserDocData object
-        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets'].forEach(key => {
+        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities'].forEach(key => {
                 if (user.appEmail === '') {delete newUserDocData[key]; return;}
                 delete newUserDocData[key];
         });
@@ -333,8 +340,6 @@ export class DatabaseService {
 
         // Updates/Creates the document with the CID
         await setDoc(docRef, newUserDocData);
-
-        console.log('Document written with ID: ', cid);
 
         // Create the asset documents from user
         let agqDoc = {
@@ -369,8 +374,17 @@ export class DatabaseService {
         await setDoc(ak1Ref, ak1Doc)
         await setDoc(genRef, general)
 
-        console.log('agq doc:', JSON.stringify(agqDoc));
-        console.log('ak1 doc:', JSON.stringify(ak1Doc));
+        // Update/Create a activity subcollection for user
+        
+        const activityCollectionRef = collection(docRef, config.ACTIVITIES_SUBCOLLECTION)
+
+        // If no activities exist, we leave the collection empty
+        if (user.activities === undefined) {return}
+
+        // Add each activity to the subcollection
+        for (let activity of user.activities) {
+            await addDoc(activityCollectionRef, activity)
+        }
     }
 
 

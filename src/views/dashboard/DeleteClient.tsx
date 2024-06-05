@@ -21,7 +21,6 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
     }, [firstName, lastName, user]);
     
     const DeleteClient = async () => {
-        console.log(user?.cid)
         await service.deleteUser(user?.cid)
         setShowModal(false);
         window.location.reload();
@@ -51,7 +50,6 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
                         <CInputGroupText>Client's Last Name</CInputGroupText>
                         <CFormInput onChange={(e) => {
                             setLastName(e.target.value);
-                            console.log(doNamesMatch);
                         }}/>
                     </CInputGroup>
                 </div>

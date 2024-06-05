@@ -21,8 +21,7 @@ const UsersTable = () => {
             const db = new DatabaseService();
             const users = await db.getUsers();
             setUsers(users);
-            setIsLoading(false);
-            console.log(JSON.stringify(users))
+            setIsLoading(false);``
         };
         fetchUsers();
     }, []);

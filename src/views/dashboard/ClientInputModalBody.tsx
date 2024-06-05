@@ -1,6 +1,10 @@
 import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol } from '@coreui/react-pro';
-import { User } from '../../db/database.ts'
+import { Activity, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
+import Papa from 'papaparse';
+import { get } from 'http';
+import { act } from 'react';
+import { ReactReduxContext } from 'react-redux';
 
 export interface InputValidationStatus {
     firstName: boolean;
@@ -25,6 +29,61 @@ interface ClientInputProps {
     userOptions: (Option | OptionsGroup)[]
 }
 
+// Handles the file input from the user
+const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
+
+    const getActivityType = (type: string | undefined) => {
+
+        if (!type) return "none";
+
+        switch (type) {
+            case "withdrawal":
+                return "profit"
+            case "deposit":
+                return "deposit"
+            default:
+                return "other"
+        }
+    }
+
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Parse the CSV file
+    Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+            // Initialize an array to store the activities
+            let activities: Activity[] = [];
+            // For each row in the CSV, create a new activity
+            results.data.forEach((row: any) => {
+
+                // Skip if row is empty
+                if (Object.values(row).every(x => (x === null || x === ''))) return;
+
+                // Create an activity from each row of the CSV
+                const activity: Activity= {
+                    fund: "AGQ",
+                    amount: Math.abs(parseFloat(row["Amount (Unscaled)"])),
+                    recipient: row["Security Name"],
+                    time: new Date(row["Date"]),
+                    type: getActivityType(row["Type"]),
+                };
+
+                // Add to the activites array
+                activities.push(activity);
+                console.log(JSON.stringify(activity));
+            });
+
+            // Update the client state with the new activities
+            const newClientState = {
+                ...clientState,
+                activities: activities,
+            };
+            setClientState(newClientState)
+        },
+    });
+};
 
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 
@@ -97,7 +156,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>DOB</CInputGroupText>
-                        <CFormInput type="date" id="dob"  value = {clientState.dob?.toISOString().split('T')[0]}
+                        <CFormInput type="date" id="dob"  value = {clientState.dob?.toISOString().split('T')[0] ?? ''}
                             onChange={(e) => {
                                 setInputValidationStatus({...inputValidationStatus, dob: true})
                                 const newClientState = {
@@ -136,7 +195,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>First Deposit Date</CInputGroupText>
-                        <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate?.toISOString().split('T')[0]}
+                        <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate?.toISOString().split('T')[0] ?? ''}
                             onChange={(e) => {
                                 setInputValidationStatus({...inputValidationStatus, firstDepositDate: true})
                                 const newClientState = {
@@ -215,7 +274,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     <div className="mb-3  py-3">
                         <h5>Upload Previous Activities</h5>
                         <div  className="mb-3 py-3">
-                            <CFormInput type="file" id="formFile"/>
+                            <CFormInput type="file" id="formFile" onChange={(event) => handleFileChange(event, clientState, setClientState)}/>
                         </div>
                     </div>
                 </CModalBody>

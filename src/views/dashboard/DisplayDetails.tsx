@@ -12,8 +12,6 @@ interface ShowModalProps {
 }
 
 export const DisplayDetails: React.FC<ShowModalProps> = ({showModal, setShowModal, users, currentUser: currentUser}) => {
-    console.log(JSON.stringify(currentUser))
-    console.log(currentUser?.dob?.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }))
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: (currentUser?.connectedUsers?.includes(user.cid))}))
     return (
         <CModal         scrollable
