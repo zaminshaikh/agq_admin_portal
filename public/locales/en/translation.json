@@ -22,6 +22,7 @@
     "customers": "Customers",
     "dark": "Dark",
     "dashboard": "Dashboard",
+    "activities": "Activities",
     "date": "{{date, datetime}}",
     "dateOnlyMonthName": "{{date, datetime(month: 'long')}}",
     "dateShortMonthName": "{{date, datetime(year: 'numeric'; month: 'short'; day: 'numeric' )}}",

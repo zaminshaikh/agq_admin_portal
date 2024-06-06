@@ -38,7 +38,7 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
 
         switch (type) {
             case "withdrawal":
-                return "profit"
+                return "income"
             case "deposit":
                 return "deposit"
             default:
@@ -61,11 +61,15 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                 // Skip if row is empty
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
 
+                // Remove the fund type after the dash and convert the name to title case
+                let name = row["Security Name"].split('-').shift()?.trim();
+                name = name?.toLowerCase().replace(/\b(\w)/g, (s: string) => s.toUpperCase());
+
                 // Create an activity from each row of the CSV
                 const activity: Activity= {
                     fund: "AGQ",
                     amount: Math.abs(parseFloat(row["Amount (Unscaled)"])),
-                    recipient: row["Security Name"],
+                    recipient: name,
                     time: new Date(row["Date"]),
                     type: getActivityType(row["Type"]),
                 };
@@ -78,7 +82,7 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
             // Update the client state with the new activities
             const newClientState = {
                 ...clientState,
-                activities: activities,
+                activities: [...(clientState.activities || []), ...activities],
             };
             setClientState(newClientState)
         },

@@ -22,6 +22,7 @@
     "customers": "Klienci",
     "dark": "Ciemny",
     "dashboard": "Pulpit",
+    "activities": "Aktywności",
     "date": "{{date, datetime}}",
     "dateOnlyMonthName": "{{date, datetime(month: 'long')}}",
     "dateShortMonthName": "{{date, datetime(year: 'numeric'; month: 'short'; day: 'numeric' )}}",
