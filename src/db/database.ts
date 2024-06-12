@@ -1,4 +1,4 @@
-import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentChangeType, DocumentData, addDoc, setDoc, deleteDoc} from 'firebase/firestore'
+import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentChangeType, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
 import config from '../config.json'
@@ -409,6 +409,15 @@ export class DatabaseService {
      */
     updateUser = async (updatedUser: User) => {
         await this.setUser(updatedUser, updatedUser.cid);
+    }
+
+    getActivities = async () => {
+        const querySnapshot = await getDocs(collectionGroup(this.db, 'activities'));
+        const activities: Activity[] = querySnapshot.docs.map(doc => doc.data() as Activity);
+        for (let i = 0; i < activities.length; i++) {
+            activities[i].time = (activities[i].time as any).toDate();
+        }
+        return activities;
     }
 
 }
