@@ -1,4 +1,4 @@
-import { CBadge, CSmartTable, CSpinner } from "@coreui/react-pro";
+import { CBadge, CButton, CContainer, CContainer, CSmartTable, CSpinner } from "@coreui/react-pro";
 import { useEffect, useState } from "react";
 import { Activity, DatabaseService, formatCurrency } from "src/db/database";
 
@@ -6,6 +6,7 @@ import { Activity, DatabaseService, formatCurrency } from "src/db/database";
 const ActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activities, setActivities] = useState<Activity[]>([]);
+    const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
     
     useEffect(() => {
         const fetchActivities = async () => {
@@ -34,8 +35,8 @@ const ActivitiesTable = () => {
             label: 'Recipient',
         },
         {
-            key: 'time',
-            label: 'Date',
+            key: 'formattedTime',
+            _style: { width: '30%' },
         },
         {
             key: 'amount',
@@ -43,7 +44,7 @@ const ActivitiesTable = () => {
         },
         {
             key: 'fund',
-            label: 'Fund',
+            _style: { width: '10%' },
         }
     ]
 
@@ -69,36 +70,36 @@ const ActivitiesTable = () => {
     }
 
     return (
-        <CSmartTable
-            activePage={1}
-            cleaner
-            clickableRows
-            columns={columns}
-            columnFilter
-            columnSorter
-            items={activities}
-            itemsPerPageSelect
-            itemsPerPage={50}
-            pagination
-            sorterValue={{ column: 'time', state: 'asc' }}
-            scopedColumns={{
-                type: (item: Activity) => (
-                    <td>
-                        <CBadge color={getBadge(item.type)}>{toSentenceCase(item.type)}</CBadge>
-                    </td>
-                ),
-                amount: (item: Activity) => (
-                    <td>
-                        {formatCurrency(item.amount)}
-                    </td>
-                ),
-                time: (item: Activity) => (
-                    <td>
-                        {item.time.toLocaleDateString()}
-                    </td>
-                ),
-            }}
-    />)
+        <CContainer>
+            <div className="d-grid gap-2">
+                <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
+            </div> 
+            <CSmartTable
+                activePage={1}
+                cleaner
+                clickableRows
+                columns={columns}
+                columnFilter
+                columnSorter
+                items={activities}
+                itemsPerPageSelect
+                itemsPerPage={50}
+                pagination
+                sorterValue={{ column: 'formattedTime', state: 'desc' }}
+                scopedColumns={{
+                    type: (item: Activity) => (
+                        <td>
+                            <CBadge color={getBadge(item.type)}>{toSentenceCase(item.type)}</CBadge>
+                        </td>
+                    ),
+                    amount: (item: Activity) => (
+                        <td>
+                            {formatCurrency(item.amount)}
+                        </td>
+                    ),
+            }} />
+        </CContainer>
+    );
 }
 
 export default ActivitiesTable;

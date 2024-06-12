@@ -3,6 +3,7 @@ import { app } from '../App.tsx'
 import 'firebase/firestore'
 import config from '../config.json'
 import 'firebase/firestore'
+import { Timestamp } from 'firebase/firestore';
 
 /**
  * User interface representing a client in the Firestore database.
@@ -56,7 +57,8 @@ export interface Activity {
     amount: number;
     fund: string;
     recipient: string;
-    time: Date;
+    time: Date | Timestamp;
+    formattedTime?: string;
     type: string;
 }
 
@@ -415,7 +417,18 @@ export class DatabaseService {
         const querySnapshot = await getDocs(collectionGroup(this.db, 'activities'));
         const activities: Activity[] = querySnapshot.docs.map(doc => doc.data() as Activity);
         for (let i = 0; i < activities.length; i++) {
-            activities[i].time = (activities[i].time as any).toDate();
+            const time = activities[i].time instanceof Timestamp ? (activities[i].time as Timestamp).toDate() : activities[i].time;
+            if (time instanceof Date) {
+                const year = time.getFullYear();
+                const month = (time.getMonth() + 1).toString().padStart(2, '0');
+                const date = time.getDate().toString().padStart(2, '0');
+                const hours = time.getHours().toString().padStart(2, '0');
+                const minutes = time.getMinutes().toString().padStart(2, '0');
+                const seconds = time.getSeconds().toString().padStart(2, '0');
+                activities[i].formattedTime = `${year}/${month}/${date} at ${hours}:${minutes}:${seconds} EST`;
+            } else {
+                activities[i].formattedTime = '';
+            }
         }
         return activities;
     }
