@@ -121,6 +121,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                 visible={showModal} 
                 backdrop="static" 
                 size="xl" 
+                alignment="center"
                 onClose={() => setShowModal(false)}>
                 <CModalHeader closeButton>
                     <CModalTitle>Create New Activity</CModalTitle>
