@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 // import { IMaskMixin } from 'react-imask'
 import React from "react";
 import { DatabaseService, User, emptyUser } from '../../db/database.ts'
-import { ClientInputModalBody, InputValidationStatus, ValidateClient } from './ClientInputModalBody.tsx'
+import { ClientInputModalBody, ValidateClient } from './ClientInputModalBody.tsx'
 
 // const CFormInputWithMask = React.forwardRef<HTMLInputElement, any>((props, ref) => (
 //     <CFormInput
@@ -24,19 +24,6 @@ interface ShowModalProps {
         currentUser?: User;
 }
 
-const initialInputValidationStatus: InputValidationStatus = {
-    firstName: true,
-    lastName: true,
-    companyName: true,
-    address: true,
-    dob: true,
-    phoneNumber: true,
-    initEmail: true,
-    firstDepositDate: true,
-    beneficiaryFirstName: true, 
-    beneficiaryLastName: true,
-}
-
 // TODO: Perform validation on address and email
 // Initial modal to create new client
 export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users, currentUser}) => {
@@ -45,7 +32,6 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
 
     const db = new DatabaseService();
     const [clientState, setClientState] = useState<User>(initialClientState);
-    const [inputValidationStatus, setInputValidationStatus] = useState<InputValidationStatus>(initialInputValidationStatus);
     
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [useCompanyName, setUseCompanyName] = useState(clientState.companyName ? true : false) ;
@@ -53,7 +39,7 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
 
     const UpdateClient = async () => {
-        if (!ValidateClient(clientState, useCompanyName, inputValidationStatus, setInputValidationStatus, setInvalidInputFields)) {
+        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields)) {
             setShowErrorModal(true);
         } else {
             await db.updateUser(clientState);
@@ -108,8 +94,6 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
                 <ClientInputModalBody 
                     clientState={clientState} 
                     setClientState={setClientState} 
-                    inputValidationStatus={inputValidationStatus} 
-                    setInputValidationStatus={setInputValidationStatus} 
                     useCompanyName={useCompanyName}
                     setUseCompanyName={setUseCompanyName} 
                     userOptions={userOptions}/>

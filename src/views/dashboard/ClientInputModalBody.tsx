@@ -3,24 +3,9 @@ import { Activity, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
 
-export interface InputValidationStatus {
-    firstName: boolean;
-    lastName: boolean;
-    companyName: boolean;
-    address: boolean;
-    dob: boolean;
-    phoneNumber: boolean;
-    initEmail: boolean;
-    firstDepositDate: boolean;
-    beneficiaryFirstName: boolean;
-    beneficiaryLastName: boolean;
-}
-
 interface ClientInputProps {
     clientState: User,
     setClientState: (clientState: User) => void,
-    inputValidationStatus: InputValidationStatus,
-    setInputValidationStatus: (inputValidationStatus: InputValidationStatus) => void,
     useCompanyName: boolean,
     setUseCompanyName: (useCompanyName: boolean) => void,
     userOptions: (Option | OptionsGroup)[]
@@ -69,7 +54,8 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                     recipient: name,
                     time: new Date(row["Date"]),
                     type: getActivityType(row["Type"]),
-                    isDividend: false, // Dividends are not supported in the CSV
+                    isDividend: false,
+                    sendNotif: false, // Dividends are not supported in the CSV
                 };
 
                 // Add to the activites array
@@ -90,8 +76,6 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 
     setClientState,
-    inputValidationStatus,
-    setInputValidationStatus,
     useCompanyName,
     setUseCompanyName,
     userOptions,
@@ -102,7 +86,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CInputGroupText>Client's First Name</CInputGroupText>
                         <CFormInput id="first-name" value={clientState.firstName}
                             onChange={(e) =>{
-                                setInputValidationStatus({...inputValidationStatus, firstName: true})
                                 const newClientState = {
                                     ...clientState,
                                     firstName: e.target.value,
@@ -113,7 +96,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CFormInput id="last-name" value={clientState.lastName}
                             onChange={
                                 (e) => {
-                                    setInputValidationStatus({...inputValidationStatus, lastName: true})
                                     const newClientState = {
                                         ...clientState,
                                         lastName: e.target.value
@@ -132,7 +114,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CFormInput id="company-name" 
                         onChange={
                             (e) => {
-                                setInputValidationStatus({...inputValidationStatus, companyName: true})
                                 const newClientState = {
                                     ...clientState,
                                     companyName: e.target.value
@@ -147,7 +128,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CInputGroupText>Address</CInputGroupText>
                         <CFormInput id="address" value={clientState.address}
                             onChange={(e) => {
-                                setInputValidationStatus({...inputValidationStatus, address: true})
                                 const newClientState = {
                                     ...clientState,
                                     address: e.target.value,
@@ -160,7 +140,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CInputGroupText>DOB</CInputGroupText>
                         <CFormInput type="date" id="dob"  value = {clientState.dob?.toISOString().split('T')[0] ?? ''}
                             onChange={(e) => {
-                                setInputValidationStatus({...inputValidationStatus, dob: true})
                                 const newClientState = {
                                     ...clientState,
                                     dob: new Date(e.target.value),
@@ -173,7 +152,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CInputGroupText>Phone Number</CInputGroupText>
                         <CFormInput id="phone-number" value={clientState.phoneNumber}
                             onChange={(e) => {
-                                setInputValidationStatus({...inputValidationStatus, phoneNumber: true})
                                 const newClientState = {
                                     ...clientState,
                                     phoneNumber: e.target.value,
@@ -186,7 +164,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CInputGroupText>Email</CInputGroupText>
                         <CFormInput type="email" id="email" value={clientState.initEmail}
                             onChange={(e) => {
-                                setInputValidationStatus({...inputValidationStatus, initEmail: true})
                                 const newClientState = {
                                     ...clientState,
                                     initEmail: e.target.value,
@@ -199,7 +176,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CInputGroupText>First Deposit Date</CInputGroupText>
                         <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate?.toISOString().split('T')[0] ?? ''}
                             onChange={(e) => {
-                                setInputValidationStatus({...inputValidationStatus, firstDepositDate: true})
                                 const newClientState = {
                                     ...clientState,
                                     firstDepositDate: new Date(e.target.value),
@@ -212,7 +188,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CInputGroupText>Beneficiary's First Name</CInputGroupText>
                         <CFormInput id="beneficiaryFirstName"  value={clientState.beneficiaryFirstName}
                             onChange={(e) => {
-                                setInputValidationStatus({...inputValidationStatus, beneficiaryFirstName: true})
                                 const newClientState = {
                                     ...clientState,
                                     beneficiaryFirstName: e.target.value,
@@ -222,7 +197,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CInputGroupText>Beneficiary's Last Name</CInputGroupText>
                         <CFormInput id="beneficiaryLastName" value={clientState.beneficiaryLastName}
                             onChange={(e) => {
-                                setInputValidationStatus({...inputValidationStatus, beneficiaryLastName: true})
                                 const newClientState = {
                                     ...clientState,
                                     beneficiaryLastName: e.target.value,
@@ -261,45 +235,36 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     )
 } 
 
-type ValidationStatusKey = 'firstName' | 'lastName' | 'companyName' | 'address' | 'dob' | 'phoneNumber' | 'initEmail' | 'firstDepositDate' | 'beneficiaryFirstName' | 'beneficiaryLastName';
-
-export const ValidateClient = (
-    clientState: User, 
-    useCompanyName: boolean,
-    inputValidationStatus: InputValidationStatus, 
-    setInputValidationStatus: (inputValidationStatus: InputValidationStatus) => void,
-    setInvalidInputFields: (invalidInputFields: string[]) => void ) => {
-        
+export const ValidateClient = (clientState: User, useCompanyName: boolean, setInvalidInputFields: (fields: string[]) => void) => {
     let validClient = true;
     let fields: string[] = [];
-    let newInputValidationStatus = { ...inputValidationStatus };
 
-    const fieldValidations: { name: ValidationStatusKey, displayName: string, condition: boolean }[] = [
-        { name: 'firstName', displayName: 'First Name', condition: clientState.firstName === '' },
-        { name: 'lastName', displayName: 'Last Name', condition: clientState.lastName === '' },
-        { name: 'companyName', displayName: 'Company Name', condition: useCompanyName && clientState.companyName === '' },
-        { name: 'address', displayName: 'Address', condition: clientState.address === '' },
-        { name: 'dob', displayName: 'DOB', condition: !clientState.dob || isNaN(clientState.dob.getTime()) },
-        { name: 'phoneNumber', displayName: 'Phone Number', condition: clientState.phoneNumber === '' },
-        { name: 'initEmail', displayName: 'Email', condition: clientState.initEmail === '' },
-        { name: 'firstDepositDate', displayName: 'First Deposit Date', condition: !clientState.firstDepositDate || isNaN(clientState.firstDepositDate.getTime()) },
-        { name: 'beneficiaryFirstName', displayName: 'Beneficiary\'s First Name', condition: clientState.beneficiaryFirstName === '' },
-        { name: 'beneficiaryLastName', displayName: 'Beneficiary\'s Last Name', condition: clientState.beneficiaryLastName === '' },
+    const fieldValidations: { displayName: string, condition: boolean }[] = [
+        { displayName: 'First Name', condition: clientState.firstName === '' },
+        { displayName: 'Last Name', condition: clientState.lastName === '' },
+        { displayName: 'Company Name', condition: useCompanyName && clientState.companyName === '' },
+        { displayName: 'Address', condition: clientState.address === '' },
+        { displayName: 'DOB', condition: !clientState.dob || isNaN(clientState.dob.getTime()) },
+        { displayName: 'Phone Number', condition: clientState.phoneNumber === '' },
+        { displayName: 'Email', condition: clientState.initEmail === '' },
+        { displayName: 'First Deposit Date', condition: !clientState.firstDepositDate || isNaN(clientState.firstDepositDate.getTime()) },
+        { displayName: 'Beneficiary\'s First Name', condition: clientState.beneficiaryFirstName === '' },
+        { displayName: 'Beneficiary\'s Last Name', condition: clientState.beneficiaryLastName === '' },
     ];
 
-    fieldValidations.forEach(({ name, displayName, condition }) => {
+    fieldValidations.forEach(({ displayName, condition }) => {
         if (condition) {
             fields.push(displayName);
-            newInputValidationStatus[name] = false;
             validClient = false;
         }
     });
-
-    setInputValidationStatus(newInputValidationStatus);
+    
     setInvalidInputFields(fields);
 
     return validClient;
 }
+
+
 
 const getAssetType = (id: string) => {
     switch (id) {
@@ -388,8 +353,8 @@ export const AssetFormComponent: React.FC<{title: string, id: string, disabled?:
                         ...state,
                         assets: {
                             ...state.assets,
-                            agq: {
-                                ...state.assets.agq,
+                            [fund]: {
+                                ...state.assets[fund],
                                 [getAssetType(id)]: 0
                             }
                         }
