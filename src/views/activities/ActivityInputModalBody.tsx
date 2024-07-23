@@ -3,15 +3,7 @@ import { OptionsGroup } from "@coreui/react-pro/dist/esm/components/multi-select
 import React from "react";
 import { Activity, User, DatabaseService} from "src/db/database";
 import { EditAssetsSection } from "../dashboard/ClientInputModalBody";
-
-export interface InputValidationStatus {
-    type: boolean;
-    recipient: boolean;
-    amount: boolean;
-    date: boolean;
-    time: boolean;
-    fund: boolean;
-}
+import { InputValidationStatus } from "./CreateActivity";
 
 interface ActivityInputProps {
     activityState: Activity,
@@ -39,6 +31,8 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         setActivityState({...activityState, time: newDate!});
     };
 
+    
+
     return (
         <CModalBody>
             <CInputGroup className="mb-3 py-1 px-3">
@@ -50,7 +44,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     <option value="withdrawal">Withdrawal</option>
                     <option value="profit">Profit</option>
                     <option value="deposit">Deposit</option>
-                    <option value="maual-entry">Manual Entry</option>
+                    <option value="manual-entry">Manual Entry</option>
                 </CFormSelect>
                 <div className="px-3 "/>
                 <CFormSwitch 
