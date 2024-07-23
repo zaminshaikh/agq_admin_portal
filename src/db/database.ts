@@ -60,6 +60,16 @@ export interface Activity {
     formattedTime?: string;
     type: string;
     isDividend: boolean | undefined;
+    sendNotif: boolean | undefined;
+}
+
+export interface Notification {
+    activityId: string;
+    recipient: string;
+    message: string;
+    isRead: boolean;
+    type: string;
+    time: Date | Timestamp;
 }
 
 export const emptyUser: User = {
@@ -107,6 +117,7 @@ export const emptyActivity: Activity = {
     time: new Date(),
     type: '',
     isDividend: false,
+    sendNotif: true,
 };
 
 
@@ -296,15 +307,15 @@ export class DatabaseService {
         };
 
         // Delete these unused properties from the newUserDocData object
-        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities'].forEach(key => {
+        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets'].forEach(key => {
                 delete newUserDocData[key];
         });
 
         // Create a reference with the CID.
-        const docRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
 
         // Updates/Creates the document with the CID
-        await setDoc(docRef, newUserDocData);
+        await setDoc(userRef, newUserDocData);
 
         // Create the asset documents from user
         let agqDoc = {
@@ -327,7 +338,7 @@ export class DatabaseService {
 
         // Create a reference to the assets subcollection for user
         // If none exists, it will create one
-        const assetCollectionRef = collection(docRef, config.ASSETS_SUBCOLLECTION)
+        const assetCollectionRef = collection(userRef, config.ASSETS_SUBCOLLECTION)
         
         // Create references to the documents in the subcollection
         const agqRef = doc(assetCollectionRef, config.ASSETS_AGQ_DOC_ID)
@@ -341,7 +352,7 @@ export class DatabaseService {
 
         // Update/Create a activity subcollection for user
         
-        const activityCollectionRef = collection(docRef, config.ACTIVITIES_SUBCOLLECTION)
+        const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION)
 
         // If no activities exist, we leave the collection empty
         if (user.activities === undefined) {return}
@@ -376,8 +387,11 @@ export class DatabaseService {
     }
 
     getActivities = async () => {
-        const querySnapshot = await getDocs(collectionGroup(this.db, 'activities'));
+        // Get all activities from all users' 'activities' subcollections
+        const querySnapshot = await getDocs(collectionGroup(this.db, 'activities')); 
+        // Map the query snapshot to an array of Activity
         const activities: Activity[] = querySnapshot.docs.map(doc => doc.data() as Activity);
+        // Format the time field of each activity
         for (let i = 0; i < activities.length; i++) {
             const time = activities[i].time instanceof Timestamp ? (activities[i].time as Timestamp).toDate() : activities[i].time;
             if (time instanceof Date) {
@@ -395,10 +409,61 @@ export class DatabaseService {
         return activities;
     }
 
-    createActivity = async (activity: Activity, cid: String) => {
+    createActivity = async (activity: Activity, cid: string) => {
+        // Create a reference to the user document
+        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        // Create a reference to the activities subcollection for the user
+        const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION);
+        // Add the activity to the subcollection
+        const activityRef = await addDoc(activityCollectionRef, activity);
 
-        // const docRef = await doc(collection(this.db, 'activities'), activity);
-        // return docRef.id;
+        // If the activity requires a notification, create a notification for the recipient
+        if (activity.sendNotif === true) {
+            // Create a reference to the notifications subcollection for the user
+            const notificationsCollectionRef = collection(userRef, config.NOTIFICATIONS_SUBCOLLECTION);
+            function getActivityMessage(activity: Activity): string {
+                let message: string;
+                switch (activity.type) {
+                    case 'withdrawal':
+                        message = `New Withdrawal: ${activity.fund} Fund has withdrawn $${activity.amount} from your account. View the Activity section for more details.`;
+                        break;
+                    case 'profit':
+                        message = `New Profit: ${activity.fund} Fund has posted the latest returns from ${activity.recipient}'s investment. View the Activity section for more details.`;
+                        break;
+                    case 'deposit':
+                        message = `New Deposit: ${activity.fund} Fund has deposited $${activity.amount} into your account. View the Activity section for more details.`;
+                        break;
+                    case 'manual-entry':
+                        message = `New Manual Entry: ${activity.fund} Fund has made a manual entry of $${activity.amount} into your account. View the Activity section for more details.`;
+                        break;
+                    default:
+                        message = 'New Activity: A new activity has been created. View the Activity section for more details.';
+                };
+                return message;
+            }
+            // Create a notification object
+            const notification: Notification = {
+                activityId: activityRef.id,
+                recipient: activity.recipient as string,
+                message: getActivityMessage(activity),
+                isRead: false,
+                type: 'activity',
+                time: activity.time,
+            };
+            // Add the notification to the subcollection
+            await addDoc(notificationsCollectionRef, notification);
+        }
+    }
+
+    setActivity = async (activity: Activity, {activityDocId}: {activityDocId?: string}, cid: string) => {
+        // Create a reference to the user document
+        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        // Create a reference to the activities subcollection for the user
+        const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION);
+        // Create a reference to the activity document
+        const activityRef = doc(activityCollectionRef, activityDocId);
+        // Set the activity document with new data
+        await setDoc(activityRef, activity);
     }
 
     getUserFromSnapshot = (userSnapshot: DocumentSnapshot, generalAssetsSnapshot: DocumentSnapshot, agqAssetsSnapshot: DocumentSnapshot, ak1AssetsSnapshot: DocumentSnapshot) => {
@@ -446,7 +511,6 @@ export class DatabaseService {
                     }
                 }
             } as User
-            console.log('FETCHED USER: ', user);
             return user;
         } else {
             return null;

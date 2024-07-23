@@ -29,13 +29,13 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     const [inputValidationStatus, setInputValidationStatus] = useState<InputValidationStatus>(initialInputValidationStatus);
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName}))
     const handleCreateActivity = async () => {
-        const isValid = validateInputs();
-        if (!isValid) {
-            return;
-        }
+        // const isValid = validateInputs();
+        // if (!isValid) {
+        //     return;
+        // }
         await db.createActivity(activityState, clientState!.cid);
-        setActivityState(emptyActivity);
         setShowModal(false);
+        window.location.reload();
     }
 
     const validateInputs = () => {

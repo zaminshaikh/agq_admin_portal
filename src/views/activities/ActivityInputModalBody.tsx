@@ -102,9 +102,10 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             </CContainer>
             <CInputGroup className="mb-3 py-3 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Fund</CInputGroupText>
-                <CFormSelect id="inputGroupSelect01" onChange={
-                    (e) => {setActivityState({...activityState, type: e.currentTarget.value})
-                }}>
+                <CFormSelect id="inputGroupSelect01" onChange={(e) => {
+                        setActivityState({...activityState, fund: e.currentTarget.value})
+                    }}
+                >
                     <option>Choose...</option>
                     <option value="AK1">AK1 Fund</option>
                     <option value="AGQ">AGQ Fund</option>

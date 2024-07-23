@@ -24,7 +24,9 @@ const ActivitiesTable = () => {
 
     if (isLoading) {
         return( 
-            <CSpinner color="primary"/>
+            <div className="text-center">
+                <CSpinner color="primary"/>
+            </div>
         )
     }
 
