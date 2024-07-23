@@ -59,7 +59,7 @@ export interface Activity {
     time: Date | Timestamp;
     formattedTime?: string;
     type: string;
-    isDividend: boolean | null;
+    isDividend: boolean | undefined;
 }
 
 export const emptyUser: User = {
