@@ -1,10 +1,9 @@
-import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentChangeType, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup} from 'firebase/firestore'
+import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
 import config from '../config.json'
 import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
-
 /**
  * User interface representing a client in the Firestore database.
  *  
@@ -56,10 +55,11 @@ export interface User {
 export interface Activity {
     amount: number;
     fund: string;
-    recipient: string;
+    recipient: string | User;
     time: Date | Timestamp;
     formattedTime?: string;
     type: string;
+    isDividend: boolean | null;
 }
 
 export const emptyUser: User = {
@@ -100,6 +100,14 @@ export const emptyUser: User = {
     },
 };
 
+export const emptyActivity: Activity = {
+    amount: 0,
+    fund: '',
+    recipient: '',
+    time: new Date(),
+    type: '',
+    isDividend: false,
+};
 
 
 /**
@@ -165,7 +173,7 @@ export class DatabaseService {
      *
      * @returns {Promise<string>} Returns a Promise that resolves to the unique hash.
      */
-    async hash(user: string) {
+    async hash(user: string): Promise<string> {
         if (this.cidArray.length === 0) {
             await this.initCIDArray();
         }
@@ -207,15 +215,12 @@ export class DatabaseService {
         const querySnapshot = await getDocs(this.usersCollection)
 
         // Initialize an empty array to hold the user objects
-        const users: User[] = []
+        const users: (User) [] = []
 
         // Loop over each document in the query snapshot
-        for (const userDoc of querySnapshot.docs) {
-            // Get the data from the document
-            const data = userDoc.data()
-
+        for (const userSnapshot of querySnapshot.docs) {
             // Get a reference to the 'assets' subcollection for this user
-            const assetsSubcollection = collection(this.usersCollection, userDoc.id, config.ASSETS_SUBCOLLECTION)
+            const assetsSubcollection = collection(this.usersCollection, userSnapshot.id, config.ASSETS_SUBCOLLECTION)
 
             // References to each doc in assets subcollection, one for each fund and a general overview doc
             const generalAssetsDoc = doc(assetsSubcollection, config.ASSETS_GENERAL_DOC_ID)
@@ -227,49 +232,8 @@ export class DatabaseService {
             const agqAssetsSnapshot = await getDoc(agqAssetsDoc)
             const ak1AssetsSnapshot = await getDoc(ak1AssetsDoc)
 
-            // Get the data from the snapshots
-            const generalAssetsData = generalAssetsSnapshot.data()
-            const agqAssetsData = agqAssetsSnapshot.data()
-            const ak1AssetsData = ak1AssetsSnapshot.data()
-
-            // Push a new user object to the array, with properties from the document data and the 'assets' subcollection data
-            users.push({
-                cid: userDoc.id,
-                uid: data.uid ?? '',
-                firstName: data.name?.first ?? '',
-                lastName: data.name?.last ?? '',
-                companyName: data.name?.company ?? '',
-                address: data.address ?? '',
-                dob: data.dob?.toDate() ?? null,
-                initEmail: data.initEmail ?? data.email ?? '',
-                appEmail: data.appEmail ?? data.email ?? 'User has not logged in yet',
-                connectedUsers: data.connectedUsers ?? [],
-                totalAssets: generalAssetsData ? generalAssetsData.total : 0,
-                phoneNumber: data.phoneNumber ?? '',
-                firstDepositDate: data.firstDepositDate?.toDate() ?? null,
-                beneficiaryFirstName: data.beneficiaryFirstName ?? '',
-                beneficiaryLastName: data.beneficiaryLastName ?? '',
-                assets: {
-                    agq: {
-                        personal: agqAssetsData?.personal ?? 0,
-                        company: agqAssetsData?.company ?? 0,
-                        trad: agqAssetsData?.trad ?? 0,
-                        roth: agqAssetsData?.roth ?? 0,
-                        sep: agqAssetsData?.sep ?? 0,
-                        nuviewTrad: agqAssetsData?.nuviewTrad ?? 0,
-                        nuviewRoth: agqAssetsData?.nuviewRoth ?? 0
-                    },
-                    ak1: {
-                        personal: ak1AssetsData?.personal ?? 0,
-                        company: ak1AssetsData?.company ?? 0,
-                        trad: ak1AssetsData?.trad ?? 0,
-                        roth: ak1AssetsData?.roth ?? 0,
-                        sep: ak1AssetsData?.sep ?? 0,
-                        nuviewTrad: ak1AssetsData?.nuviewTrad ?? 0,
-                        nuviewRoth: ak1AssetsData?.nuviewRoth ?? 0
-                    }
-                }
-            })
+            const user = this.getUserFromSnapshot(userSnapshot, generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot);
+            if (user !== null) { users.push(user); }
         }
 
         // Return the array of user objects
@@ -333,7 +297,6 @@ export class DatabaseService {
 
         // Delete these unused properties from the newUserDocData object
         ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities'].forEach(key => {
-                if (user.appEmail === '') {delete newUserDocData[key]; return;}
                 delete newUserDocData[key];
         });
 
@@ -389,7 +352,6 @@ export class DatabaseService {
         }
     }
 
-
     /**
      * Asynchronously deletes a user from the Firestore database.
      *
@@ -431,6 +393,83 @@ export class DatabaseService {
             }
         }
         return activities;
+    }
+
+    createActivity = async (activity: Activity, cid: String) => {
+
+        // const docRef = await doc(collection(this.db, 'activities'), activity);
+        // return docRef.id;
+    }
+
+    getUserFromSnapshot = (userSnapshot: DocumentSnapshot, generalAssetsSnapshot: DocumentSnapshot, agqAssetsSnapshot: DocumentSnapshot, ak1AssetsSnapshot: DocumentSnapshot) => {
+        if (userSnapshot.exists()) {
+            // Get the data from the snapshots
+            const data = userSnapshot.data()
+            const generalAssetsData = generalAssetsSnapshot.data()
+            const agqAssetsData = agqAssetsSnapshot.data()
+            const ak1AssetsData = ak1AssetsSnapshot.data()
+            let user: User = userSnapshot.data() as User;
+            user = {
+                cid: userSnapshot?.id,
+                uid: data?.uid ?? '',
+                firstName: data?.name?.first ?? '',
+                lastName: data?.name?.last ?? '',
+                companyName: data?.name?.company ?? '',
+                address: data?.address ?? '',
+                dob: data?.dob?.toDate() ?? null,
+                initEmail: data?.initEmail ?? data?.email ?? '',
+                appEmail: data?.appEmail ?? data?.email ?? 'User has not logged in yet',
+                connectedUsers: data?.connectedUsers ?? [],
+                totalAssets: generalAssetsData ? generalAssetsData.total : 0,
+                phoneNumber: data?.phoneNumber ?? '',
+                firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
+                beneficiaryFirstName: data?.beneficiaryFirstName ?? '',
+                beneficiaryLastName: data?.beneficiaryLastName ?? '',
+                assets: {
+                    agq: {
+                        personal: agqAssetsData?.personal ?? 0,
+                        company: agqAssetsData?.company ?? 0,
+                        trad: agqAssetsData?.trad ?? 0,
+                        roth: agqAssetsData?.roth ?? 0,
+                        sep: agqAssetsData?.sep ?? 0,
+                        nuviewTrad: agqAssetsData?.nuviewTrad ?? 0,
+                        nuviewRoth: agqAssetsData?.nuviewRoth ?? 0
+                    },
+                    ak1: {
+                        personal: ak1AssetsData?.personal ?? 0,
+                        company: ak1AssetsData?.company ?? 0,
+                        trad: ak1AssetsData?.trad ?? 0,
+                        roth: ak1AssetsData?.roth ?? 0,
+                        sep: ak1AssetsData?.sep ?? 0,
+                        nuviewTrad: ak1AssetsData?.nuviewTrad ?? 0,
+                        nuviewRoth: ak1AssetsData?.nuviewRoth ?? 0
+                    }
+                }
+            } as User
+            console.log('FETCHED USER: ', user);
+            return user;
+        } else {
+            return null;
+        }
+    }
+
+    getUser = async (cid: string) => {
+        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        const userSnapshot = await getDoc(userRef);
+        // Get a reference to the 'assets' subcollection for this user
+        const assetsSubcollection = collection(this.usersCollection, cid, config.ASSETS_SUBCOLLECTION)
+
+        // References to each doc in assets subcollection, one for each fund and a general overview doc
+        const generalAssetsDoc = doc(assetsSubcollection, config.ASSETS_GENERAL_DOC_ID)
+        const agqAssetsDoc = doc(assetsSubcollection, config.ASSETS_AGQ_DOC_ID)
+        const ak1AssetsDoc = doc(assetsSubcollection, config.ASSETS_AK1_DOC_ID)
+
+        // Use the references to fetch the snapshots of the documents
+        const generalAssetsSnapshot = await getDoc(generalAssetsDoc)
+        const agqAssetsSnapshot = await getDoc(agqAssetsDoc)
+        const ak1AssetsSnapshot = await getDoc(ak1AssetsDoc)
+
+        return this.getUserFromSnapshot(userSnapshot, generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot);
     }
 
 }

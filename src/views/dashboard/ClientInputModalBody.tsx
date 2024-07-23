@@ -2,9 +2,6 @@ import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMult
 import { Activity, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
-import { get } from 'http';
-import { act } from 'react';
-import { ReactReduxContext } from 'react-redux';
 
 export interface InputValidationStatus {
     firstName: boolean;
@@ -72,6 +69,7 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                     recipient: name,
                     time: new Date(row["Date"]),
                     type: getActivityType(row["Type"]),
+                    isDividend: false, // Dividends are not supported in the CSV
                 };
 
                 // Add to the activites array
@@ -249,31 +247,9 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             }
                         }
                     /> 
-                    
-                    <CContainer className=" py-3">
-                        <CRow>
-                        <CCol>
-                            <h5>AGQ Fund Assets</h5>
-                            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={!useCompanyName} state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-                        </CCol>
-                        <CCol>
-                            <h5>AK1 Fund Assets</h5>
-                            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={!useCompanyName} state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-                            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-                        </CCol>
-                        </CRow>
-                    </CContainer>
+
+                    <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName}/>
+                
 
                     <div className="mb-3  py-3">
                         <h5>Upload Previous Activities</h5>
@@ -353,12 +329,40 @@ const getAssetType = (id: string) => {
     }
 }
 
+export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean}> = ({clientState, setClientState, useCompanyName}) => {
+    return (    
+    <CContainer className=" py-3">
+        <CRow>
+        <CCol>
+            <h5>AGQ Fund Assets</h5>
+            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={!useCompanyName} state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" state={clientState} setClientState={setClientState}/>
+        </CCol>
+        <CCol>
+            <h5>AK1 Fund Assets</h5>
+            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={!useCompanyName} state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
+        </CCol>
+        </CRow>
+    </CContainer>)
+}
 
 
-const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, state: User, setClientState: (clientState: User) => void}> = ({title, id, disabled, fund, state, setClientState}) => {
+
+export const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, state: User, setClientState: (clientState: User) => void}> = ({title, id, disabled, fund, state, setClientState}) => {
     return (
         <CInputGroup className="mb-3 py-3">
-            <CInputGroupText style={{ width: "200px" }} id="personal">{title}</CInputGroupText>
+            <CInputGroupText style={{ width: "200px" }}>{title}</CInputGroupText>
             <CInputGroupText>$</CInputGroupText>
             <CFormInput id={id} disabled={disabled} type="number" step="1000" value={state["assets"][fund][getAssetType(id)]} 
             onChange={(e) => {

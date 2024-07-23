@@ -1,18 +1,22 @@
-import { CBadge, CButton, CContainer, CContainer, CSmartTable, CSpinner } from "@coreui/react-pro";
+import { CBadge, CButton, CContainer, CSmartTable, CSpinner } from "@coreui/react-pro";
 import { useEffect, useState } from "react";
-import { Activity, DatabaseService, formatCurrency } from "src/db/database";
+import { Activity, DatabaseService, User, formatCurrency } from "src/db/database";
+import { CreateActivity } from "./CreateActivity";
 
 
 const ActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activities, setActivities] = useState<Activity[]>([]);
+    const [users, setUsers] = useState<User[]>([]); // [1
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
     
     useEffect(() => {
         const fetchActivities = async () => {
             const db = new DatabaseService();
             const activities = await db.getActivities();
+            const users = await db.getUsers();
             setActivities(activities);
+            setUsers(users);
             setIsLoading(false);
         };
         fetchActivities();
@@ -71,6 +75,7 @@ const ActivitiesTable = () => {
 
     return (
         <CContainer>
+            {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users}/>}
             <div className="d-grid gap-2">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
             </div> 

@@ -19,9 +19,13 @@ const UsersTable = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             const db = new DatabaseService();
-            const users = await db.getUsers();
-            setUsers(users);
-            setIsLoading(false);``
+            let users = await db.getUsers();
+            if (users !== null) {
+                users = users as User[];
+                setUsers(users);
+                setIsLoading(false);``
+            }
+            
         };
         fetchUsers();
     }, []);
