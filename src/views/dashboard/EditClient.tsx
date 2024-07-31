@@ -44,7 +44,7 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
         } else {
             await db.updateUser(clientState);
             setShowModal(false);
-            // window.location.reload();
+            window.location.reload();
         }
     }
 
