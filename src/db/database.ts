@@ -59,7 +59,7 @@ export interface Activity {
     time: Date | Timestamp;
     formattedTime?: string;
     type: string;
-    isDividend: boolean | undefined;
+    isDividend?: boolean;
     sendNotif: boolean | undefined;
 }
 
@@ -150,6 +150,7 @@ export class DatabaseService {
     constructor() {
         this.usersCollection = collection(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION);
         this.cidArray = [];
+        this.initCIDArray();
     }
 
     /**
@@ -168,42 +169,45 @@ export class DatabaseService {
     }
 
     /**
-     * Asynchronously generates a unique hash for a given name.
+     * Hashes the input string to generate a unique ID, handling collisions by checking against existing IDs.
      *
-     * @param user - The name to be hashed. It should be a string.
-     *
-     * This function performs the following steps:
-     * 1. If `cidArray` is empty, it initializes it by calling `initCIDArray`.
-     * 2. It creates a new `TextEncoder` and uses it to encode the `name` into a `Uint8Array`.
-     * 3. It uses the `window.crypto.subtle.digest` function to create a SHA-256 hash of the encoded `name`.
-     * 4. It converts the hash into a hexadecimal string.
-     * 5. It converts the first 8 characters of the hexadecimal string into a decimal number and takes the remainder of dividing by 100000000 to get `numHash`.
-     * 6. If `numHash` is already in `cidArray`, it increments `numHash` by 1 and takes the remainder of dividing by 100000000 until `numHash` is not in `cidArray`.
-     * 7. It adds `numHash` to `cidArray`.
-     * 8. It returns `numHash` as a string.
-     *
-     * @returns {Promise<string>} Returns a Promise that resolves to the unique hash.
+     * @param input - The string to hash.
+     * @returns A unique 8-digit ID.
      */
-    async hash(user: string): Promise<string> {
-        if (this.cidArray.length === 0) {
-            await this.initCIDArray();
+    async hash(input: string): Promise<string> {
+
+        function fnv1aHash(input: string): number {
+            let hash = 2166136261; // FNV offset basis
+            for (let i = 0; i < input.length; i++) {
+                hash ^= input.charCodeAt(i);
+                hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+            }
+            return hash >>> 0; // Convert to unsigned 32-bit integer
         }
 
-        const encoder = new TextEncoder();
-        const data = encoder.encode(user);
-        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        let numHash = parseInt(hashHex.substring(0, 8), 16) % 100000000;
+        const generateUniqueID = (baseID: string): string => {
+            let uniqueID = baseID;
+            let counter = 1;
 
-        while (this.cidArray.includes(numHash.toString().padEnd(8, '0'))) {
-            numHash = (numHash + 1) % 100000000;
-        }
+            console.log("UNIQUE ID:", uniqueID);
+            console.log("CID ARRAY:", this.cidArray);
 
-        const numHashStr = numHash.toString().padEnd(8, '0');
-        this.cidArray.push(numHashStr);
+            // Check for collisions and modify the ID if necessary
+            while (this.cidArray.includes(uniqueID)) {
+                uniqueID = (parseInt(baseID, 10) + counter).toString().padStart(8, '0');
+                counter++;
+            }
 
-        return numHashStr;
+            console.log("UNIQUE ID AFTER COLLISION:", uniqueID);
+            return uniqueID;
+        };
+
+        const hash = fnv1aHash(input);
+        const baseID = (hash % 100000000).toString().padStart(8, '0');
+        const id = generateUniqueID(baseID);
+        this.cidArray.push(id); // Add the new unique ID to the array
+        console.log('HASH:', id);
+        return id;
     }
     /**
      * Fetches all users from the 'testUsers' collection in Firestore.
