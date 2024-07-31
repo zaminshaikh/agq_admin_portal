@@ -2,6 +2,8 @@ import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMult
 import { Activity, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
+import { parse, format } from 'date-fns';
+
 
 interface ClientInputProps {
     clientState: User,
@@ -15,9 +17,7 @@ interface ClientInputProps {
 const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
 
     const getActivityType = (type: string | undefined) => {
-
         if (!type) return "none";
-
         switch (type) {
             case "withdrawal":
                 return "income"
@@ -31,6 +31,8 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
     const file = event.target.files?.[0];
     if (!file) return;
 
+    let i: number = 2;
+
     // Parse the CSV file
     Papa.parse(file, {
         header: true,
@@ -39,7 +41,6 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
             let activities: Activity[] = [];
             // For each row in the CSV, create a new activity
             results.data.forEach((row: any) => {
-
                 // Skip if row is empty
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
 
@@ -47,20 +48,30 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                 let name = row["Security Name"].split('-').shift()?.trim();
                 name = name?.toLowerCase().replace(/\b(\w)/g, (s: string) => s.toUpperCase());
 
+                // Check if name does not match client's full name or company name
+                const clientFullName = clientState.firstName + ' ' + clientState.lastName;
+                if (name !== clientFullName && name !== clientState.companyName) return;
+
+                if (i === 2) { console.log(row["Date"]); }
+
+                // Parse the date string correctly
+                const parsedDate = parse(row["Date"], 'yyyy-MM-dd', new Date());
+
                 // Create an activity from each row of the CSV
-                const activity: Activity= {
-                    fund: "AGQ",
+                const activity: Activity = {
+                    fund: "AGQ", // TODO: Add support for AK1
                     amount: Math.abs(parseFloat(row["Amount (Unscaled)"])),
                     recipient: name,
-                    time: new Date(row["Date"]),
+                    time: parsedDate,
                     type: getActivityType(row["Type"]),
-                    isDividend: false,
-                    sendNotif: false, // Dividends are not supported in the CSV
                 };
 
-                // Add to the activites array
+                if (i === 2) { console.log(parsedDate); }
+
+                // Add to the activities array
                 activities.push(activity);
                 console.log(JSON.stringify(activity));
+                i++;
             });
 
             // Update the client state with the new activities
@@ -72,6 +83,7 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
         },
     });
 };
+
 
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 

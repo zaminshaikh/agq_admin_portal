@@ -60,7 +60,7 @@ export interface Activity {
     formattedTime?: string;
     type: string;
     isDividend?: boolean;
-    sendNotif: boolean | undefined;
+    sendNotif?: boolean;
 }
 
 export interface Notification {
