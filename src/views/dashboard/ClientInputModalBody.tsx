@@ -31,7 +31,7 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
     const file = event.target.files?.[0];
     if (!file) return;
 
-    let i: number = 2;
+    let i: number = 0;
 
     // Parse the CSV file
     Papa.parse(file, {
@@ -45,8 +45,8 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
 
                 // Remove the fund type after the dash and convert the name to title case
-                let name = row["Security Name"].split('-').shift()?.trim();
-                name = name?.toLowerCase().replace(/\b(\w)/g, (s: string) => s.toUpperCase());
+                let [clientName, fundInfo] = row["Security Name"].split('-').map((s: string) => s.trim());
+                let name = clientName?.toLowerCase().replace(/\b(\w)/g, (s: string) => s.toUpperCase());
 
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName + ' ' + clientState.lastName;
@@ -54,12 +54,14 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
 
                 if (i === 2) { console.log(row["Date"]); }
 
+                // Determine the fund type
+                let fund = fundInfo.split(' ')[0];
                 // Parse the date string correctly
                 const parsedDate = parse(row["Date"], 'yyyy-MM-dd', new Date());
 
                 // Create an activity from each row of the CSV
                 const activity: Activity = {
-                    fund: "AGQ", // TODO: Add support for AK1
+                    fund: fund, // TODO: Add support for AK1
                     amount: Math.abs(parseFloat(row["Amount (Unscaled)"])),
                     recipient: name,
                     time: parsedDate,
@@ -73,6 +75,8 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                 console.log(JSON.stringify(activity));
                 i++;
             });
+
+            console.log(i)
 
             // Update the client state with the new activities
             const newClientState = {
