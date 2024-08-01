@@ -312,27 +312,27 @@ const getAssetType = (id: string) => {
 
 export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean, activeFund?: string}> = ({clientState, setClientState, useCompanyName, activeFund}) => {
     return (    
-    <CContainer className=" py-3">
+    <CContainer className="py-3">
         <CRow>
-        <CCol >
+        <CCol>
             <h5>AGQ Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" state={clientState} setClientState={setClientState} />
-            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={!useCompanyName} state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={!(useCompanyName || activeFund == 'AGQ')} state={clientState} setClientState={setClientState} />
+            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
         </CCol>
         <CCol>
             <h5>AK1 Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={!useCompanyName} state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
-            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={!(useCompanyName || activeFund == 'AK1')} state={clientState} setClientState={setClientState} />
+            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
         </CCol>
         </CRow>
     </CContainer>)
