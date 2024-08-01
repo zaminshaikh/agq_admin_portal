@@ -1,7 +1,10 @@
-import { CBadge, CButton, CContainer, CSmartTable, CSpinner } from "@coreui/react-pro";
+import { CBadge, CButton, CCardBody, CCol, CCollapse, CContainer, CRow, CSmartTable, CSpinner } from "@coreui/react-pro";
 import { useEffect, useState } from "react";
 import { Activity, DatabaseService, User, formatCurrency } from "src/db/database";
 import { CreateActivity } from "./CreateActivity";
+import { set } from "date-fns";
+import DeleteActivity from "./DeleteActivity";
+import EditActivity from "./EditActivity";
 
 
 const ActivitiesTable = () => {
@@ -9,6 +12,13 @@ const ActivitiesTable = () => {
     const [activities, setActivities] = useState<Activity[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
+    const [details, setDetails] = useState<string[]>([])
+    
+    const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
+    const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
+    const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
+    const [showEditClientModal, setShowEditClientModal] = useState(false);
+
     
     useEffect(() => {
         const fetchActivities = async () => {
@@ -52,7 +62,21 @@ const ActivitiesTable = () => {
         {
             key: 'fund',
             _style: { width: '10%' },
-        }
+        },
+        {
+            key: 'edit',
+            label: '',
+            _style: { width: '1%' },
+            filter: false,
+            sorter: false,
+        },
+        {
+            key: 'delete',
+            label: '',
+            _style: { width: '1%' },
+            filter: false,
+            sorter: false,
+        },
     ]
 
     const getBadge = (status: string) => {
@@ -78,6 +102,8 @@ const ActivitiesTable = () => {
 
     return (
         <CContainer>
+            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} user={currentUser}/>}
+            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} user={currentUser}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users}/>}
             <div className="d-grid gap-2">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
@@ -105,6 +131,40 @@ const ActivitiesTable = () => {
                             {formatCurrency(item.amount)}
                         </td>
                     ),
+                    edit: (item: User) => {
+                        return (
+                        <td className="py-2">
+                            <CButton
+                            color="warning"
+                            variant="outline"
+                            shape="square"
+                            size="sm"
+                            onClick={() => {
+                                setShowEditClientModal(true);
+                            }}
+                            >
+                            Edit
+                            </CButton>
+                        </td>
+                        )
+                    },
+                    delete: (item: User) => {
+                        return (
+                        <td className="py-2">
+                            <CButton
+                            color="danger"
+                            variant="outline"
+                            shape="square"
+                            size="sm"
+                            onClick={() => {
+                                setShowDeleteClientModal(true);
+                            }}
+                            >
+                            Delete
+                            </CButton>
+                        </td>
+                        )
+                    },
             }} />
         </CContainer>
     );
