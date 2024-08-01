@@ -310,13 +310,13 @@ const getAssetType = (id: string) => {
     }
 }
 
-export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean}> = ({clientState, setClientState, useCompanyName}) => {
+export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean, activeFund?: string}> = ({clientState, setClientState, useCompanyName, activeFund}) => {
     return (    
     <CContainer className=" py-3">
         <CRow>
-        <CCol>
+        <CCol >
             <h5>AGQ Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" state={clientState} setClientState={setClientState}/>
+            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" state={clientState} setClientState={setClientState} />
             <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={!useCompanyName} state={clientState} setClientState={setClientState}/>
             <AssetFormComponent title="IRA" id="agq-ira" fund="agq" state={clientState} setClientState={setClientState}/>
             <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" state={clientState} setClientState={setClientState}/>

@@ -8,11 +8,10 @@ export type Route = {
   path?: string
   routes?: Route[]
 }
-
+// IMPORT PATHS
 const Activities = React.lazy(() => import('./views/activities/Activities'))
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
-const Colors = React.lazy(() => import('./views/theme/colors/Colors'))
-const Typography = React.lazy(() => import('./views/theme/typography/Typography'))
+const Statements = React.lazy(() => import('./views/statements/Statements'))
 
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
@@ -85,16 +84,9 @@ const routes: Route[] = [
     element: Activities,
   },
   {
-    path: '/theme',
-    name: <Translation>{(t) => t('theme')}</Translation>,
-    element: Colors,
-    exact: true,
-  },
-  { path: '/theme/colors', name: <Translation>{(t) => t('colors')}</Translation>, element: Colors },
-  {
-    path: '/theme/typography',
-    name: <Translation>{(t) => t('typography')}</Translation>,
-    element: Typography,
+    path: '/statements',
+    name: <Translation>{(t) => t('statements')}</Translation>,
+    element: Statements,
   },
   {
     path: '/base',

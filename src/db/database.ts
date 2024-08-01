@@ -143,6 +143,7 @@ export const formatCurrency = (amount: number): string => {
 }
 
 export class DatabaseService {
+
     private db: Firestore = getFirestore(app);
     private usersCollection: CollectionReference<DocumentData, DocumentData>;
     private cidArray: string[];
@@ -359,8 +360,9 @@ export class DatabaseService {
         // Using the passed email, first name, and initial email to create a unique 8 digit CID using our hash function
         const newUserDocId = await this.hash(newUser.firstName + '-' + newUser.lastName + '-' + newUser.initEmail);
 
+        newUser = {...newUser, cid: newUserDocId};
         // Since the CID is unique, this will create a unique user in the database
-        await this.setUser(newUser, newUserDocId);
+        await this.setUser(newUser);
     }
 
     /**
@@ -370,7 +372,7 @@ export class DatabaseService {
      * @param cid 
      * 
      */
-    setUser = async (user: User, cid: string) => {
+    setUser = async (user: User) => {
         // Create a new DocumentData object from the newUser object, with a name property that is an object containing first, last, and company properties.
         const newUserDocData: DocumentData = {
             ...user,
@@ -387,13 +389,32 @@ export class DatabaseService {
         });
 
         // Create a reference with the CID.
-        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, user.cid);
 
         // Updates/Creates the document with the CID
         await setDoc(userRef, newUserDocData);
+        
+        // Update/Create the assets subcollection for user
+        await this.setAssets(user); 
 
-        // Create the asset documents from user
-        let agqDoc = {
+        // Update/Create a activity subcollection for user
+        const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION)
+
+        // If no activities exist, we leave the collection undefined
+        if (user.activities === undefined) {return}
+
+        // Add each activity to the subcollection
+        for (let activity of user.activities) {
+            await addDoc(activityCollectionRef, activity)
+        }
+    }
+
+    async setAssets(user: User) {
+        // Create a reference to the assets subcollection for this user
+        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, user.cid);
+
+         // Create the asset documents from user
+         let agqDoc = {
             ...user.assets.agq,
             fund: 'AGQ',
             // Calculate sum of the subfields of the fund (personal, company, trad, roth etc.)
@@ -424,18 +445,6 @@ export class DatabaseService {
         await setDoc(agqRef, agqDoc)
         await setDoc(ak1Ref, ak1Doc)
         await setDoc(genRef, general)
-
-        // Update/Create a activity subcollection for user
-        
-        const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION)
-
-        // If no activities exist, we leave the collection empty
-        if (user.activities === undefined) {return}
-
-        // Add each activity to the subcollection
-        for (let activity of user.activities) {
-            await addDoc(activityCollectionRef, activity)
-        }
     }
 
     /**
@@ -458,7 +467,7 @@ export class DatabaseService {
      *
      */
     updateUser = async (updatedUser: User) => {
-        await this.setUser(updatedUser, updatedUser.cid);
+        await this.setUser(updatedUser);
     }
 
     getActivities = async () => {

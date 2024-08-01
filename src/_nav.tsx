@@ -8,6 +8,8 @@ import {
   cilCursor,
   cilDrop,
   cilEnvelopeOpen,
+  cilFile,
+  cilFolderOpen,
   cilGrid,
   cilLayers,
   cilMap,
@@ -52,6 +54,12 @@ const _nav: NavItem[] = [
     name: "Activities",
     to: '/activities',
     icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: "Statements",
+    to: '/statements',
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   },
 ]
 

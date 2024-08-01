@@ -7,7 +7,7 @@ import { CreateActivity } from "./CreateActivity";
 const ActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activities, setActivities] = useState<Activity[]>([]);
-    const [users, setUsers] = useState<User[]>([]); // [1
+    const [users, setUsers] = useState<User[]>([]);
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
     
     useEffect(() => {
@@ -40,7 +40,8 @@ const ActivitiesTable = () => {
             key: 'recipient',
             label: 'Recipient',
         },
-        {
+        {   
+            label: 'Time',
             key: 'formattedTime',
             _style: { width: '30%' },
         },
