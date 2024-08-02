@@ -82,9 +82,11 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     userOptions,
 }) => {
     const db = new DatabaseService();
+    const [date, setDate] = React.useState<Date | null>(new Date());
 
     const handleDateChange = (newDate: Date | null) => {
         if (newDate === null) {return;}
+        setDate(newDate);
         setActivityState({...activityState, time: newDate!});
     };
 
@@ -116,7 +118,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             <CContainer className="py-3 px-3">
                 <CRow>
                 <CCol>
-                    <CDatePicker placeholder={"Date and Time of Activity"} date={new Date()} onDateChange={handleDateChange} timepicker/>    
+                    <CDatePicker placeholder={"Date and Time of Activity"} date={date} onDateChange={handleDateChange} timepicker/>    
                 </CCol>
                 <CCol>
                 <CMultiSelect 
@@ -185,7 +187,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     } 
                 }}/>
             </CInputGroup>
-            {clientState && (activityState.isDividend || activityState.type === 'manual-entry') && activityState.fund && <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={clientState.companyName !== null} activeFund={activityState.fund}/>}
+            {clientState && ((activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry') && activityState.fund && <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={clientState.companyName !== null} activeFund={activityState.fund}/>}
             
         </CModalBody>
     )
