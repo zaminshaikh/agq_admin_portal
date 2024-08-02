@@ -25,13 +25,15 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
         userOptions.push(nonUserOption);
     }
 
-    const handleCreateActivity = async () => {
+    const handleEditActivity = async () => {
         if (!ValidateActivity(activityState, setInvalidInputFields)) {
             setShowErrorModal(true);
             return;
         }
+
         // Create activity with client cid
-        await db.createActivity(activityState, clientState!.cid);
+        await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
+
         if ((activityState.isDividend || activityState.type === 'manual-entry') && clientState) {
             await db.setAssets(clientState);
         }
@@ -74,7 +76,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
                 />
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
-                    <CButton color="primary" onClick={handleCreateActivity}>Update</CButton>
+                    <CButton color="primary" onClick={handleEditActivity}>Update</CButton>
                 </CModalFooter>
             </CModal>
         </>

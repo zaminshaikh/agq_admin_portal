@@ -93,7 +93,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             <CInputGroup className="mb-3 py-1 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Type</CInputGroupText>
                 <CFormSelect id="inputGroupSelect01" defaultValue={activityState?.type} onChange={
-                    (e) => {setActivityState({...activityState, type: e.currentTarget.value, isDividend: e.currentTarget.value === 'profit' ? activityState.isDividend : false})
+                    (e) => {setActivityState({...activityState, type: e.currentTarget.value})
                 }}>
                     <option>Choose...</option>
                     <option value="withdrawal">Withdrawal</option>
@@ -107,7 +107,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     label="Dividend Payment" 
                     id="formSwitchCheckDisabled" 
                     disabled={activityState.type !== 'profit'} 
-                    checked={activityState.isDividend} 
+                    checked={activityState.type == 'profit' && activityState.isDividend} 
                     onChange={(e) => {
                         setActivityState({...activityState, isDividend: e.currentTarget.checked })
                     }}
