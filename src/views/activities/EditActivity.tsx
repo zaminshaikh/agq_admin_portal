@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
-import { DatabaseService, Activity, emptyActivity, User } from 'src/db/database';
+import { DatabaseService, Activity, emptyActivity, User, emptyUser } from 'src/db/database';
 import { ValidateActivity, ErrorModal, ActivityInputModalBody } from './ActivityInputModalBody';
 
 interface EditActivityProps {
@@ -12,14 +12,15 @@ interface EditActivityProps {
 
 const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, users, activity }) => {
     const db = new DatabaseService();
+
     const [activityState, setActivityState] = useState<Activity>(activity ?? emptyActivity);
-    const [clientState, setClientState] = useState<User | null>(null);
+    const [clientState, setClientState] = useState<User | null>(emptyUser);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
 
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: activity?.recipient === user.firstName + ' ' + user.lastName}));
     
-    // TODO: THIS DOES NOT WORK UNTIL NON USER IS AVAILABLE 
+    // TODO: THIS DOES NOT WORK UNTIL NON USER CAN BE A RECIPIENT   
     if (userOptions.find(option => option.value === activity?.recipient) === undefined ) {
         const nonUserOption = {value: activity?.recipient as string, label: activity?.recipient as string, selected: true};   
         userOptions.push(nonUserOption);
@@ -34,7 +35,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
         // Create activity with client cid
         await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
 
-        if ((activityState.isDividend || activityState.type === 'manual-entry') && clientState) {
+        if (( (activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry') && clientState) {
             await db.setAssets(clientState);
         }
         setShowModal(false);
@@ -50,9 +51,8 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
                 console.error('Failed to fetch user:', error);
             }
         };
-
         fetchUser();
-    }, [db]);
+    }, []);
 
     return (
         <>

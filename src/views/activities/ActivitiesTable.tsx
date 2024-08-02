@@ -8,14 +8,15 @@ import EditActivity from "./EditActivity";
 
 const ActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
+
     const [activities, setActivities] = useState<Activity[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
-    
-    const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
 
+    const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
     
     useEffect(() => {
         const fetchActivities = async () => {
@@ -136,7 +137,7 @@ const ActivitiesTable = () => {
                             variant="outline"
                             shape="square"
                             size="sm"
-                            onClick={() => {
+                            onClick={async () => {
                                 setCurrentActivity(item);
                                 setShowEditClientModal(true);
                             }}

@@ -2,7 +2,7 @@ import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMult
 import { Activity, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
-import { parse, format } from 'date-fns';
+import { parse} from 'date-fns';
 
 
 interface ClientInputProps {
@@ -30,8 +30,6 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
 
     const file = event.target.files?.[0];
     if (!file) return;
-
-    let i: number = 0;
 
     // Parse the CSV file
     Papa.parse(file, {
@@ -308,23 +306,23 @@ export const EditAssetsSection: React.FC<{clientState: User, setClientState: (cl
         <CRow>
         <CCol>
             <h5>AGQ Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={!(useCompanyName || activeFund == 'AGQ')} state={clientState} setClientState={setClientState} />
-            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={!(useCompanyName || activeFund == 'AGQ')} clientState={clientState} setClientState={setClientState} />
+            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
         </CCol>
         <CCol>
             <h5>AK1 Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={!(useCompanyName || activeFund == 'AK1')} state={clientState} setClientState={setClientState} />
-            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" state={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={!(useCompanyName || activeFund == 'AK1')} clientState={clientState} setClientState={setClientState} />
+            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
         </CCol>
         </CRow>
     </CContainer>)
@@ -332,37 +330,40 @@ export const EditAssetsSection: React.FC<{clientState: User, setClientState: (cl
 
 
 
-export const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, state: User, setClientState: (clientState: User) => void}> = ({title, id, disabled, fund, state, setClientState}) => {
+export const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, clientState: User, setClientState: (clientState: User) => void}> = ({title, id, disabled, fund, clientState: clientState, setClientState}) => {
     return (
         <CInputGroup className="mb-3 py-3">
             <CInputGroupText style={{ width: "200px" }}>{title}</CInputGroupText>
             <CInputGroupText>$</CInputGroupText>
-            <CFormInput id={id} disabled={disabled} type="number" step="1000" value={state["assets"][fund][getAssetType(id)]} 
+            <CFormInput id={id} disabled={disabled} type="number" step="1000" value={clientState["assets"][fund][getAssetType(id)]} 
             onChange={(e) => {
                 const value = e.target.value;
                 if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    // Update the client state with the new asset value
                     const newState = {
-                        ...state,
+                        ...clientState,
                         assets: {
-                            ...state.assets,
+                            ...clientState.assets,
                             [fund]: {
-                                ...state.assets[fund],
+                                ...clientState.assets[fund],
                                 [getAssetType(id)]: parseFloat(value)
                             }
                         }
                     };
+                    // Update the client state
                     setClientState(newState);
                 }
             }}
             onBlur={(e) => {
                 const value = e.target.value;
                 if (value === '' || isNaN(parseFloat(value))) {
+                    // Reset the asset value to 0
                     const newState = {
-                        ...state,
+                        ...clientState,
                         assets: {
-                            ...state.assets,
+                            ...clientState.assets,
                             [fund]: {
-                                ...state.assets[fund],
+                                ...clientState.assets[fund],
                                 [getAssetType(id)]: 0
                             }
                         }
