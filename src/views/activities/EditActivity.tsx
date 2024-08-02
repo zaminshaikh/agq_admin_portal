@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton } from '@coreui/react-pro';
+import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
 import { DatabaseService, Activity, emptyActivity, User } from 'src/db/database';
 import { ValidateActivity, ErrorModal, ActivityInputModalBody } from './ActivityInputModalBody';
 
@@ -7,7 +7,6 @@ interface EditActivityProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
     users: User[]; 
-    currentUser?: User;
     activity?: Activity;
 }
 

@@ -1,8 +1,7 @@
-import { CBadge, CButton, CCardBody, CCol, CCollapse, CContainer, CRow, CSmartTable, CSpinner } from "@coreui/react-pro";
+import { CBadge, CButton, CContainer, CSmartTable, CSpinner } from "@coreui/react-pro";
 import { useEffect, useState } from "react";
 import { Activity, DatabaseService, User, formatCurrency } from "src/db/database";
 import { CreateActivity } from "./CreateActivity";
-import { set } from "date-fns";
 import DeleteActivity from "./DeleteActivity";
 import EditActivity from "./EditActivity";
 
@@ -12,11 +11,8 @@ const ActivitiesTable = () => {
     const [activities, setActivities] = useState<Activity[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
-    const [details, setDetails] = useState<string[]>([])
     
     const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
-    const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
-    const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
 
@@ -104,7 +100,7 @@ const ActivitiesTable = () => {
     return (
         <CContainer>
             {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity}/>}
-            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} currentUser={currentUser} activity={currentActivity}/>}
+            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} activity={currentActivity}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users}/>}
             <div className="d-grid gap-2">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
