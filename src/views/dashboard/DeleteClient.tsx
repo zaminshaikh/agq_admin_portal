@@ -20,7 +20,7 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
         setDoNamesMatch(firstName === user?.firstName && lastName === user?.lastName);
     }, [firstName, lastName, user]);
     
-    const DeleteClient = async () => {
+    const deleteClient = async () => {
         await service.deleteUser(user?.cid)
         setShowModal(false);
         window.location.reload();
@@ -57,7 +57,7 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
             <CModalFooter>
                 <CButton color="secondary" onClick={() => setShowModal(false)}>Cancel</CButton>
                 <CButton color="danger" variant="outline" disabled={!doNamesMatch} 
-                    onClick={() => DeleteClient()}>Delete</CButton>
+                    onClick={() => deleteClient()}>Delete</CButton>
             </CModalFooter>
         </CModal>
     )

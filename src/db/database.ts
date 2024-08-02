@@ -53,6 +53,8 @@ export interface User {
 }
 
 export interface Activity {
+    id?: string;
+    parentDocId?: string;
     amount: number;
     fund: string;
     recipient: string | User;
@@ -474,7 +476,13 @@ export class DatabaseService {
         // Get all activities from all users' 'activities' subcollections
         const querySnapshot = await getDocs(collectionGroup(this.db, 'activities')); 
         // Map the query snapshot to an array of Activity
-        const activities: Activity[] = querySnapshot.docs.map(doc => doc.data() as Activity);
+        const activities: Activity[] = querySnapshot.docs.map((doc) => {
+            const data = doc.data() as Activity;
+            const parentPath = doc.ref.parent.path.split('/'); // Split the path to get parent document ID
+            const parentDocId = parentPath[parentPath.length - 2]; // Get parent document ID
+            const activity = {...data, id: doc.id, parentDocId};
+            return activity;
+        });
         // Format the time field of each activity
         for (let i = 0; i < activities.length; i++) {
             const time = activities[i].time instanceof Timestamp ? (activities[i].time as Timestamp).toDate() : activities[i].time;
@@ -549,6 +557,27 @@ export class DatabaseService {
         const activityRef = doc(activityCollectionRef, activityDocId);
         // Set the activity document with new data
         await setDoc(activityRef, activity);
+    }
+
+    deleteActivity = async (activity: Activity) => {
+        const cid = activity.parentDocId!;
+        const activityDocID = activity.id!;
+        // Create a reference to the user document
+        try {
+            const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+            const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION);
+            const activityRef = doc(activityCollectionRef, activityDocID);
+            await deleteDoc(activityRef);
+        } catch (error) {
+            console.error('Failed to delete activity, CID or activityDocID does not exist for the activity:', error);
+            console.error('Activity:', activity);
+        }
+
+        // Create a reference to the activities subcollection for the user
+        // Create a reference to the activity document
+        // const activityRef = doc(activityCollectionRef, activityDocId);
+        // Delete the activity document
+        // await deleteDoc(activityRef);
     }
 
 }

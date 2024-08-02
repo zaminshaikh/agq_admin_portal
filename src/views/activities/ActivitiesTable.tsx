@@ -14,7 +14,7 @@ const ActivitiesTable = () => {
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
     const [details, setDetails] = useState<string[]>([])
     
-    const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
+    const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
@@ -24,6 +24,7 @@ const ActivitiesTable = () => {
         const fetchActivities = async () => {
             const db = new DatabaseService();
             const activities = await db.getActivities();
+            console.log(activities);
             const users = await db.getUsers();
             setActivities(activities);
             setUsers(users);
@@ -102,8 +103,8 @@ const ActivitiesTable = () => {
 
     return (
         <CContainer>
-            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} user={currentUser}/>}
-            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} user={currentUser}/>}
+            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity}/>}
+            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} user={currentActivity}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users}/>}
             <div className="d-grid gap-2">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
@@ -131,7 +132,7 @@ const ActivitiesTable = () => {
                             {formatCurrency(item.amount)}
                         </td>
                     ),
-                    edit: (item: User) => {
+                    edit: (item: Activity) => {
                         return (
                         <td className="py-2">
                             <CButton
@@ -140,6 +141,7 @@ const ActivitiesTable = () => {
                             shape="square"
                             size="sm"
                             onClick={() => {
+                                setCurrentActivity(item);
                                 setShowEditClientModal(true);
                             }}
                             >
@@ -148,7 +150,7 @@ const ActivitiesTable = () => {
                         </td>
                         )
                     },
-                    delete: (item: User) => {
+                    delete: (item: Activity) => {
                         return (
                         <td className="py-2">
                             <CButton
@@ -157,6 +159,7 @@ const ActivitiesTable = () => {
                             shape="square"
                             size="sm"
                             onClick={() => {
+                                setCurrentActivity(item);
                                 setShowDeleteClientModal(true);
                             }}
                             >
