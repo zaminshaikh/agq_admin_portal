@@ -15,6 +15,7 @@ const ActivitiesTable = () => {
     const [details, setDetails] = useState<string[]>([])
     
     const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
+    const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
@@ -103,7 +104,7 @@ const ActivitiesTable = () => {
     return (
         <CContainer>
             {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity}/>}
-            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} user={currentActivity}/>}
+            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} currentUser={currentUser} activity={currentActivity}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users}/>}
             <div className="d-grid gap-2">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>

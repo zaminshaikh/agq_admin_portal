@@ -566,12 +566,6 @@ export class DatabaseService {
             console.error('Failed to delete activity, CID or activityDocID does not exist for the activity:', error);
             console.error('Activity:', activity);
         }
-
-        // Create a reference to the activities subcollection for the user
-        // Create a reference to the activity document
-        // const activityRef = doc(activityCollectionRef, activityDocId);
-        // Delete the activity document
-        // await deleteDoc(activityRef);
     }
 
 }
