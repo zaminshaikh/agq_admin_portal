@@ -92,7 +92,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         <CModalBody>
             <CInputGroup className="mb-3 py-1 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Type</CInputGroupText>
-                <CFormSelect id="inputGroupSelect01" onChange={
+                <CFormSelect id="inputGroupSelect01" defaultValue={activityState?.type} onChange={
                     (e) => {setActivityState({...activityState, type: e.currentTarget.value, isDividend: e.currentTarget.value === 'profit' ? activityState.isDividend : false})
                 }}>
                     <option>Choose...</option>
@@ -123,6 +123,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                         id="recipient"
                         className="mb-3a custom-multiselect-dropdown" // Added custom class here
                         options={userOptions} 
+                        defaultValue={[]}
                         placeholder="Select Recipient" 
                         selectAll={false}
                         multiple={false}
@@ -151,7 +152,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             </CContainer>
             <CInputGroup className="mb-3 py-3 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Fund</CInputGroupText>
-                <CFormSelect id="inputGroupSelect01" onChange={(e) => {
+                <CFormSelect id="inputGroupSelect01" defaultValue={activityState.fund} onChange={(e) => {
                         setActivityState({...activityState, fund: e.currentTarget.value})
                     }}
                 >

@@ -17,7 +17,14 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
 
-    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName}))
+    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: activity?.recipient === user.firstName + ' ' + user.lastName}));
+    
+    // TODO: THIS DOES NOT WORK UNTIL NON USER IS AVAILABLE 
+    if (userOptions.find(option => option.value === activity?.recipient) === undefined ) {
+        const nonUserOption = {value: activity?.recipient as string, label: activity?.recipient as string, selected: true};   
+        userOptions.push(nonUserOption);
+    }
+
     const handleCreateActivity = async () => {
         if (!ValidateActivity(activityState, setInvalidInputFields)) {
             setShowErrorModal(true);
@@ -56,7 +63,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
                 alignment="center"
                 onClose={() => setShowModal(false)}>
                 <CModalHeader closeButton>
-                    <CModalTitle>Create New Activity</CModalTitle>
+                    <CModalTitle>Edit Activity</CModalTitle>
                 </CModalHeader>
                 <ActivityInputModalBody
                     activityState={activityState}
@@ -66,8 +73,8 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
                     userOptions={userOptions}            
                 />
                 <CModalFooter>
-                    <CButton color="primary" onClick={handleCreateActivity}>Create</CButton>
-                    <CButton color="danger" variant="outline" onClick={() => setShowModal(false)}>Discard</CButton>
+                    <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
+                    <CButton color="primary" onClick={handleCreateActivity}>Update</CButton>
                 </CModalFooter>
             </CModal>
         </>
