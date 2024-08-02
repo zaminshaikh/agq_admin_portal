@@ -192,16 +192,11 @@ export class DatabaseService {
             let uniqueID = baseID;
             let counter = 1;
 
-            console.log("UNIQUE ID:", uniqueID);
-            console.log("CID ARRAY:", this.cidArray);
-
             // Check for collisions and modify the ID if necessary
             while (this.cidArray.includes(uniqueID)) {
                 uniqueID = (parseInt(baseID, 10) + counter).toString().padStart(8, '0');
                 counter++;
             }
-
-            console.log("UNIQUE ID AFTER COLLISION:", uniqueID);
             return uniqueID;
         };
 
@@ -209,7 +204,6 @@ export class DatabaseService {
         const baseID = (hash % 100000000).toString().padStart(8, '0');
         const id = generateUniqueID(baseID);
         this.cidArray.push(id); // Add the new unique ID to the array
-        console.log('HASH:', id);
         return id;
     }
     /**

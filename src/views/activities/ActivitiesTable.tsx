@@ -24,7 +24,6 @@ const ActivitiesTable = () => {
         const fetchActivities = async () => {
             const db = new DatabaseService();
             const activities = await db.getActivities();
-            console.log(activities);
             const users = await db.getUsers();
             setActivities(activities);
             setUsers(users);

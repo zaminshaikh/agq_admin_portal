@@ -52,8 +52,6 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                 const clientFullName = clientState.firstName + ' ' + clientState.lastName;
                 if (name !== clientFullName && name !== clientState.companyName) return;
 
-                if (i === 2) { console.log(row["Date"]); }
-
                 // Determine the fund type
                 let fund = fundInfo.split(' ')[0];
                 // Parse the date string correctly
@@ -68,15 +66,9 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                     type: getActivityType(row["Type"]),
                 };
 
-                if (i === 2) { console.log(parsedDate); }
-
                 // Add to the activities array
                 activities.push(activity);
-                console.log(JSON.stringify(activity));
-                i++;
             });
-
-            console.log(i)
 
             // Update the client state with the new activities
             const newClientState = {
