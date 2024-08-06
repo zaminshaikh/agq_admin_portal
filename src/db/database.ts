@@ -1,7 +1,7 @@
 import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
-import config from '../config.json'
+import config from '../../config.json'
 import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
 /**
