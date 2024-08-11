@@ -1,4 +1,4 @@
-import * as v2 from "firebase-functions/v1";
+import * as v1 from "firebase-functions/v1";
 import config from "../../config.json";
 import {Timestamp} from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
@@ -15,15 +15,23 @@ export interface Notification {
     time: Date | Timestamp;
 }
 
-export const sendNotif = v2.firestore.document(`${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/{userId}/notifications/{notificationId}`)
-  .onCreate(async (snapshot) => {
-    const fcmToken = config.FCM;
-    const message = {
-      token: fcmToken,
-      notification: {
-        title: "New Activity",
-        body: "TEST",
-      },
-    };
-    return await messaging.send(message);
-});
+const path = `/${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/{userId}/notifications/{notificationId}`;
+
+export const sendNotif = v1.firestore.document(path)
+  .onCreate(async (snapshot, context) => {
+    try {
+      const fcmToken = config.FCM;
+      const message = {
+        token: fcmToken,
+        notification: {
+          title: "New Activity",
+          body: "TEST",
+        },
+      };
+      const response = messaging.send(message);
+      return response;
+    } catch (error) {
+      console.error("Error sending message:", error);
+      throw new Error("Notification failed to send");
+    }
+  });
