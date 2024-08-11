@@ -96,6 +96,7 @@ const UsersTable = () => {
                 activePage={1}
                 cleaner
                 clickableRows
+                selectable
                 columns={columns}
                 columnFilter
                 columnSorter
@@ -147,6 +148,15 @@ const UsersTable = () => {
                                         setCurrentUser(users.find(user => user.cid === item.cid))
                                     }}>
                                         Edit Client 
+                                    </CButton>
+                                </CCol>
+                                <CCol className="text-center">
+                                    <CButton size="sm" color="warning" className="ml-1" variant="outline"
+                                    onClick={() => {
+                                        const db = new DatabaseService();
+                                        db.unlinkUser(item.cid);
+                                    }}>
+                                        Unlink User 
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">

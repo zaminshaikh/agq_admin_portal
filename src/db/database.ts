@@ -1,9 +1,11 @@
-import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot} from 'firebase/firestore'
+import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, updateDoc} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
 import config from '../config.json'
 import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
+import { getAuth, deleteUser } from 'firebase/auth';
+
 /**
  * User interface representing a client in the Firestore database.
  *  
@@ -28,6 +30,7 @@ export interface User {
     beneficiaryLastName: string;
     connectedUsers: string[];
     totalAssets: number,
+    _selected?: boolean;
     activities?: Activity[];
     assets: {
         [key: string]: any;
@@ -145,7 +148,6 @@ export const formatCurrency = (amount: number): string => {
 }
 
 export class DatabaseService {
-
     private db: Firestore = getFirestore(app);
     private usersCollection: CollectionReference<DocumentData, DocumentData>;
     private cidArray: string[];
@@ -277,6 +279,7 @@ export class DatabaseService {
                 firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
                 beneficiaryFirstName: data?.beneficiaryFirstName ?? '',
                 beneficiaryLastName: data?.beneficiaryLastName ?? '',
+                _selected: false,
                 assets: {
                     agq: {
                         personal: agqAssetsData?.personal ?? 0,
@@ -454,6 +457,10 @@ export class DatabaseService {
         if (cid === undefined || cid === null ||cid === '' ) { console.log('no value'); return }
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
         await deleteDoc(clientRef);
+    }
+
+    unlinkUser = async (cid: string) => {
+        throw new Error('Method not implemented.');
     }
 
     /**
