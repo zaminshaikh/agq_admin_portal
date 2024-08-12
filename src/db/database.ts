@@ -66,6 +66,8 @@ export interface Activity {
 export interface Notification {
     activityId: string;
     recipient: string;
+    title: string;
+    body: string;
     message: string;
     isRead: boolean;
     type: string;
@@ -526,10 +528,14 @@ export class DatabaseService {
                 };
                 return message;
             }
+            const message = getActivityMessage(activity);
+            const [title, body] = message.split(': ', 2);
             // Create a notification object
             const notification: Notification = {
                 activityId: activityRef.id,
                 recipient: activity.recipient as string,
+                title: title,
+                body: body,
                 message: getActivityMessage(activity),
                 isRead: false,
                 type: 'activity',
