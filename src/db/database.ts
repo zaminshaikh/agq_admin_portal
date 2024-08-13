@@ -55,7 +55,7 @@ export interface User {
 export interface Activity {
     amount: number;
     fund: string;
-    recipient: string | User;
+    recipient: string;
     time: Date | Timestamp;
     formattedTime?: string;
     type: string;
@@ -503,47 +503,47 @@ export class DatabaseService {
         // Add the activity to the subcollection
         const activityRef = await addDoc(activityCollectionRef, activity);
 
-        // If the activity requires a notification, create a notification for the recipient
-        if (activity.sendNotif === true) {
-            // Create a reference to the notifications subcollection for the user
-            const notificationsCollectionRef = collection(userRef, config.NOTIFICATIONS_SUBCOLLECTION);
-            // Create a function to generate the notification message
-            function getActivityMessage(activity: Activity): string {
-                let message: string;
-                switch (activity.type) {
-                    case 'withdrawal':
-                        message = `New Withdrawal: ${activity.fund} Fund has withdrawn $${activity.amount} from your account. View the Activity section for more details.`;
-                        break;
-                    case 'profit':
-                        message = `New Profit: ${activity.fund} Fund has posted the latest returns from ${activity.recipient}'s investment. View the Activity section for more details.`;
-                        break;
-                    case 'deposit':
-                        message = `New Deposit: ${activity.fund} Fund has deposited $${activity.amount} into your account. View the Activity section for more details.`;
-                        break;
-                    case 'manual-entry':
-                        message = `New Manual Entry: ${activity.fund} Fund has made a manual entry of $${activity.amount} into your account. View the Activity section for more details.`;
-                        break;
-                    default:
-                        message = 'New Activity: A new activity has been created. View the Activity section for more details.';
-                };
-                return message;
-            }
-            const message = getActivityMessage(activity);
-            const [title, body] = message.split(': ', 2);
-            // Create a notification object
-            const notification: Notification = {
-                activityId: activityRef.id,
-                recipient: activity.recipient as string,
-                title: title,
-                body: body,
-                message: getActivityMessage(activity),
-                isRead: false,
-                type: 'activity',
-                time: activity.time,
-            };
-            // Add the notification to the subcollection
-            await addDoc(notificationsCollectionRef, notification);
-        }
+        // // If the activity requires a notification, create a notification for the recipient
+        // if (activity.sendNotif === true) {
+        //     // Create a reference to the notifications subcollection for the user
+        //     const notificationsCollectionRef = collection(userRef, config.NOTIFICATIONS_SUBCOLLECTION);
+        //     // Create a function to generate the notification message
+        //     function getActivityMessage(activity: Activity): string {
+        //         let message: string;
+        //         switch (activity.type) {
+        //             case 'withdrawal':
+        //                 message = `New Withdrawal: ${activity.fund} Fund has withdrawn $${activity.amount} from your account. View the Activity section for more details.`;
+        //                 break;
+        //             case 'profit':
+        //                 message = `New Profit: ${activity.fund} Fund has posted the latest returns from ${activity.recipient}'s investment. View the Activity section for more details.`;
+        //                 break;
+        //             case 'deposit':
+        //                 message = `New Deposit: ${activity.fund} Fund has deposited $${activity.amount} into your account. View the Activity section for more details.`;
+        //                 break;
+        //             case 'manual-entry':
+        //                 message = `New Manual Entry: ${activity.fund} Fund has made a manual entry of $${activity.amount} into your account. View the Activity section for more details.`;
+        //                 break;
+        //             default:
+        //                 message = 'New Activity: A new activity has been created. View the Activity section for more details.';
+        //         };
+        //         return message;
+        //     }
+        //     const message = getActivityMessage(activity);
+        //     const [title, body] = message.split(': ', 2);
+        //     // Create a notification object
+        //     const notification: Notification = {
+        //         activityId: activityRef.id,
+        //         recipient: activity.recipient as string,
+        //         title: title,
+        //         body: body,
+        //         message: getActivityMessage(activity),
+        //         isRead: false,
+        //         type: 'activity',
+        //         time: activity.time,
+        //     };
+        //     // Add the notification to the subcollection
+        //     await addDoc(notificationsCollectionRef, notification);
+        // }
     }
 
     setActivity = async (activity: Activity, {activityDocId}: {activityDocId?: string}, cid: string) => {
