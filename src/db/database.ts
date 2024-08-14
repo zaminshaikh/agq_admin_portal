@@ -61,7 +61,7 @@ export interface Activity {
     amount: number;
     fund: string;
     recipient: string;
-    time: Date | Timestamp;
+    time: Date | Timestamp | null;
     formattedTime?: string;
     type: string;
     isDividend?: boolean;

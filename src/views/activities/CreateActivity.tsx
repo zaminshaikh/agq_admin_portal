@@ -1,5 +1,5 @@
 import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 import { Activity, DatabaseService, User, emptyActivity } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
@@ -19,27 +19,42 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     const [clientState, setClientState] = useState<User | null>(null);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
+    const [override, setOverride] = useState(false);
+
 
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName}))
     const handleCreateActivity = async () => {
-        if (!ValidateActivity(activityState, setInvalidInputFields)) {
+        if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
             setShowErrorModal(true);
-            return;
+        } else {
+            if (override) {
+                setActivityState({
+                    ...activityState,
+                    time: new Date(),
+                });
+            }
+            // Create activity with client cid
+            await db.createActivity(activityState, clientState!.cid);
+            if ((activityState.isDividend || activityState.type === 'manual-entry') && clientState) {
+                await db.setAssets(clientState);
+            }
+            setShowModal(false);
+            window.location.reload();
         }
-        // Create activity with client cid
-        await db.createActivity(activityState, clientState!.cid);
-        if ((activityState.isDividend || activityState.type === 'manual-entry') && clientState) {
-            await db.setAssets(clientState);
-        }
-        setShowModal(false);
-        window.location.reload();
     }
 
-
+    useEffect(() => {
+        const createActivityIfOverride = async () => {
+            if (override) {
+                await handleCreateActivity();
+            }
+        };
+        createActivityIfOverride();
+    }, [override]);
 
     return (
         <>
-            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} create={handleCreateActivity}/>}
+            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
             <CModal 
                 scrollable
                 visible={showModal} 
