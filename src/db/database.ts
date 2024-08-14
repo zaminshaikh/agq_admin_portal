@@ -1,4 +1,4 @@
-import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, updateDoc} from 'firebase/firestore'
+import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, updateDoc, where, query, writeBatch} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
 import config from '../../config.json'
@@ -581,5 +581,21 @@ export class DatabaseService {
         }
     }
 
+    async deleteNotification(activity: Activity,) {
+        const cid = activity.parentDocId!;
+        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        const notificationsCollectionRef = collection(userRef, config.NOTIFICATIONS_SUBCOLLECTION);
+        const querySnapshot = await getDocs(query(notificationsCollectionRef, where('activityId', '==', activity.id)));
+        
+        if (!querySnapshot.empty) {
+            const batch = writeBatch(this.db);
+            querySnapshot.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+        } else {
+            return;
+        }
+    }
 }
 

@@ -39,7 +39,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
 
     return (
         <>
-            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields}/>}
+            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} create={handleCreateActivity}/>}
             <CModal 
                 scrollable
                 visible={showModal} 

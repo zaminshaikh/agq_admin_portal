@@ -19,6 +19,7 @@ interface ErrorModalProps {
     showErrorModal: boolean,
     setShowErrorModal: (show: boolean) => void,
     invalidInputFields: string[],
+    setOverride: (override: boolean) => void,
 }
 
 export const ValidateActivity = (activityState: Activity, setInvalidInputFields: (fields: string[]) => void) => {
@@ -45,7 +46,7 @@ export const ValidateActivity = (activityState: Activity, setInvalidInputFields:
     return validClient;
 }
 
-export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowErrorModal, invalidInputFields}) => {
+export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowErrorModal, invalidInputFields, setOverride}) => {
     return (
         <CModal
             scrollable
@@ -56,7 +57,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowEr
         >
             <CModalHeader>
                 <CModalTitle>
-                    <FontAwesomeIcon className="pr-5" icon={faExclamationTriangle} color="red" />  Error
+                    <FontAwesomeIcon className="pr-5" icon={faExclamationTriangle} color="red" />  WARNING
                 </CModalTitle>
             </CModalHeader>
             <CModalBody>
@@ -68,7 +69,14 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowEr
                 </ul>
             </CModalBody>
             <CModalFooter>
-                <CButton color="primary" onClick={() => setShowErrorModal(false)}>OK</CButton>
+                <CButton color="danger" variant="outline" onClick={() => {
+                    setOverride(true);
+                    setShowErrorModal(false);
+                }}>OVERRIDE & CREATE</CButton>
+
+                <CButton color="primary" onClick={() => {
+                    setShowErrorModal(false);
+                }}>Go Back</CButton>
             </CModalFooter>
         </CModal>
     )

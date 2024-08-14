@@ -1,5 +1,5 @@
 import { CButton, CModal, CModalHeader, CModalTitle, CModalFooter} from "@coreui/react-pro"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 import { DatabaseService, User, emptyUser } from '../../db/database.ts'
 import { ClientInputModalBody } from "./ClientInputModalBody.tsx";
@@ -31,27 +31,44 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
     const db = new DatabaseService();
     const [clientState, setClientState] = useState<User>(initialClientState);
 
-    
+    const [override, setOverride] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [useCompanyName, setUseCompanyName] = useState(false);
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName}))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
 
-    const Create = async () => {
-        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields)) {
-            setShowErrorModal(true);
-            
-        } else {
+    const handleCreateClient = async () => {
+        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields) && !override) {
+            // If validation fails, show error modal
+            setShowErrorModal(true); 
+        } else {        
+            // If validation passes, create the client and reload the page
             await db.createUser(clientState);
             setShowModal(false);
             window.location.reload();
         }
     }
 
+    useEffect(() => {
+        const createClientIfOverride = async () => {
+            console.log("TEST CALL")
+            setClientState({
+                ...clientState,
+                dob: new Date(),
+                firstDepositDate: new Date(),
+            })
+            if (override) {
+                await handleCreateClient();
+            }
+        };
+        createClientIfOverride();
+    }, [override]);
+    
+
     return (
         
         <div>
-            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields}/> }
+            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/> }
             <CModal 
                 scrollable
                 alignment="center"
@@ -70,7 +87,7 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
                     userOptions={userOptions}/>
                 <CModalFooter>
                     <CButton color="danger" variant="outline" onClick={() => setShowModal(false)}>Discard</CButton>
-                    <CButton color="primary" onClick={() => Create()}>Create +</CButton>
+                    <CButton color="primary" onClick={() => handleCreateClient()}>Create +</CButton>
                 </CModalFooter>
             </CModal>
         </div>

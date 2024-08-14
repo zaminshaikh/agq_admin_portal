@@ -17,6 +17,7 @@ const DeleteActivity: React.FC<DeleteActivityProps> = ({ showModal, setShowModal
         if (activity && activity.id) {
             try {
                 await service.deleteActivity(activity);
+                await service.deleteNotification(activity);
                 setShowModal(false);
                 window.location.reload();
             } catch (error) {
