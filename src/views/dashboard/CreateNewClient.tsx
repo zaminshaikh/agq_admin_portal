@@ -42,6 +42,13 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
             // If validation fails, show error modal
             setShowErrorModal(true); 
         } else {        
+            if (override) {
+                setClientState({
+                    ...clientState,
+                    dob: new Date(),
+                    firstDepositDate: new Date(),
+                });
+            }
             // If validation passes, create the client and reload the page
             await db.createUser(clientState);
             setShowModal(false);
@@ -51,12 +58,6 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
 
     useEffect(() => {
         const createClientIfOverride = async () => {
-            console.log("TEST CALL")
-            setClientState({
-                ...clientState,
-                dob: new Date(),
-                firstDepositDate: new Date(),
-            })
             if (override) {
                 await handleCreateClient();
             }

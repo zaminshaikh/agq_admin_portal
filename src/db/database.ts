@@ -21,11 +21,11 @@ export interface User {
     lastName: string;
     companyName: string;
     address: string;
-    dob: Date | undefined;
+    dob: Date | null;
     phoneNumber: string;
     appEmail: string;
     initEmail: string;
-    firstDepositDate: Date | undefined;
+    firstDepositDate: Date | null;
     beneficiaryFirstName: string;
     beneficiaryLastName: string;
     connectedUsers: string[];
@@ -84,9 +84,9 @@ export const emptyUser: User = {
     lastName: '',
     companyName: '',
     address: '',
-    dob: undefined,
+    dob: null,
     phoneNumber: '',
-    firstDepositDate: undefined,
+    firstDepositDate: null,
     beneficiaryFirstName: '',
     beneficiaryLastName: '',
     connectedUsers: [],
