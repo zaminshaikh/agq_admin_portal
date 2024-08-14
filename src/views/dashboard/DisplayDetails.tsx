@@ -1,6 +1,6 @@
 import { CCol, CContainer, CFormCheck, CFormInput, CInputGroup, CInputGroupText, CModal, CModalBody, CModalHeader, CModalTitle, CMultiSelect, CRow } from "@coreui/react-pro"
 import { User } from "src/db/database";
-import config from '../../config.json'
+import config from '../../../config.json'
 import { formatCurrency } from '../../db/database';
 
 

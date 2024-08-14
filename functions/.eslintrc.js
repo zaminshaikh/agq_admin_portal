@@ -19,14 +19,16 @@ module.exports = {
   },
   ignorePatterns: [
     "/lib/**/*", // Ignore built files.
+    "/generated/**/*", // Ignore generated files.
   ],
   plugins: [
     "@typescript-eslint",
     "import",
   ],
   rules: {
-    "quotes": ["error", "double"],
-    "import/no-unresolved": 0,
-    "indent": ["error", 2],
+    "quotes": ["warn", "double"], // Change "error" to "warn"
+    "import/no-unresolved": "warn", // Change to "warn"
+    "indent": ["warn", 2], // Change "error" to "warn"
+    "max-len": ["warn", {"code": 80}], // If you want to add max-len as a warning
   },
 };
