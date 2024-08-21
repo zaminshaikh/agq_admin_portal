@@ -31,6 +31,17 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // List of exceptions to preserve original casing
+    const exceptions = ["LLC", "Inc", "Ltd"];
+
+    // Function to convert a string to title case while preserving exceptions
+    const toTitleCase = (str: string, exceptions: string[]) => {
+        return str.split(' ').map(word => {
+            return exceptions.includes(word.toUpperCase()) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }).join(' ');
+    };
+
+
     // Parse the CSV file
     Papa.parse(file, {
         header: true,
@@ -38,23 +49,29 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
             // Initialize an array to store the activities
             let activities: Activity[] = [];
             // For each row in the CSV, create a new activity
+            let i = 2;
+
             results.data.forEach((row: any) => {
                 // Skip if row is empty
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
-
+    
                 // Remove the fund type after the dash and convert the name to title case
-                let [clientName, fundInfo] = row["Security Name"].split('-').map((s: string) => s.trim());
-                let name = clientName?.toLowerCase().replace(/\b(\w)/g, (s: string) => s.toUpperCase());
-
+                let [recipientName, fundInfo] = row["Security Name"].split('-').map((s: string) => s.trim());
+                let name = toTitleCase(recipientName, exceptions);
+    
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName + ' ' + clientState.lastName;
-                if (name !== clientFullName && name !== clientState.companyName) return;
-
+    
+                console.log(`${i++}. Company Name: ${clientState.companyName}, Client Name: ${clientFullName}, Recipient Name: ${name}`);
+    
+                if (name.toLowerCase() !== clientFullName.toLowerCase() && name.toLowerCase() !== clientState.companyName.toLowerCase()) return;
+    
                 // Determine the fund type
                 let fund = fundInfo.split(' ')[0];
+    
                 // Parse the date string correctly
                 const parsedDate = parse(row["Date"], 'yyyy-MM-dd', new Date());
-
+    
                 // Create an activity from each row of the CSV
                 const activity: Activity = {
                     fund: fund, // TODO: Add support for AK1
@@ -63,8 +80,8 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                     time: parsedDate,
                     type: getActivityType(row["Type"]),
                 };
-
-                // Add to the activities array
+    
+                // Add the activity to the activities array
                 activities.push(activity);
             });
 
@@ -117,7 +134,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             <CFormCheck type="checkbox" id="useCompanyName" checked={useCompanyName} onChange={(e) => setUseCompanyName(e.target.checked)}/>
                         </CInputGroupText>
                         <CInputGroupText>Company Name</CInputGroupText>
-                        <CFormInput id="company-name" 
+                        <CFormInput id="company-name" value={clientState.companyName}
                         onChange={
                             (e) => {
                                 const newClientState = {
