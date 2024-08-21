@@ -5,7 +5,7 @@ const AppFooter = () => {
   return (
     <CFooter className="px-4">
       <div>
-        <a href="https://coreui.io" target="_blank" rel="noopener noreferrer">
+        {/* <a href="https://coreui.io" target="_blank" rel="noopener noreferrer">
           CoreUI
         </a>
         <span className="ms-1">&copy; 2024 creativeLabs.</span>
@@ -18,7 +18,7 @@ const AppFooter = () => {
           rel="noopener noreferrer"
         >
           CoreUI React Admin &amp; Dashboard Template
-        </a>
+        </a> */}
       </div>
     </CFooter>
   )
