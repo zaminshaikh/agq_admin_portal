@@ -17,6 +17,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
     const [clientState, setClientState] = useState<User | null>(emptyUser);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
+    const [override, setOverride] = useState(false);
 
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: activity?.recipient === user.firstName + ' ' + user.lastName}));
     
@@ -32,6 +33,13 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
             return;
         }
 
+        if (override) {
+            setActivityState({
+                ...activityState,
+                time: new Date(),
+            });
+        }
+
         // Create activity with client cid
         await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
 
@@ -43,10 +51,22 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
     }
 
     useEffect(() => {
+        const createActivityIfOverride = async () => {
+            if (override) {
+                await handleEditActivity();
+            }
+        };
+        createActivityIfOverride();
+    }, [override]);
+
+    useEffect(() => {
         const fetchUser = async () => {
             try {
                 const user = await db.getUser(activityState.parentDocId ?? '');
+                console.log('USER:', user);
                 setClientState(user);
+                console.log('CLIENT STATE:', clientState);
+
             } catch (error) {
                 console.error('Failed to fetch user:', error);
             }
@@ -56,7 +76,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
 
     return (
         <>
-            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields}/>}
+            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
             <CModal 
                 scrollable
                 visible={showModal} 

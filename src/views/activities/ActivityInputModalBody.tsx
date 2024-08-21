@@ -102,8 +102,9 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         <CModalBody>
             <CInputGroup className="mb-3 py-1 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Type</CInputGroupText>
-                <CFormSelect id="inputGroupSelect01" defaultValue={activityState?.type} onChange={
-                    (e) => {setActivityState({...activityState, type: e.currentTarget.value})
+                <CFormSelect id="inputGroupSelect01" value={activityState?.type} onChange={
+                    (e) => {setActivityState({...activityState, type: e.currentTarget.value});
+                    console.log(clientState);
                 }}>
                     <option>Choose...</option>
                     <option value="withdrawal">Withdrawal</option>
@@ -142,7 +143,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                             if (selectedValue.length === 0) {
                                 // Handle the case where no options are selected
                                 setActivityState({ ...activityState, recipient: '' });
-                                setClientState(null); // Or reset to some default state
+                                setClientState(await db.getUser(activityState.parentDocId ?? '')); // Or reset to some default state
                             } else {
                                 // Index 0 since only one option can be selected
                                 const recipient = selectedValue.map(selected => selected.label as string)[0];
@@ -153,7 +154,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                                 };
                                 setActivityState(newActivityState);
                                 // Fetch the user data from the database
-                                setClientState(await db.getUser(cid));
+                                setClientState(await db.getUser(cid) ?? await db.getUser(activityState.parentDocId ?? ''));
                             }
                         }}
                     /> 
