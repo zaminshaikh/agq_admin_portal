@@ -42,7 +42,7 @@ const Login = () => {
         <CRow className="justify-content-center">
           <CCol md={8}>
             <CCardGroup>
-              <CCard className="p-4">
+              <CCard className="p-5">
                 <CCardBody>
                   <CForm onSubmit={handleLogin}>
                     <h1>Login</h1>
@@ -71,21 +71,21 @@ const Login = () => {
                       />
                     </CInputGroup>
                     <CRow>
-                      <CCol xs={6}>
-                        <CButton type="submit" color="primary" className="px-4">
-                          Login
-                        </CButton>
-                      </CCol>
-                      <CCol xs={6} className="text-right">
-                        <CButton color="link" className="px-0">
-                          Forgot password?
-                        </CButton>
-                      </CCol>
+                        <CCol xs={6}>
+                            <CButton type="submit" color="primary" className="px-4">
+                            Login
+                            </CButton>
+                        </CCol>
+                        <CCol xs={6} className="text-end">
+                            <CButton color="link">
+                            Forgot password?
+                            </CButton>
+                        </CCol>
                     </CRow>
                   </CForm>
                 </CCardBody>
               </CCard>
-              <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
+              {/* <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
                 <CCardBody className="text-center">
                   <div>
                     <h2>Sign up</h2>
@@ -96,7 +96,7 @@ const Login = () => {
                     </Link>
                   </div>
                 </CCardBody>
-              </CCard>
+              </CCard> */}
             </CCardGroup>
           </CCol>
         </CRow>
