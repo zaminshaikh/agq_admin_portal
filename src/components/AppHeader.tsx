@@ -13,6 +13,7 @@ import {
   CHeaderToggler,
   CNavLink,
   CNavItem,
+  CButton,
 //   useColorModes,
 } from '@coreui/react-pro'
 import CIcon from '@coreui/icons-react'
@@ -38,6 +39,8 @@ import {
 } from './header'
 
 import type { State } from './../store'
+
+import { auth } from '../App'
 
 const AppHeader = () => {
   const headerRef = useRef<HTMLDivElement>(null)
@@ -78,6 +81,7 @@ const AppHeader = () => {
           </CNavItem>
         </CHeaderNav>
         <CHeaderNav className="d-none d-md-flex ms-auto">
+          <CButton color='danger' variant='outline' size='sm' onClick={async () => await auth.signOut()}>Logout</CButton>
           <AppHeaderDropdownNotif />
         </CHeaderNav>
         <CHeaderNav className="ms-auto ms-md-0">

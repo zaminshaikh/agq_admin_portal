@@ -15,6 +15,7 @@ import type { State } from './store'
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from 'firebase/auth'
+import ProtectedRoute from './ProtectedRoute'
 // import 'firebase/auth'
 // import 'firebase/firestore'
 // import {useAuthState} from 'react-firebase-hooks/auth'
@@ -93,10 +94,9 @@ const App = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/404" element={<Page404 />} />
+          {/* <Route path="/404" element={<Page404 />} /> */}
           <Route path="/500" element={<Page500 />} />
-          <Route path="/apps/email/*" element={<EmailApp />} />
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="*" element={<ProtectedRoute><DefaultLayout /></ProtectedRoute>}/>
           {/* <Route path="*" element={<DefaultLayout />} /> */}
         </Routes>
       </Suspense>
