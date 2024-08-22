@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react'
-import { HashRouter, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 import { CSpinner, useColorModes } from '@coreui/react-pro'
@@ -14,6 +14,7 @@ import type { State } from './store'
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { getAuth } from 'firebase/auth'
 // import 'firebase/auth'
 // import 'firebase/firestore'
 // import {useAuthState} from 'react-firebase-hooks/auth'
@@ -41,6 +42,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+const auth = getAuth(app);
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -94,7 +96,8 @@ const App = () => {
           <Route path="/404" element={<Page404 />} />
           <Route path="/500" element={<Page500 />} />
           <Route path="/apps/email/*" element={<EmailApp />} />
-          <Route path="*" element={<DefaultLayout />} />
+          <Route path="*" element={<Navigate to="/login" />} />
+          {/* <Route path="*" element={<DefaultLayout />} /> */}
         </Routes>
       </Suspense>
     </HashRouter>
@@ -102,5 +105,5 @@ const App = () => {
 }
 
 export default App
-export { app, analytics } // firebase application instance
+export { app, analytics, auth} // firebase application instance
 
