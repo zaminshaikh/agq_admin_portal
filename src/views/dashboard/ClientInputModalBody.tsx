@@ -168,7 +168,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
-                                    dob: parse(e.target.value, 'mm/dd/yyyy', new Date()),
+                                    dob: parse(e.target.value, 'yyyy-MM-dd', new Date()),
                                 };
                                 setClientState(newClientState)
                         }}/>
@@ -204,7 +204,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
-                                    firstDepositDate: new Date(e.target.value),
+                                    firstDepositDate: parse(e.target.value, 'yyyy-MM-dd', new Date()),
                                 };
                                 setClientState(newClientState)
                         }}/>
