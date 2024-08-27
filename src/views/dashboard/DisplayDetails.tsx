@@ -2,19 +2,21 @@ import { CCol, CContainer, CFormCheck, CFormInput, CInputGroup, CInputGroupText,
 import { User } from "src/db/database";
 import config from '../../../config.json'
 import { formatCurrency } from '../../db/database';
+import { ClientInputModalBody } from "./ClientInputModalBody";
 
 
 interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
-        currentUser?: User;
+        currentUser: User;
         users?: User[];
 }
 
 export const DisplayDetails: React.FC<ShowModalProps> = ({showModal, setShowModal, users, currentUser: currentUser}) => {
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: (currentUser?.connectedUsers?.includes(user.cid))}))
     return (
-        <CModal         scrollable
+        <CModal         
+            scrollable
             alignment="center"
             visible={showModal} 
             backdrop="static" 
@@ -23,7 +25,8 @@ export const DisplayDetails: React.FC<ShowModalProps> = ({showModal, setShowModa
             <CModalHeader>
                 <CModalTitle>{currentUser?.firstName + ' ' + currentUser?.lastName}</CModalTitle>
             </CModalHeader>
-            <CModalBody className="px-5">
+            
+            {/* <CModalBody className="px-5">
             <CInputGroup className="mb-3 py-3">
                 <CInputGroupText>Client's First Name</CInputGroupText>
                 <CFormInput id="first-name" value={currentUser?.firstName} disabled/>
@@ -82,7 +85,7 @@ export const DisplayDetails: React.FC<ShowModalProps> = ({showModal, setShowModa
                 disabled
             /> 
 
-            {/* TODO: Add connected users */}
+            {/* TODO: Add connected users
             
             <CContainer className=" py-3">
                 <CRow>
@@ -107,8 +110,15 @@ export const DisplayDetails: React.FC<ShowModalProps> = ({showModal, setShowModa
                     <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" user={currentUser}/>
                 </CCol>
                 </CRow>
-            </CContainer>
-            </CModalBody>
+            </CContainer> 
+            </CModalBody> */}
+            <ClientInputModalBody 
+                    clientState={currentUser} 
+                    setClientState={(user: User) => {}} 
+                    useCompanyName={currentUser.companyName ? true : false}
+                    setUseCompanyName={(useCompanyName: boolean) => {}} 
+                    userOptions={userOptions}
+                    viewOnly={true}/>
         </CModal>
     )
 }

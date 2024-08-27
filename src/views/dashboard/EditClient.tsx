@@ -96,7 +96,8 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
                     setClientState={setClientState} 
                     useCompanyName={useCompanyName}
                     setUseCompanyName={setUseCompanyName} 
-                    userOptions={userOptions}/>
+                    userOptions={userOptions}
+                    viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
                     <CButton color="primary" onClick={() => UpdateClient()}>Update</CButton>

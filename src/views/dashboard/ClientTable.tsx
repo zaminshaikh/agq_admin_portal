@@ -1,5 +1,5 @@
 import { CButton, CCardBody, CCol, CCollapse, CContainer, CRow, CSmartTable, CSpinner } from '@coreui/react-pro';
-import { DatabaseService, User, formatCurrency } from 'src/db/database.ts';
+import { DatabaseService, User, emptyUser, formatCurrency } from 'src/db/database.ts';
 import { useEffect, useState } from 'react';
 import CreateClient from './CreateNewClient';
 import { DisplayDetails } from './DisplayDetails';
@@ -86,7 +86,7 @@ const UsersTable = () => {
     return (
         <CContainer>
             {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} currentUser={currentUser}/>}
-            {showDisplayDetailsModal && <DisplayDetails showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} users={users} currentUser={currentUser}/>}
+            {showDisplayDetailsModal && <DisplayDetails showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} users={users} currentUser={currentUser ?? emptyUser}/>}
             {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} user={currentUser}/>}
             {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} users={users}/>} 
             <div className="d-grid gap-2">

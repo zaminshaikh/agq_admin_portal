@@ -85,7 +85,8 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
                     setClientState={setClientState} 
                     useCompanyName={useCompanyName} 
                     setUseCompanyName={setUseCompanyName} 
-                    userOptions={userOptions}/>
+                    userOptions={userOptions}
+                    viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="danger" variant="outline" onClick={() => setShowModal(false)}>Discard</CButton>
                     <CButton color="primary" onClick={() => handleCreateClient()}>Create +</CButton>

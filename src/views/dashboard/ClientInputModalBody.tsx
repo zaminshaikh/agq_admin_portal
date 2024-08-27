@@ -10,7 +10,8 @@ interface ClientInputProps {
     setClientState: (clientState: User) => void,
     useCompanyName: boolean,
     setUseCompanyName: (useCompanyName: boolean) => void,
-    userOptions: (Option | OptionsGroup)[]
+    userOptions: (Option | OptionsGroup)[],
+    viewOnly: boolean,
 }
 
 // Handles the file input from the user
@@ -102,12 +103,14 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     useCompanyName,
     setUseCompanyName,
     userOptions,
+    viewOnly,
 }) => {
+    console.log(clientState);
     return (
         <CModalBody className="px-5">
                     <CInputGroup className="mb-3 py-3">
                         <CInputGroupText>Client's First Name</CInputGroupText>
-                        <CFormInput id="first-name" value={clientState.firstName}
+                        <CFormInput id="first-name" value={clientState.firstName} disabled={viewOnly}
                             onChange={(e) =>{
                                 const newClientState = {
                                     ...clientState,
@@ -116,7 +119,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                 setClientState(newClientState)
                         }}/>
                         <CInputGroupText>Client's Last Name</CInputGroupText>
-                        <CFormInput id="last-name" value={clientState.lastName}
+                        <CFormInput id="last-name" value={clientState.lastName} disabled={viewOnly}
                             onChange={
                                 (e) => {
                                     const newClientState = {
@@ -131,10 +134,10 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>
-                            <CFormCheck type="checkbox" id="useCompanyName" checked={useCompanyName} onChange={(e) => setUseCompanyName(e.target.checked)}/>
+                            <CFormCheck type="checkbox" id="useCompanyName" checked={useCompanyName} onChange={(e) => setUseCompanyName(e.target.checked)} disabled={viewOnly}/>
                         </CInputGroupText>
                         <CInputGroupText>Company Name</CInputGroupText>
-                        <CFormInput id="company-name" value={clientState.companyName}
+                        <CFormInput id="company-name" value={clientState.companyName} 
                         onChange={
                             (e) => {
                                 const newClientState = {
@@ -144,12 +147,12 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                 setClientState(newClientState)
                             }
                         } 
-                        disabled={!useCompanyName}/>
+                        disabled={viewOnly ? viewOnly : !useCompanyName}/>
                     </CInputGroup>
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>Address</CInputGroupText>
-                        <CFormInput id="address" value={clientState.address}
+                        <CFormInput id="address" value={clientState.address} disabled={viewOnly}
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
@@ -161,11 +164,11 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>DOB</CInputGroupText>
-                        <CFormInput type="date" id="dob"  value = {clientState.dob?.toISOString().split('T')[0] ?? ''}
+                        <CFormInput type="date" id="dob"  value = {clientState.dob?.toISOString().split('T')[0] ?? ''} disabled={viewOnly}
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
-                                    dob: new Date(e.target.value),
+                                    dob: parse(e.target.value, 'mm/dd/yyyy', new Date()),
                                 };
                                 setClientState(newClientState)
                         }}/>
@@ -173,7 +176,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>Phone Number</CInputGroupText>
-                        <CFormInput id="phone-number" value={clientState.phoneNumber}
+                        <CFormInput id="phone-number" value={clientState.phoneNumber} disabled={viewOnly}
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
@@ -185,7 +188,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>Email</CInputGroupText>
-                        <CFormInput type="email" id="email" value={clientState.initEmail}
+                        <CFormInput type="email" id="email" value={clientState.initEmail} disabled={viewOnly}
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
@@ -197,7 +200,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>First Deposit Date</CInputGroupText>
-                        <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate?.toISOString().split('T')[0] ?? ''}
+                        <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate?.toISOString().split('T')[0] ?? ''} disabled={viewOnly}
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
@@ -209,7 +212,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>Beneficiary's First Name</CInputGroupText>
-                        <CFormInput id="beneficiaryFirstName"  value={clientState.beneficiaryFirstName}
+                        <CFormInput id="beneficiaryFirstName"  value={clientState.beneficiaryFirstName} disabled={viewOnly}
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
@@ -218,7 +221,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                 setClientState(newClientState)
                         }}/>
                         <CInputGroupText>Beneficiary's Last Name</CInputGroupText>
-                        <CFormInput id="beneficiaryLastName" value={clientState.beneficiaryLastName}
+                        <CFormInput id="beneficiaryLastName" value={clientState.beneficiaryLastName} disabled={viewOnly}
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
@@ -234,6 +237,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         options={userOptions} 
                         placeholder="Select Connected Users" 
                         selectAll={false}
+                        disabled={viewOnly}
                         onChange={
                             (selectedValues) => {
                                 const newClientState = {
@@ -245,13 +249,13 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         }
                     /> 
 
-                    <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName}/>
+                    <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>
                 
 
                     <div className="mb-3  py-3">
                         <h5>Upload Previous Activities</h5>
                         <div  className="mb-3 py-3">
-                            <CFormInput type="file" id="formFile" onChange={(event) => handleFileChange(event, clientState, setClientState)}/>
+                            <CFormInput type="file" id="formFile" onChange={(event) => handleFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
                         </div>
                     </div>
                 </CModalBody>
@@ -317,29 +321,29 @@ const getAssetType = (id: string) => {
     }
 }
 
-export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean, activeFund?: string}> = ({clientState, setClientState, useCompanyName, activeFund}) => {
+export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean, activeFund?: string, viewOnly: boolean}> = ({clientState, setClientState, useCompanyName, activeFund, viewOnly = null}) => {
     return (    
     <CContainer className="py-3">
         <CRow>
         <CCol>
             <h5>AGQ Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={!(useCompanyName || activeFund == 'AGQ')} clientState={clientState} setClientState={setClientState} />
-            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
-            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AGQ' && activeFund !== undefined} />
+            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
+            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={viewOnly ?? (!(useCompanyName || activeFund == 'AGQ'))} clientState={clientState} setClientState={setClientState} />
+            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
+            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
+            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
+            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
+            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
         </CCol>
         <CCol>
             <h5>AK1 Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={!(useCompanyName || activeFund == 'AK1')} clientState={clientState} setClientState={setClientState} />
-            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
-            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={activeFund !== 'AK1' && activeFund !== undefined} />
+            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
+            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={viewOnly ?? (!(useCompanyName || activeFund == 'AK1'))} clientState={clientState} setClientState={setClientState} />
+            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
+            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
+            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
+            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
+            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
         </CCol>
         </CRow>
     </CContainer>)
