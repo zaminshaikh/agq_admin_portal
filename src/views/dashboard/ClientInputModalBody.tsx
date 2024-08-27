@@ -211,24 +211,22 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     </CInputGroup>
 
                     <CInputGroup className="mb-3  py-3">
-                        <CInputGroupText>Beneficiary's First Name</CInputGroupText>
-                        <CFormInput id="beneficiaryFirstName"  value={clientState.beneficiaryFirstName} disabled={viewOnly}
+                        <CInputGroupText>Beneficiary</CInputGroupText>
+                        <CFormInput
+                            id="beneficiary"
+                            value={clientState.beneficiaries[0]} // Assuming you want to edit the first beneficiary
+                            disabled={viewOnly}
                             onChange={(e) => {
+                                const newBeneficiaries = [...clientState.beneficiaries];
+                                newBeneficiaries[0] = e.target.value; // Update the first beneficiary
                                 const newClientState = {
                                     ...clientState,
-                                    beneficiaryFirstName: e.target.value,
+                                    beneficiaries: newBeneficiaries,
                                 };
-                                setClientState(newClientState)
-                        }}/>
-                        <CInputGroupText>Beneficiary's Last Name</CInputGroupText>
-                        <CFormInput id="beneficiaryLastName" value={clientState.beneficiaryLastName} disabled={viewOnly}
-                            onChange={(e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    beneficiaryLastName: e.target.value,
-                                };
-                                setClientState(newClientState)
-                        }}/>
+                                setClientState(newClientState);
+                                console.log(clientState);
+                            }}
+                        />
                     </CInputGroup>
 
                     <CMultiSelect 
@@ -275,8 +273,7 @@ export const ValidateClient = (clientState: User, useCompanyName: boolean, setIn
         { displayName: 'Phone Number', condition: clientState.phoneNumber === '' },
         { displayName: 'Email', condition: clientState.initEmail === '' },
         { displayName: 'First Deposit Date', condition: !clientState.firstDepositDate || isNaN(clientState.firstDepositDate.getTime()) },
-        { displayName: 'Beneficiary\'s First Name', condition: clientState.beneficiaryFirstName === '' },
-        { displayName: 'Beneficiary\'s Last Name', condition: clientState.beneficiaryLastName === '' },
+        { displayName: 'Beneficiary', condition: clientState.beneficiaries[0] === '' },
     ];
 
     fieldValidations.forEach(({ displayName, condition }) => {

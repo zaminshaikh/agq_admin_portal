@@ -26,8 +26,7 @@ export interface User {
     appEmail: string;
     initEmail: string;
     firstDepositDate: Date | null;
-    beneficiaryFirstName: string;
-    beneficiaryLastName: string;
+    beneficiaries: string[];
     connectedUsers: string[];
     totalAssets: number,
     _selected?: boolean;
@@ -87,8 +86,7 @@ export const emptyUser: User = {
     dob: null,
     phoneNumber: '',
     firstDepositDate: null,
-    beneficiaryFirstName: '',
-    beneficiaryLastName: '',
+    beneficiaries: [],
     connectedUsers: [],
     cid: '',
     uid: '',
@@ -279,8 +277,7 @@ export class DatabaseService {
                 totalAssets: generalAssetsData ? generalAssetsData.total : 0,
                 phoneNumber: data?.phoneNumber ?? '',
                 firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
-                beneficiaryFirstName: data?.beneficiaryFirstName ?? '',
-                beneficiaryLastName: data?.beneficiaryLastName ?? '',
+                beneficiaries: data?.beneficiaries ?? [],
                 _selected: false,
                 assets: {
                     agq: {
