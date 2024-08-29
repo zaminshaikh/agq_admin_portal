@@ -92,8 +92,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     const db = new DatabaseService();
     const [date, setDate] = React.useState<Date | null>(new Date());
     const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
-    console.log("RECIPIENT", activityState.recipient)
-    console.log("CLIENT", clientState?.firstName + ' ' + clientState?.lastName)
+
 
     const handleDateChange = (newDate: Date | null) => {
         if (newDate === null) {return;}
@@ -142,7 +141,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     id="user"
                     className="mb-3a custom-multiselect-dropdown"
                     options={userOptions}
-                    defaultValue={[]}
+                    defaultValue={clientState?.cid}
                     placeholder="Select User"
                     selectAll={false}
                     multiple={false}
