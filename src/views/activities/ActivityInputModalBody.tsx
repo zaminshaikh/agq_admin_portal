@@ -1,7 +1,7 @@
-import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow } from "@coreui/react-pro";
+import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip } from "@coreui/react-pro";
 import { OptionsGroup } from "@coreui/react-pro/dist/esm/components/multi-select/types";
-import React from "react";
-import { Activity, User, DatabaseService} from "src/db/database";
+import React, { useEffect, useState } from "react";
+import { Activity, User, DatabaseService, emptyUser} from "src/db/database";
 import { EditAssetsSection } from "../dashboard/ClientInputModalBody";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
@@ -91,12 +91,19 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
 }) => {
     const db = new DatabaseService();
     const [date, setDate] = React.useState<Date | null>(new Date());
+    const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
+
 
     const handleDateChange = (newDate: Date | null) => {
         if (newDate === null) {return;}
         setDate(newDate);
         setActivityState({...activityState, time: newDate!});
     };
+
+    useEffect(() => {
+        if (activityState.recipient === null || activityState.recipient === '') {return;}
+        setIsRecipientSameAsUser(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
+    }, [clientState]);
 
     return (
         <CModalBody>
@@ -112,7 +119,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     <option value="deposit">Deposit</option>
                     <option value="manual-entry">Manual Entry</option>
                 </CFormSelect>
-                <div className="px-3 "/>
+                <div className="px-3"/>
                 <CFormSwitch 
                     className="py-2"  
                     label="Dividend Payment" 
@@ -130,37 +137,70 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     <CDatePicker placeholder={"Date and Time of Activity"} date={date} onDateChange={handleDateChange} timepicker/>    
                 </CCol>
                 <CCol>
-                <CMultiSelect 
-                        id="recipient"
-                        className="mb-3a custom-multiselect-dropdown" // Added custom class here
-                        options={userOptions} 
-                        defaultValue={[]}
-                        placeholder="Select Recipient" 
-                        selectAll={false}
-                        multiple={false}
-                        allowCreateOptions={true}
-                        onChange={async (selectedValue) => {
-                            if (selectedValue.length === 0) {
-                                // Handle the case where no options are selected
-                                setActivityState({ ...activityState, recipient: '' });
-                                setClientState(await db.getUser(activityState.parentDocId ?? '')); // Or reset to some default state
-                            } else {
-                                // Index 0 since only one option can be selected
-                                const recipient = selectedValue.map(selected => selected.label as string)[0];
-                                const cid = selectedValue.map(selected => selected.value as string)[0];
-                                const newActivityState = {
-                                    ...activityState,
-                                    recipient: recipient,
-                                };
-                                setActivityState(newActivityState);
-                                // Fetch the user data from the database
-                                setClientState(await db.getUser(cid) ?? await db.getUser(activityState.parentDocId ?? ''));
+                <CMultiSelect
+                    id="user"
+                    className="mb-3a custom-multiselect-dropdown"
+                    options={userOptions}
+                    defaultValue={clientState?.cid}
+                    placeholder="Select User"
+                    selectAll={false}
+                    multiple={false}
+                    allowCreateOptions={false}
+                    onChange={async (selectedValue) => {
+                        if (selectedValue.length === 0) {
+                            setClientState(await db.getUser(activityState.parentDocId ?? ''));
+                        } else {
+                            const user = selectedValue.map(selected => selected.label as string)[0];
+                            const cid = selectedValue.map(selected => selected.value as string)[0];
+                            setClientState(await db.getUser(cid) ?? await db.getUser(activityState.parentDocId ?? ''));
+
+                            // Update the recipient as well if the checkbox is checked
+                            if (isRecipientSameAsUser) {
+                                setActivityState({ ...activityState, recipient: user });
                             }
-                        }}
-                    /> 
+                        }
+                    }}
+                />
                 </CCol>
                 </CRow>
             </CContainer>
+            <CContainer className="py-3 px-3">
+                <CRow>
+                    <CCol xl={4}>
+                    <CInputGroup>
+                        <CTooltip
+                            placement="left"
+                            content={"Sometimes you may need the recipient of the activity to differ from the user who's activity it is. Uncheck this box to type a different recipient."}
+                        >
+                            <CFormSwitch
+                                id="sameAsUserCheckbox"
+                                label="Recipient is the same as the user"
+                                checked={isRecipientSameAsUser}
+                                onChange={(e) => {
+                                    setIsRecipientSameAsUser(e.target.checked);
+                                    if (e.target.checked && clientState) {
+                                        setActivityState({ ...activityState, recipient: clientState.firstName + ' ' + clientState.lastName });
+                                    }
+                                }}
+                            />
+                        </CTooltip>
+                    </CInputGroup>
+                    </CCol>
+                    <CCol xl={8}>
+                    <CFormInput
+                        id="recipient"
+                        className="mb-3a custom-multiselect-dropdown"
+                        value={activityState.recipient}
+                        placeholder="Select Recipient"
+                        multiple={false}
+                        disabled={isRecipientSameAsUser} // Disable this dropdown if the checkbox is checked
+                        onChange={(e) => {
+                            setActivityState({ ...activityState, recipient: e.target.value });
+                        }}
+                    />
+                    </CCol>
+                </CRow>
+            </CContainer>            
             <CInputGroup className="mb-3 py-3 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Fund</CInputGroupText>
                 <CFormSelect id="inputGroupSelect01" defaultValue={activityState.fund} onChange={(e) => {
@@ -196,7 +236,8 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     } 
                 }}/>
             </CInputGroup>
-            {clientState && ((activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry') && activityState.fund && <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={clientState.companyName !== null} activeFund={activityState.fund}/>}
+            {clientState && ((activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry') && activityState.fund && 
+                <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={clientState.companyName !== null} activeFund={activityState.fund}/>}
             
         </CModalBody>
     )

@@ -19,13 +19,13 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
-    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: activity?.recipient === user.firstName + ' ' + user.lastName}));
+    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: activity?.parentDocId === user.cid }));
     
     // TODO: THIS DOES NOT WORK UNTIL NON USER CAN BE A RECIPIENT   
-    if (userOptions.find(option => option.value === activity?.recipient) === undefined ) {
-        const nonUserOption = {value: activity?.recipient as string, label: activity?.recipient as string, selected: true};   
-        userOptions.push(nonUserOption);
-    }
+    // if (userOptions.find(option => option.value === activity?.recipient) === undefined ) {
+    //     const nonUserOption = {value: activity?.recipient as string, label: activity?.recipient as string, selected: true};   
+    //     userOptions.push(nonUserOption);
+    // }
 
     const handleEditActivity = async () => {
         if (!ValidateActivity(activityState, setInvalidInputFields)) {
@@ -63,9 +63,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
         const fetchUser = async () => {
             try {
                 const user = await db.getUser(activityState.parentDocId ?? '');
-                console.log('USER:', user);
                 setClientState(user);
-                console.log('CLIENT STATE:', clientState);
 
             } catch (error) {
                 console.error('Failed to fetch user:', error);
