@@ -195,7 +195,9 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                         placeholder="Select Recipient"
                         multiple={false}
                         disabled={isRecipientSameAsUser} // Disable this dropdown if the checkbox is checked
-                        onChange={(e) => {}}
+                        onChange={(e) => {
+                            setActivityState({ ...activityState, recipient: e.target.value });
+                        }}
                     />
                     </CCol>
                 </CRow>
