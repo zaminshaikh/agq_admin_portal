@@ -318,7 +318,7 @@ const getAssetType = (id: string) => {
     }
 }
 
-export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean, activeFund?: string, viewOnly: boolean}> = ({clientState, setClientState, useCompanyName, activeFund, viewOnly = null}) => {
+export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean, activeFund?: string, viewOnly?: boolean}> = ({clientState, setClientState, useCompanyName, activeFund, viewOnly = null}) => {
     return (    
     <CContainer className="py-3">
         <CRow>
