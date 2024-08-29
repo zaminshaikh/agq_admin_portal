@@ -1,7 +1,7 @@
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip } from "@coreui/react-pro";
 import { OptionsGroup } from "@coreui/react-pro/dist/esm/components/multi-select/types";
-import React, { useState } from "react";
-import { Activity, User, DatabaseService} from "src/db/database";
+import React, { useEffect, useState } from "react";
+import { Activity, User, DatabaseService, emptyUser} from "src/db/database";
 import { EditAssetsSection } from "../dashboard/ClientInputModalBody";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
@@ -91,7 +91,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
 }) => {
     const db = new DatabaseService();
     const [date, setDate] = React.useState<Date | null>(new Date());
-    const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
+    const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
     console.log("RECIPIENT", activityState.recipient)
     console.log("CLIENT", clientState?.firstName + ' ' + clientState?.lastName)
 
@@ -100,6 +100,11 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         setDate(newDate);
         setActivityState({...activityState, time: newDate!});
     };
+
+    useEffect(() => {
+        if (activityState.recipient === null || activityState.recipient === '') {return;}
+        setIsRecipientSameAsUser(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
+    }, [clientState]);
 
     return (
         <CModalBody>
@@ -183,30 +188,18 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     </CInputGroup>
                     </CCol>
                     <CCol xl={8}>
-                    <CMultiSelect
+                    <CFormInput
                         id="recipient"
                         className="mb-3a custom-multiselect-dropdown"
-                        options={userOptions}
-                        defaultValue={[]}
+                        value={activityState.recipient}
                         placeholder="Select Recipient"
-                        selectAll={false}
                         multiple={false}
-                        allowCreateOptions={true}
                         disabled={isRecipientSameAsUser} // Disable this dropdown if the checkbox is checked
-                        onChange={async (selectedValue) => {
-                            if (selectedValue.length === 0) {
-                                setActivityState({ ...activityState, recipient: '' });
-                            } else {
-                                const recipient = selectedValue.map(selected => selected.label as string)[0];
-                                setActivityState({ ...activityState, recipient });
-                            }
-                        }}
+                        onChange={(e) => {}}
                     />
                     </CCol>
                 </CRow>
-            </CContainer>
-            
-            
+            </CContainer>            
             <CInputGroup className="mb-3 py-3 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Fund</CInputGroupText>
                 <CFormSelect id="inputGroupSelect01" defaultValue={activityState.fund} onChange={(e) => {
