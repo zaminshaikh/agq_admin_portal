@@ -224,47 +224,56 @@ export class DatabaseService {
      * - formattedAssets: The user's total assets, formatted as a currency string.
      */
     getUsers = async () => {
-
         // Fetch all documents from the users collection
-        const querySnapshot = await getDocs(this.usersCollection)
+        const querySnapshot = await getDocs(this.usersCollection);
 
         // Initialize an empty array to hold the user objects
-        const users: (User) [] = []
+        const users: User[] = [];
 
-        // Loop over each document in the query snapshot
-        for (const userSnapshot of querySnapshot.docs) {
+        // Use Promise.all to fetch all users concurrently
+        const userPromises = querySnapshot.docs.map(async (userSnapshot) => {
             // Get a reference to the 'assets' subcollection for this user
-            const assetsSubcollection = collection(this.usersCollection, userSnapshot.id, config.ASSETS_SUBCOLLECTION)
+            const assetsSubcollection = collection(this.usersCollection, userSnapshot.id, config.ASSETS_SUBCOLLECTION);
 
-            // References to each doc in assets subcollection, one for each fund and a general overview doc
-            const generalAssetsDoc = doc(assetsSubcollection, config.ASSETS_GENERAL_DOC_ID)
-            const agqAssetsDoc = doc(assetsSubcollection, config.ASSETS_AGQ_DOC_ID)
-            const ak1AssetsDoc = doc(assetsSubcollection, config.ASSETS_AK1_DOC_ID)
+            // References to each doc in assets subcollection
+            const generalAssetsDoc = doc(assetsSubcollection, config.ASSETS_GENERAL_DOC_ID);
+            const agqAssetsDoc = doc(assetsSubcollection, config.ASSETS_AGQ_DOC_ID);
+            const ak1AssetsDoc = doc(assetsSubcollection, config.ASSETS_AK1_DOC_ID);
 
-            // Use the references to fetch the snapshots of the documents
-            const generalAssetsSnapshot = await getDoc(generalAssetsDoc)
-            const agqAssetsSnapshot = await getDoc(agqAssetsDoc)
-            const ak1AssetsSnapshot = await getDoc(ak1AssetsDoc)
+            // Fetch all the assets documents concurrently
+            const [generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot] = await Promise.all([
+                getDoc(generalAssetsDoc),
+                getDoc(agqAssetsDoc),
+                getDoc(ak1AssetsDoc),
+            ]);
 
-            const user = this.getUserFromSnapshot(userSnapshot, generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot);
-            if (user !== null) { users.push(user); }
-        }
+            // Process the snapshots to create the user object
+            return this.getUserFromSnapshot(userSnapshot, generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot);
+        });
+
+        // Wait for all user processing promises to resolve
+        const processedUsers = await Promise.all(userPromises);
+
+        // Filter out any null values in case some users couldn't be created
+        users.push(...processedUsers.filter(user => user !== null));
 
         // Return the array of user objects
-        return users
-    }
+        return users;
+    };
 
-    getUserFromSnapshot = (userSnapshot: DocumentSnapshot, generalAssetsSnapshot: DocumentSnapshot, agqAssetsSnapshot: DocumentSnapshot, ak1AssetsSnapshot: DocumentSnapshot) => {
+    getUserFromSnapshot = (
+        userSnapshot: DocumentSnapshot,
+        generalAssetsSnapshot: DocumentSnapshot,
+        agqAssetsSnapshot: DocumentSnapshot,
+        ak1AssetsSnapshot: DocumentSnapshot): User | null => {
         if (userSnapshot.exists()) {
-            // Get the data from the snapshots
-            const data = userSnapshot.data()
-            const generalAssetsData = generalAssetsSnapshot.data()
-            const agqAssetsData = agqAssetsSnapshot.data()
-            const ak1AssetsData = ak1AssetsSnapshot.data()
-            // Create a new User object
-            let user: User = userSnapshot.data() as User;
-            user = {
-                cid: userSnapshot?.id,
+            const data = userSnapshot.data();
+            const generalAssetsData = generalAssetsSnapshot.data();
+            const agqAssetsData = agqAssetsSnapshot.data();
+            const ak1AssetsData = ak1AssetsSnapshot.data();
+
+            const user: User = {
+                cid: userSnapshot.id,
                 uid: data?.uid ?? '',
                 firstName: data?.name?.first ?? '',
                 lastName: data?.name?.last ?? '',
@@ -287,7 +296,7 @@ export class DatabaseService {
                         roth: agqAssetsData?.roth ?? 0,
                         sep: agqAssetsData?.sep ?? 0,
                         nuviewTrad: agqAssetsData?.nuviewTrad ?? 0,
-                        nuviewRoth: agqAssetsData?.nuviewRoth ?? 0
+                        nuviewRoth: agqAssetsData?.nuviewRoth ?? 0,
                     },
                     ak1: {
                         personal: ak1AssetsData?.personal ?? 0,
@@ -296,15 +305,16 @@ export class DatabaseService {
                         roth: ak1AssetsData?.roth ?? 0,
                         sep: ak1AssetsData?.sep ?? 0,
                         nuviewTrad: ak1AssetsData?.nuviewTrad ?? 0,
-                        nuviewRoth: ak1AssetsData?.nuviewRoth ?? 0
-                    }
-                }
-            } as User
+                        nuviewRoth: ak1AssetsData?.nuviewRoth ?? 0,
+                    },
+                },
+            };
+
             return user;
         } else {
             return null;
         }
-    }
+    };
 
     getUser = async (cid: string) => {
         const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
