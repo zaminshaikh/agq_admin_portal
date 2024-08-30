@@ -104,6 +104,7 @@ const UsersTable = () => {
                 itemsPerPageSelect
                 itemsPerPage={50}
                 pagination
+                sorterValue={{ column: 'firstName', state: 'asc' }}
                 scopedColumns={{
                     totalAssets: (item: User) => (
                         <td>
