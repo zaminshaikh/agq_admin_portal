@@ -3,6 +3,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth'; // You may need to install react-firebase-hooks
 import { auth } from './App'; // Adjust the path as necessary
+import { CSpinner } from '@coreui/react-pro';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     // auth.signOut();
@@ -10,7 +11,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
 
     if (loading) {
-        return <div>Loading...</div>; // Or a spinner component
+        return (<div className="text-center">
+            <CSpinner color="primary"/>
+        </div>); // Or a spinner component
     }
 
     if (error) {
