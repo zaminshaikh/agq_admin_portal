@@ -1,11 +1,12 @@
-import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, updateDoc, where, query, writeBatch} from 'firebase/firestore'
+import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, where, query, writeBatch} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
 import config from '../../config.json'
 import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
-import { getAuth, deleteUser } from 'firebase/auth';
+import { getFunctions, httpsCallable } from "firebase/functions";
 
+const functions = getFunctions();
 /**
  * User interface representing a client in the Firestore database.
  *  
@@ -469,7 +470,7 @@ export class DatabaseService {
     }
 
     unlinkUser = async (cid: string) => {
-        throw new Error('Method not implemented.');
+
     }
 
     /**
@@ -483,32 +484,42 @@ export class DatabaseService {
     }
 
     getActivities = async () => {
-        // Get all activities from all users' 'activities' subcollections
-        const querySnapshot = await getDocs(collectionGroup(this.db, 'activities')); 
-        // Map the query snapshot to an array of Activity
+        // Fetch all activities from all users' 'activities' subcollections using collectionGroup
+        const querySnapshot = await getDocs(collectionGroup(this.db, 'activities'));
+
+        // Map the query snapshot to an array of Activity with formatted time
         const activities: Activity[] = querySnapshot.docs.map((doc) => {
             const data = doc.data() as Activity;
-            const parentPath = doc.ref.parent.path.split('/'); // Split the path to get parent document ID
-            const parentDocId = parentPath[parentPath.length - 2]; // Get parent document ID
-            const activity = {...data, id: doc.id, parentDocId};
-            return activity;
-        });
-        // Format the time field of each activity
-        for (let i = 0; i < activities.length; i++) {
-            const time = activities[i].time instanceof Timestamp ? (activities[i].time as Timestamp).toDate() : activities[i].time;
+            const parentPath = doc.ref.parent.path.split('/');
+            const parentDocId = parentPath[parentPath.length - 2];
+
+            // Format the time field
+            let formattedTime = '';
+            const time = data.time instanceof Timestamp ? data.time.toDate() : data.time;
             if (time instanceof Date) {
-                const year = time.getFullYear();
-                const month = (time.getMonth() + 1).toString().padStart(2, '0');
-                const date = time.getDate().toString().padStart(2, '0');
-                const hours = time.getHours().toString().padStart(2, '0');
-                const minutes = time.getMinutes().toString().padStart(2, '0');
-                const seconds = time.getSeconds().toString().padStart(2, '0');
-                activities[i].formattedTime = `${year}/${month}/${date} at ${hours}:${minutes}:${seconds} EST`;
-            } else {
-                activities[i].formattedTime = '';
+                formattedTime = this.formatDate(time);
             }
-        }
+
+            return {
+                ...data,
+                id: doc.id,
+                parentDocId,
+                formattedTime,
+            };
+        });
+
         return activities;
+    }
+
+    // Utility function for formatting Date
+    formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        return `${year}/${month}/${day} at ${hours}:${minutes}:${seconds} EST`;
     }
 
     createActivity = async (activity: Activity, cid: string) => {
@@ -517,7 +528,7 @@ export class DatabaseService {
         // Create a reference to the activities subcollection for the user
         const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION);
         // Add the activity to the subcollection
-        const activityRef = await addDoc(activityCollectionRef, activity);
+        addDoc(activityCollectionRef, activity);
 
         // // If the activity requires a notification, create a notification for the recipient
         // if (activity.sendNotif === true) {
