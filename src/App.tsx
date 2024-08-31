@@ -53,8 +53,6 @@ const Register = React.lazy(() => import('./views/pages/register/Register'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 
-// Email App
-const EmailApp = React.lazy(() => import('./views/apps/email/EmailApp'))
 
 const App = () => {
   
