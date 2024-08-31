@@ -67,7 +67,16 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                 let fund = fundInfo.split(' ')[0];
     
                 // Parse the date string correctly
-                const parsedDate = parse(row["Date"], 'yyyy-MM-dd', new Date());
+                const dateString = row["Date"] ?? row["date"];
+                if (!dateString) {
+                    console.warn("Date field is missing or undefined in row:", row);
+                    return;
+                }
+    
+                console.log(`Raw date string: ${dateString}`);
+    
+                // Parse the date string correctly
+                const parsedDate = parseDateWithTwoDigitYear(dateString);
     
                 // Create an activity from each row of the CSV
                 const activity: Activity = {
@@ -81,6 +90,8 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                 // Add the activity to the activities array
                 activities.push(activity);
             });
+
+            console.log(activities);
 
             // Update the client state with the new activities
             const newClientState = {
@@ -128,8 +139,8 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
     
                 // Get the date string from the row
-                const dateString = row["Date"] ?? row["date"];
                 const amount = row["Amount"] ?? row["amount"];
+                const dateString = row["Date"] ?? row["date"];
                 if (!dateString) {
                     console.warn("Date field is missing or undefined in row:", row);
                     return;
