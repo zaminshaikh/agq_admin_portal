@@ -7,6 +7,7 @@ import { Timestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 const functions = getFunctions();
+
 /**
  * User interface representing a client in the Firestore database.
  *  
@@ -32,6 +33,7 @@ export interface User {
     totalAssets: number,
     _selected?: boolean;
     activities?: Activity[];
+    graphPoints?: GraphPoint[];
     assets: {
         [key: string]: any;
         agq: {
@@ -77,6 +79,11 @@ export interface Notification {
     isRead: boolean;
     type: string;
     time: Date | Timestamp;
+}
+
+export interface GraphPoint {
+    time: Date | Timestamp | null;
+    amount: number | null;
 }
 
 export const emptyUser: User = {
@@ -125,7 +132,6 @@ export const emptyActivity: Activity = {
     isDividend: false,
     sendNotif: true,
 };
-
 
 /**
  * Formats a number as a currency string.
@@ -209,6 +215,7 @@ export class DatabaseService {
         this.cidArray.push(id); // Add the new unique ID to the array
         return id;
     }
+
     /**
      * Fetches all users from the 'testUsers' collection in Firestore.
      * For each user, it also fetches their total assets from the 'assets' subcollection.
@@ -393,7 +400,7 @@ export class DatabaseService {
         };
 
         // Delete these unused properties from the newUserDocData object
-        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets'].forEach(key => {
+        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints'].forEach(key => {
                 delete newUserDocData[key];
         });
 
@@ -409,12 +416,21 @@ export class DatabaseService {
         // Update/Create a activity subcollection for user
         const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION)
 
-        // If no activities exist, we leave the collection undefined
-        if (user.activities === undefined) {return}
+        const graphCollectionRef = collection(userRef, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID, config.GRAPH_POINTS_SUBCOLLECTION)
 
-        // Add each activity to the subcollection
-        for (let activity of user.activities) {
-            await addDoc(activityCollectionRef, activity)
+        // If no activities exist, we leave the collection undefined
+        if (user.activities !== undefined) {
+            // Add all the activities to the subcollection
+            const promise = user.activities.map((activity) => addDoc(activityCollectionRef, activity));
+            // Use Promise.all to add all activities concurrently
+            await Promise.all(promise);
+        }
+            
+        if (user.graphPoints !== undefined) {
+            // Add all the graph points to the subcollection
+            const promise = user.graphPoints.map((graphPoint) => addDoc(graphCollectionRef, graphPoint));
+            // Use Promise.all to add all graph points concurrently
+            await Promise.all(promise);
         }
     }
 
