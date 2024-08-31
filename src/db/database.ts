@@ -7,6 +7,7 @@ import { Timestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 const functions = getFunctions();
+
 /**
  * User interface representing a client in the Firestore database.
  *  
@@ -132,7 +133,6 @@ export const emptyActivity: Activity = {
     sendNotif: true,
 };
 
-
 /**
  * Formats a number as a currency string.
  *
@@ -215,6 +215,7 @@ export class DatabaseService {
         this.cidArray.push(id); // Add the new unique ID to the array
         return id;
     }
+
     /**
      * Fetches all users from the 'testUsers' collection in Firestore.
      * For each user, it also fetches their total assets from the 'assets' subcollection.
@@ -417,11 +418,11 @@ export class DatabaseService {
 
         // If no activities exist, we leave the collection undefined
         if (user.activities === undefined) {return}
-
-        // Add each activity to the subcollection
-        for (let activity of user.activities) {
-            await addDoc(activityCollectionRef, activity)
-        }
+        
+        // Add all the activities to the subcollection
+        const promise = user.activities.map((activity) => addDoc(activityCollectionRef, activity));
+        // Use Promise.all to add all activities concurrently
+        await Promise.all(promise);
     }
 
     async setAssets(user: User) {

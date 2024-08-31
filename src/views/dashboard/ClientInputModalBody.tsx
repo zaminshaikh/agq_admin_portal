@@ -87,6 +87,7 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                 ...clientState,
                 activities: [...(clientState.activities || []), ...activities],
             };
+            
             setClientState(newClientState)
         },
     });
