@@ -82,8 +82,8 @@ export interface Notification {
 }
 
 export interface GraphPoint {
-    time: Date;
-    amount: number;
+    time: Date | Timestamp | null;
+    amount: number | null;
 }
 
 export const emptyUser: User = {
@@ -416,13 +416,22 @@ export class DatabaseService {
         // Update/Create a activity subcollection for user
         const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION)
 
+        const graphCollectionRef = collection(userRef, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID, config.GRAPH_POINTS_SUBCOLLECTION)
+
         // If no activities exist, we leave the collection undefined
-        if (user.activities === undefined) {return}
-        
-        // Add all the activities to the subcollection
-        const promise = user.activities.map((activity) => addDoc(activityCollectionRef, activity));
-        // Use Promise.all to add all activities concurrently
-        await Promise.all(promise);
+        if (user.activities !== undefined) {
+            // Add all the activities to the subcollection
+            const promise = user.activities.map((activity) => addDoc(activityCollectionRef, activity));
+            // Use Promise.all to add all activities concurrently
+            await Promise.all(promise);
+        }
+            
+        if (user.graphPoints !== undefined) {
+            // Add all the graph points to the subcollection
+            const promise = user.graphPoints.map((graphPoint) => addDoc(graphCollectionRef, graphPoint));
+            // Use Promise.all to add all graph points concurrently
+            await Promise.all(promise);
+        }
     }
 
     async setAssets(user: User) {

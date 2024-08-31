@@ -2,7 +2,7 @@ import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMult
 import { Activity, GraphPoint, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
-import { parse} from 'date-fns';
+import { isValid, parse } from 'date-fns';
 
 
 interface ClientInputProps {
@@ -87,10 +87,29 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                 ...clientState,
                 activities: [...(clientState.activities || []), ...activities],
             };
-            
+
             setClientState(newClientState)
         },
     });
+};
+
+const parseDateWithTwoDigitYear = (dateString: string) => {
+    const dateFormats = ['yyyy-MM-dd', 'MM/dd/yyyy', 'MM/dd/yy', 'MM-dd-yy', 'MM-dd-yyyy'];
+    let parsedDate = null;
+
+    for (const format of dateFormats) {
+        parsedDate = parse(dateString, format, new Date());
+        if (isValid(parsedDate)) {
+            // Handle two-digit year
+            const year = parsedDate.getFullYear();
+            if (year < 100) {
+                parsedDate.setFullYear(year + 2000);
+            }
+            break;
+        }
+    }
+
+    return parsedDate;
 };
 
 const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
@@ -116,20 +135,17 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
                     return;
                 }
     
+                console.log(`Raw date string: ${dateString}`);
+    
                 // Parse the date string correctly
-                let parsedDate = parse(dateString, 'yyyy-MM-dd', new Date());
-                if (isNaN(parsedDate.getTime())) {
-                    parsedDate = parse(dateString, 'MM/dd/yyyy', new Date());
+                const parsedDate = parseDateWithTwoDigitYear(dateString);
+    
+                if (!isValid(parsedDate)) {
+                    console.warn("Invalid date format in row:", row);
+                    return;
                 }
-                if (isNaN(parsedDate.getTime())) {
-                    parsedDate = parse(dateString, 'MM/dd/yy', new Date());
-                }
-                if (isNaN(parsedDate.getTime())) {
-                    parsedDate = parse(dateString, 'MM-dd-yy', new Date());
-                }
-                if (isNaN(parsedDate.getTime())) {
-                    parsedDate = parse(dateString, 'MM-dd-yyyy', new Date());
-                }
+    
+                console.log(`Parsed date: ${parsedDate}`);
     
                 // Create an activity from each row of the CSV
                 const point: GraphPoint = {
@@ -140,7 +156,7 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
                 // Add the activity to the activities array
                 graphPoints.push(point);
             });
-
+    
             console.log(graphPoints);
     
             // Update the client state with the new activities
