@@ -3,6 +3,8 @@ import { Activity, GraphPoint, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
 import { isValid, parse } from 'date-fns';
+import CIcon from '@coreui/icons-react';
+import * as icon from '@coreui/icons';
 
 
 interface ClientInputProps {
@@ -139,7 +141,7 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
     
                 // Get the date string from the row
-                const amount = row["Amount"] ?? row["amount"];
+                const amountString = row["Amount"] ?? row["amount"];
                 const dateString = row["Date"] ?? row["date"];
                 if (!dateString) {
                     console.warn("Date field is missing or undefined in row:", row);
@@ -150,6 +152,10 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
     
                 // Parse the date string correctly
                 const parsedDate = parseDateWithTwoDigitYear(dateString);
+
+                // Remove commas and dollar signs from the amount string and parse it as a float
+                const cleanedAmountString = amountString.replace(/[$,]/g, '');
+                const amount = parseFloat(cleanedAmountString);
     
                 if (!isValid(parsedDate)) {
                     console.warn("Invalid date format in row:", row);
@@ -161,7 +167,7 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
                 // Create an activity from each row of the CSV
                 const point: GraphPoint = {
                     time: parsedDate,
-                    amount: parseFloat(amount),
+                    amount: amount,
                 };
     
                 // Add the activity to the activities array
@@ -331,7 +337,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     /> 
 
                     <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>
-                
 
                     <div className="mb-3  py-3">
                         <h5>Upload Previous Activities</h5>
