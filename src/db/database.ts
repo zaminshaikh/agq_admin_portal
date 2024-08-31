@@ -528,7 +528,7 @@ export class DatabaseService {
         // Create a reference to the activities subcollection for the user
         const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION);
         // Add the activity to the subcollection
-        addDoc(activityCollectionRef, activity);
+        await addDoc(activityCollectionRef, activity);
 
         // // If the activity requires a notification, create a notification for the recipient
         // if (activity.sendNotif === true) {
