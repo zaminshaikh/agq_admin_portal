@@ -420,7 +420,7 @@ export const EditAssetsSection: React.FC<{clientState: User, setClientState: (cl
         <CCol>
             <h5>AGQ Fund Assets</h5>
             <AssetFormComponent title="Personal" id="agq-personal" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
-            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={viewOnly ?? (!(useCompanyName || activeFund == 'AGQ'))} clientState={clientState} setClientState={setClientState} />
+            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={viewOnly ?? (!(useCompanyName && activeFund == 'AGQ'))} clientState={clientState} setClientState={setClientState} />
             <AssetFormComponent title="IRA" id="agq-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
             <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
             <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
@@ -430,7 +430,7 @@ export const EditAssetsSection: React.FC<{clientState: User, setClientState: (cl
         <CCol>
             <h5>AK1 Fund Assets</h5>
             <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
-            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={viewOnly ?? (!(useCompanyName || activeFund == 'AK1'))} clientState={clientState} setClientState={setClientState} />
+            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={viewOnly ?? (!(useCompanyName && activeFund == 'AK1'))} clientState={clientState} setClientState={setClientState} />
             <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
             <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
             <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
