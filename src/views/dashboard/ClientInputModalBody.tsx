@@ -1,5 +1,5 @@
 import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol } from '@coreui/react-pro';
-import { Activity, User } from '../../db/database.ts'
+import { Activity, GraphPoint, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
 import { parse} from 'date-fns';
@@ -15,7 +15,7 @@ interface ClientInputProps {
 }
 
 // Handles the file input from the user
-const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
+const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
 
     const getActivityType = (type: string | undefined) => {
         if (!type) return "none";
@@ -49,8 +49,6 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
         complete: (results) => {
             // Initialize an array to store the activities
             let activities: Activity[] = [];
-            // For each row in the CSV, create a new activity
-            let i = 2;
 
             results.data.forEach((row: any) => {
                 // Skip if row is empty
@@ -63,8 +61,6 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName + ' ' + clientState.lastName;
     
-                console.log(`${i++}. Company Name: ${clientState.companyName}, Client Name: ${clientFullName}, Recipient Name: ${name}`);
-    
                 if (name.toLowerCase() !== clientFullName.toLowerCase() && name.toLowerCase() !== clientState.companyName.toLowerCase()) return;
     
                 // Determine the fund type
@@ -75,7 +71,7 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
     
                 // Create an activity from each row of the CSV
                 const activity: Activity = {
-                    fund: fund, // TODO: Add support for AK1
+                    fund: fund,
                     amount: Math.abs(parseFloat(row["Amount (Unscaled)"])),
                     recipient: name,
                     time: parsedDate,
@@ -96,6 +92,66 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientStat
     });
 };
 
+const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Parse the CSV file
+    Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+            // Initialize an array to store the activities
+            let graphPoints: GraphPoint[] = [];
+    
+            results.data.forEach((row: any) => {
+                // Skip if row is empty
+                if (Object.values(row).every(x => (x === null || x === ''))) return;
+    
+                // Get the date string from the row
+                const dateString = row["Date"] ?? row["date"];
+                const amount = row["Amount"] ?? row["amount"];
+                if (!dateString) {
+                    console.warn("Date field is missing or undefined in row:", row);
+                    return;
+                }
+    
+                // Parse the date string correctly
+                let parsedDate = parse(dateString, 'yyyy-MM-dd', new Date());
+                if (isNaN(parsedDate.getTime())) {
+                    parsedDate = parse(dateString, 'MM/dd/yyyy', new Date());
+                }
+                if (isNaN(parsedDate.getTime())) {
+                    parsedDate = parse(dateString, 'MM/dd/yy', new Date());
+                }
+                if (isNaN(parsedDate.getTime())) {
+                    parsedDate = parse(dateString, 'MM-dd-yy', new Date());
+                }
+                if (isNaN(parsedDate.getTime())) {
+                    parsedDate = parse(dateString, 'MM-dd-yyyy', new Date());
+                }
+    
+                // Create an activity from each row of the CSV
+                const point: GraphPoint = {
+                    time: parsedDate,
+                    amount: parseFloat(amount),
+                };
+    
+                // Add the activity to the activities array
+                graphPoints.push(point);
+            });
+
+            console.log(graphPoints);
+    
+            // Update the client state with the new activities
+            const newClientState = {
+                ...clientState,
+                graphPoints,
+            };
+            setClientState(newClientState);
+        }
+    });
+}
+
 
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 
@@ -105,7 +161,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     userOptions,
     viewOnly,
 }) => {
-    console.log(clientState);
     return (
         <CModalBody className="px-5">
                     <CInputGroup className="mb-3 py-3">
@@ -253,7 +308,14 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     <div className="mb-3  py-3">
                         <h5>Upload Previous Activities</h5>
                         <div  className="mb-3 py-3">
-                            <CFormInput type="file" id="formFile" onChange={(event) => handleFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
+                            <CFormInput type="file" id="formFile" onChange={(event) => handleActivitiesFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
+                        </div>
+                    </div>
+
+                    <div className="mb-3 ">
+                        <h5>Upload Graph Points</h5>
+                        <div  className="mb-3 py-3">
+                            <CFormInput type="file" id="formFile" onChange={(event) => handleGraphPointsFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
                         </div>
                     </div>
                 </CModalBody>

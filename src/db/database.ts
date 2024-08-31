@@ -32,6 +32,7 @@ export interface User {
     totalAssets: number,
     _selected?: boolean;
     activities?: Activity[];
+    graphPoints?: GraphPoint[];
     assets: {
         [key: string]: any;
         agq: {
@@ -77,6 +78,11 @@ export interface Notification {
     isRead: boolean;
     type: string;
     time: Date | Timestamp;
+}
+
+export interface GraphPoint {
+    time: Date;
+    amount: number;
 }
 
 export const emptyUser: User = {
@@ -393,7 +399,7 @@ export class DatabaseService {
         };
 
         // Delete these unused properties from the newUserDocData object
-        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets'].forEach(key => {
+        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints'].forEach(key => {
                 delete newUserDocData[key];
         });
 
