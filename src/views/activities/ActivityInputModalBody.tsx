@@ -84,6 +84,8 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowEr
     )
 }
 
+
+
 export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     activityState, 
     setActivityState, 
@@ -91,16 +93,35 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     setClientState,
     userOptions,
 }) => {
+    
     const db = new DatabaseService();
-    const [date, setDate] = React.useState<Date | null>(activityState.time instanceof Timestamp ? activityState.time.toDate() : new Date());;
+    const roundToNearestHour = (date: Date): Date => {
+        const minutes = date.getMinutes();
+        const roundedDate = new Date(date);
+
+        if (minutes >= 30) {
+            roundedDate.setHours(date.getHours() + 1);
+        }
+        
+        roundedDate.setMinutes(0, 0, 0); // Reset minutes, seconds, and milliseconds to 0
+
+        return roundedDate;
+    };
+
+        // Convert and round the date to the nearest hour
+    const initialDate = activityState.time instanceof Timestamp
+        ? roundToNearestHour(activityState.time.toDate())
+        : roundToNearestHour(new Date());
+    const [date, setDate] = React.useState<Date | null>(initialDate);
     const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
 
-
     const handleDateChange = (newDate: Date | null) => {
-        if (newDate === null) {return;}
-        setDate(newDate);
-        setActivityState({...activityState, time: newDate!});
+        if (newDate === null) { return; }
+        const roundedDate = roundToNearestHour(newDate);
+        setDate(roundedDate);
+        setActivityState({ ...activityState, time: roundedDate });
     };
+
 
     useEffect(() => {
         if (activityState.recipient === null || activityState.recipient === '') {return;}
