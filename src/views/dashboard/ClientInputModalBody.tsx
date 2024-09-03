@@ -431,42 +431,55 @@ const getAssetType = (id: string) => {
     }
 }
 
-export const EditAssetsSection: React.FC<{clientState: User, setClientState: (clientState: User) => void, useCompanyName: boolean, activeFund?: string, viewOnly?: boolean}> = ({clientState, setClientState, useCompanyName, activeFund, viewOnly = null}) => {
+export const EditAssetsSection: React.FC<{
+    clientState: User, 
+    setClientState: (clientState: User) => void, 
+    useCompanyName: boolean, 
+    activeFund?: string, 
+    incrementAmount?: number,
+    viewOnly?: boolean
+}> = ({
+    clientState, 
+    setClientState, 
+    useCompanyName, 
+    activeFund, 
+    incrementAmount = 1000, 
+    viewOnly = null
+}) => {
     return (    
-    <CContainer className="py-3">
-        <CRow>
-        <CCol>
-            <h5>AGQ Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="agq-personal" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
-            <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={viewOnly ?? (!(useCompanyName && activeFund == 'AGQ'))} clientState={clientState} setClientState={setClientState} />
-            <AssetFormComponent title="IRA" id="agq-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
-            <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
-            <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
-            <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
-            <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} />
-        </CCol>
-        <CCol>
-            <h5>AK1 Fund Assets</h5>
-            <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
-            <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={viewOnly ?? (!(useCompanyName && activeFund == 'AK1'))} clientState={clientState} setClientState={setClientState} />
-            <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
-            <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
-            <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
-            <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
-            <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} />
-        </CCol>
-        </CRow>
-    </CContainer>)
+        <CContainer className="py-3">
+            <CRow>
+                <CCol>
+                    <h5>AGQ Fund Assets</h5>
+                    <AssetFormComponent title="Personal" id="agq-personal" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={viewOnly ?? (!(useCompanyName && activeFund == 'AGQ'))} clientState={clientState} setClientState={setClientState} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="IRA" id="agq-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                </CCol>
+                <CCol>
+                    <h5>AK1 Fund Assets</h5>
+                    <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={viewOnly ?? (!(useCompanyName && activeFund == 'AK1'))} clientState={clientState} setClientState={setClientState} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                    <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
+                </CCol>
+            </CRow>
+        </CContainer>
+    );
 }
 
-
-
-export const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, clientState: User, setClientState: (clientState: User) => void}> = ({title, id, disabled, fund, clientState: clientState, setClientState}) => {
+export const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, clientState: User, setClientState: (clientState: User) => void, incrementAmount: number}> = ({title, id, disabled, fund, clientState, setClientState, incrementAmount}) => {
     return (
         <CInputGroup className="mb-3 py-3">
             <CInputGroupText style={{ width: "200px" }}>{title}</CInputGroupText>
             <CInputGroupText>$</CInputGroupText>
-            <CFormInput id={id} disabled={disabled} type="number" step="1000" value={clientState["assets"][fund][getAssetType(id)]} 
+            <CFormInput id={id} disabled={disabled} type="number" step={incrementAmount} value={clientState["assets"][fund][getAssetType(id)]} 
             onChange={(e) => {
                 const value = e.target.value;
                 if (/^\d*\.?\d{0,2}$/.test(value)) {
@@ -503,5 +516,5 @@ export const AssetFormComponent: React.FC<{title: string, id: string, disabled?:
                 } 
             }}/>
         </CInputGroup>
-    )      
+    );      
 }

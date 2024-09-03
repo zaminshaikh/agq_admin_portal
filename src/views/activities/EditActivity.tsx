@@ -43,9 +43,10 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
         // Create activity with client cid
         await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
 
-        if (( (activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry') && clientState) {
+        if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
             await db.setAssets(clientState);
         }
+        
         setShowModal(false);
         window.location.reload();
     }
