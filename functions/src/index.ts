@@ -171,3 +171,67 @@ export const handleActivity = functions.firestore.document(activityPath).onCreat
     }
 });
 
+export const linkNewUser = functions.https.onCall(async (data, context) => {
+    // Ensure authenticated context
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+  
+    const { email, cid, uid } = data;
+  
+    const usersCollection = admin.firestore().collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION);
+    const userRef = usersCollection.doc(cid);
+    const userSnapshot = await userRef.get();
+  
+    if (!userSnapshot.exists) {
+      throw new functions.https.HttpsError('not-found', `Document does not exist for cid: ${cid}`);
+    }
+  
+    const existingData = userSnapshot.data() as admin.firestore.DocumentData;
+  
+    // Check if user already exists
+    if (existingData.uid && existingData.uid !== '') {
+      throw new functions.https.HttpsError('already-exists', `User already exists for cid: ${cid}`);
+    }
+  
+    // Prepare updated data
+    const updatedData = {
+      ...existingData,
+      uid: uid,
+      email: email,
+      appEmail: email,
+    };
+  
+    // Update the user document
+    await userRef.set(updatedData);
+  
+    console.log(`User ${uid} has been linked with document ${cid} in Firestore`);
+  
+    const connectedUsers: string[] = existingData.connectedUsers || [];
+  
+    // Update connected users
+    await addUidToConnectedUsers(connectedUsers, uid, usersCollection);
+});
+
+const addUidToConnectedUsers = async (connectedUsers: string[], uid: string, usersCollection: admin.firestore.CollectionReference) => {
+    const updatePromises = connectedUsers.map(async (connectedUser) => {
+        const connectedUserRef = usersCollection.doc(connectedUser);
+        const connectedUserSnapshot = await connectedUserRef.get();
+
+        if (connectedUserSnapshot.exists) {
+            const connectedUserData = connectedUserSnapshot.data() as admin.firestore.DocumentData;
+            const uidAccessGranted: string[] = connectedUserData.uidAccessGranted || [];
+
+            if (!uidAccessGranted.includes(uid)) {
+                uidAccessGranted.push(uid);
+                await connectedUserRef.update({ uidAccessGranted });
+                console.log(`User ${uid} has been added to uidAccessGranted of connected user ${connectedUser}`);
+            }
+        } else {
+            console.log(`Connected user document ${connectedUser} does not exist`);
+        }
+    });
+
+    await Promise.all(updatePromises);
+};
+
