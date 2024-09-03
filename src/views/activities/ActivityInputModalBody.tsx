@@ -5,6 +5,8 @@ import { Activity, User, DatabaseService, emptyUser} from "src/db/database";
 import { EditAssetsSection } from "../dashboard/ClientInputModalBody";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+import { time } from "console";
+import { Timestamp } from "firebase/firestore";
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 
 interface ActivityInputProps {
@@ -90,7 +92,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     userOptions,
 }) => {
     const db = new DatabaseService();
-    const [date, setDate] = React.useState<Date | null>(new Date());
+    const [date, setDate] = React.useState<Date | null>(activityState.time instanceof Timestamp ? activityState.time.toDate() : new Date());;
     const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
 
 
@@ -109,7 +111,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         <CModalBody>
             <CInputGroup className="mb-3 py-1 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Type</CInputGroupText>
-                <CFormSelect id="inputGroupSelect01" value={activityState?.type} onChange={
+                <CFormSelect id="inputGroupSelect01" value={activityState?.type != '' ? activityState?.type : "profit"} onChange={
                     (e) => {setActivityState({...activityState, type: e.currentTarget.value});
                     console.log(clientState);
                 }}>
@@ -203,7 +205,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             </CContainer>            
             <CInputGroup className="mb-3 py-3 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Fund</CInputGroupText>
-                <CFormSelect id="inputGroupSelect01" defaultValue={activityState.fund} onChange={(e) => {
+                <CFormSelect id="inputGroupSelect01" defaultValue={"AGQ"} value={activityState.fund != '' ? activityState.fund : undefined}onChange={(e) => {
                         setActivityState({...activityState, fund: e.currentTarget.value})
                     }}
                 >
