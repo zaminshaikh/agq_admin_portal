@@ -127,7 +127,7 @@ export const emptyActivity: Activity = {
     amount: 0,
     fund: '',
     recipient: '',
-    time: new Date(),
+    time: null,
     type: '',
     isDividend: false,
     sendNotif: true,
