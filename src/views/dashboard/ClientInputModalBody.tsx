@@ -23,11 +23,11 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
         if (!type) return "none";
         switch (type) {
             case "withdrawal":
-                return "income"
+                return "profit";
             case "deposit":
-                return "deposit"
+                return "deposit";
             default:
-                return "other"
+                return "other";
         }
     }
 
