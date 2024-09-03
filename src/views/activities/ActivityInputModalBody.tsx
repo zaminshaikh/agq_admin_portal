@@ -1,10 +1,11 @@
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip } from "@coreui/react-pro";
 import { OptionsGroup } from "@coreui/react-pro/dist/esm/components/multi-select/types";
-import React, { useEffect, useState } from "react";
-import { Activity, User, DatabaseService, emptyUser} from "src/db/database";
+import React, { act, useEffect, useState } from "react";
+import { Activity, User, DatabaseService, emptyUser, roundToNearestHour} from "src/db/database";
 import { EditAssetsSection } from "../dashboard/ClientInputModalBody";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+import { Timestamp } from "firebase/firestore";
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 
 interface ActivityInputProps {
@@ -90,7 +91,12 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     userOptions,
 }) => {
     const db = new DatabaseService();
-    const [date, setDate] = React.useState<Date | null>(new Date());
+
+    // Convert and round the date to the nearest hour
+    const initialDate = activityState.time instanceof Timestamp
+        ? roundToNearestHour(activityState.time.toDate())
+        : roundToNearestHour(activityState.time);
+    const [date, setDate] = React.useState<Date | null>(initialDate);
     const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
 
 
@@ -101,10 +107,19 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     };
 
     useEffect(() => {
+        const newDate = activityState.time instanceof Timestamp
+            ? roundToNearestHour(activityState.time.toDate())
+            : roundToNearestHour(activityState.time);
+        
+        setActivityState({...activityState, time: newDate});
+    }, [date]);
+
+    useEffect(() => {
         if (activityState.recipient === null || activityState.recipient === '') {return;}
         setIsRecipientSameAsUser(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
-    }, [clientState]);
+    }, [activityState.recipient, clientState]);
 
+    console.log(activityState);
     return (
         <CModalBody>
             <CInputGroup className="mb-3 py-1 px-3">
