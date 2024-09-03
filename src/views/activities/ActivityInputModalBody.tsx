@@ -5,6 +5,8 @@ import { Activity, User, DatabaseService, emptyUser} from "src/db/database";
 import { EditAssetsSection } from "../dashboard/ClientInputModalBody";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+import { time } from "console";
+import { Timestamp } from "firebase/firestore";
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 
 interface ActivityInputProps {
@@ -90,7 +92,8 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     userOptions,
 }) => {
     const db = new DatabaseService();
-    const [date, setDate] = React.useState<Date | null>(new Date());
+    console.log(activityState.time);
+    const [date, setDate] = React.useState<Date | null>(activityState.time instanceof Timestamp ? activityState.time.toDate() : new Date());;
     const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
 
 
@@ -101,6 +104,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     };
 
     useEffect(() => {
+        console.log(activityState.time);
         if (activityState.recipient === null || activityState.recipient === '') {return;}
         setIsRecipientSameAsUser(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
     }, [clientState]);
