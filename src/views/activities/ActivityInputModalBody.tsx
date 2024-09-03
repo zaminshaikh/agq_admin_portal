@@ -92,7 +92,6 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     userOptions,
 }) => {
     const db = new DatabaseService();
-    console.log(activityState.time);
     const [date, setDate] = React.useState<Date | null>(activityState.time instanceof Timestamp ? activityState.time.toDate() : new Date());;
     const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
 
@@ -104,7 +103,6 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     };
 
     useEffect(() => {
-        console.log(activityState.time);
         if (activityState.recipient === null || activityState.recipient === '') {return;}
         setIsRecipientSameAsUser(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
     }, [clientState]);
