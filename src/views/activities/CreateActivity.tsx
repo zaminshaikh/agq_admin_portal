@@ -35,7 +35,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
             }
             // Create activity with client cid
             await db.createActivity(activityState, clientState!.cid);
-            if ((activityState.isDividend || activityState.type === 'manual-entry') && clientState) {
+            if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
                 await db.setAssets(clientState);
             }
             setShowModal(false);

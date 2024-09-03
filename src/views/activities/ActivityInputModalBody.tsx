@@ -255,8 +255,13 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     } 
                 }}/>
             </CInputGroup>
-            {clientState && ((activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry') && activityState.fund && 
-                <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={clientState.companyName !== null} activeFund={activityState.fund}/>}
+            {clientState && ((activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry' || activityState.type === 'deposit' || activityState.type === 'withdrawal') && activityState.fund && 
+                <EditAssetsSection 
+                    clientState={clientState} 
+                    setClientState={setClientState} 
+                    useCompanyName={clientState.companyName !== null} 
+                    activeFund={activityState.fund}
+                    incrementAmount={activityState.amount}/>}
             
         </CModalBody>
     )
