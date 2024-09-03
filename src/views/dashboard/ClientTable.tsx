@@ -25,7 +25,6 @@ const UsersTable = () => {
                 setUsers(users);
                 setIsLoading(false);``
             }
-            
         };
         fetchUsers();
     }, []);

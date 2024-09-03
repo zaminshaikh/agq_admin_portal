@@ -55,15 +55,27 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
             results.data.forEach((row: any) => {
                 // Skip if row is empty
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
+
+                
     
                 // Remove the fund type after the dash and convert the name to title case
                 let [recipientName, fundInfo] = row["Security Name"].split('-').map((s: string) => s.trim());
-                let name = toTitleCase(recipientName, exceptions);
+                let name = toTitleCase(recipientName.trimEnd(), exceptions);
     
                 // Check if name does not match client's full name or company name
-                const clientFullName = clientState.firstName + ' ' + clientState.lastName;
+                const clientFullName = clientState.firstName.trimEnd() + ' ' + clientState.lastName.trimEnd();
+
+                // console.log("SECURITY NAME:", row["Security Name"].toLowerCase());
+                console.log("NAME:", name.toLowerCase());
+                console.log("CLIENT FULL NAME:", clientFullName.toLowerCase());
+                console.log("CLIENT COMPANY NAME:", clientState.companyName.toLowerCase());
+
+                console.log(name.toLowerCase() !== clientFullName.toLowerCase())
+                console.log(name.toLowerCase() !== clientState.companyName.toLowerCase())
+
     
                 if (name.toLowerCase() !== clientFullName.toLowerCase() && name.toLowerCase() !== clientState.companyName.toLowerCase()) return;
+                else if (name.toLowerCase() === clientState.companyName.toLowerCase()) { name = clientState.companyName }
     
                 // Determine the fund type
                 let fund = fundInfo.split(' ')[0];
@@ -79,6 +91,7 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
     
                 // Parse the date string correctly
                 const parsedDate = parseDateWithTwoDigitYear(dateString);
+                if (parsedDate === null) return;
     
                 // Create an activity from each row of the CSV
                 const activity: Activity = {
@@ -197,29 +210,34 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 }) => {
     return (
         <CModalBody className="px-5">
-                    <CInputGroup className="mb-3 py-3">
-                        <CInputGroupText>Client's First Name</CInputGroupText>
-                        <CFormInput id="first-name" value={clientState.firstName} disabled={viewOnly}
-                            onChange={(e) =>{
-                                const newClientState = {
-                                    ...clientState,
-                                    firstName: e.target.value,
-                                };
-                                setClientState(newClientState)
-                        }}/>
-                        <CInputGroupText>Client's Last Name</CInputGroupText>
-                        <CFormInput id="last-name" value={clientState.lastName} disabled={viewOnly}
-                            onChange={
-                                (e) => {
-                                    const newClientState = {
-                                        ...clientState,
-                                        lastName: e.target.value
-                                    }
-                                    setClientState(newClientState)
-                                }
-                            }
-                        />
-                    </CInputGroup>
+            <CInputGroup className="mb-3 py-3">
+                <CInputGroupText>Client's First Name</CInputGroupText>
+                <CFormInput
+                    id="first-name"
+                    value={clientState.firstName}
+                    disabled={viewOnly}
+                    onChange={(e) => {
+                        const newClientState = {
+                            ...clientState,
+                            firstName: e.target.value,
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
+                <CInputGroupText>Client's Last Name</CInputGroupText>
+                <CFormInput
+                    id="last-name"
+                    value={clientState.lastName}
+                    disabled={viewOnly}
+                    onChange={(e) => {
+                        const newClientState = {
+                            ...clientState,
+                            lastName: e.target.value,
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
+            </CInputGroup>
 
                     <CInputGroup className="mb-3  py-3">
                         <CInputGroupText>
