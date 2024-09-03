@@ -5,6 +5,7 @@ import { Activity, User, DatabaseService, emptyUser, roundToNearestHour} from "s
 import { EditAssetsSection } from "../dashboard/ClientInputModalBody";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+import { time } from "console";
 import { Timestamp } from "firebase/firestore";
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 
@@ -83,6 +84,8 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowEr
     )
 }
 
+
+
 export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     activityState, 
     setActivityState, 
@@ -90,6 +93,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     setClientState,
     userOptions,
 }) => {
+    
     const db = new DatabaseService();
 
     // Convert and round the date to the nearest hour
@@ -99,11 +103,11 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     const [date, setDate] = React.useState<Date | null>(initialDate);
     const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
 
-
     const handleDateChange = (newDate: Date | null) => {
-        if (newDate === null) {return;}
-        setDate(newDate);
-        setActivityState({...activityState, time: newDate!});
+        if (newDate === null) { return; }
+        const roundedDate = roundToNearestHour(newDate);
+        setDate(roundedDate);
+        setActivityState({ ...activityState, time: roundedDate });
     };
 
     useEffect(() => {
@@ -124,7 +128,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         <CModalBody>
             <CInputGroup className="mb-3 py-1 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Type</CInputGroupText>
-                <CFormSelect id="inputGroupSelect01" value={activityState?.type} onChange={
+                <CFormSelect id="inputGroupSelect01" value={activityState?.type != '' ? activityState?.type : "profit"} onChange={
                     (e) => {setActivityState({...activityState, type: e.currentTarget.value});
                     console.log(clientState);
                 }}>
@@ -218,7 +222,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             </CContainer>            
             <CInputGroup className="mb-3 py-3 px-3">
                 <CInputGroupText as="label" htmlFor="inputGroupSelect01">Fund</CInputGroupText>
-                <CFormSelect id="inputGroupSelect01" defaultValue={activityState.fund} onChange={(e) => {
+                <CFormSelect id="inputGroupSelect01" defaultValue={"AGQ"} value={activityState.fund != '' ? activityState.fund : undefined}onChange={(e) => {
                         setActivityState({...activityState, fund: e.currentTarget.value})
                     }}
                 >
