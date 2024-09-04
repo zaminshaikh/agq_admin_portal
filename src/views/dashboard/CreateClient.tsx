@@ -4,7 +4,7 @@ import React from "react";
 import { DatabaseService, User, emptyUser } from '../../db/database.ts'
 import { ClientInputModalBody } from "./ClientInputModalBody.tsx";
 import { ValidateClient } from "./ClientInputModalBody.tsx";
-import { ErrorModal } from "../activities/ActivityInputModalBody.tsx";
+import { ErrorModal } from '../../components/ErrorModal.tsx';
 
 // const CFormInputWithMask = React.forwardRef<HTMLInputElement, any>((props, ref) => (
 //     <CFormInput
@@ -41,12 +41,12 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
         if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields) && !override) {
             // If validation fails, show error modal
             setShowErrorModal(true); 
-        } else {        
+        } else {
             if (override) {
                 setClientState({
                     ...clientState,
-                    dob: new Date(),
-                    firstDepositDate: new Date(),
+                    dob: null,
+                    firstDepositDate: null,
                 });
             }
             // If validation passes, create the client and reload the page

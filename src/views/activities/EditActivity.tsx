@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
 import { DatabaseService, Activity, emptyActivity, User, emptyUser } from 'src/db/database';
-import { ValidateActivity, ErrorModal, ActivityInputModalBody } from './ActivityInputModalBody';
+import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
+import { ErrorModal } from '../../components/ErrorModal';
 
 interface EditActivityProps {
     showModal: boolean;
@@ -94,6 +95,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
                     userOptions={userOptions}            
                 />
                 <CModalFooter>
+                    TEST
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
                     <CButton color="primary" onClick={handleEditActivity}>Update</CButton>
                 </CModalFooter>

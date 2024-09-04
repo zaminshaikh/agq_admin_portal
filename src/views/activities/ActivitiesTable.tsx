@@ -16,6 +16,7 @@ const ActivitiesTable = () => {
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
 
+    // The current activity selected in the table
     const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
     
     useEffect(() => {
@@ -30,6 +31,7 @@ const ActivitiesTable = () => {
         fetchActivities();
     }, []);
 
+    // If our data is still loading, we display a spinner
     if (isLoading) {
         return( 
             <div className="text-center">
@@ -85,7 +87,7 @@ const ActivitiesTable = () => {
                 return 'info'
             case 'income':
                 return 'info'
-             case 'pending':
+            case 'pending':
                 return 'warning'
             case 'withdrawal':
                 return 'danger'

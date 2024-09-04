@@ -12,7 +12,7 @@ interface ShowModalProps {
         users?: User[];
 }
 
-export const DisplayDetails: React.FC<ShowModalProps> = ({showModal, setShowModal, users, currentUser: currentUser}) => {
+export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users, currentUser: currentUser}) => {
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: (currentUser?.connectedUsers?.includes(user.cid))}))
     return (
         <CModal         

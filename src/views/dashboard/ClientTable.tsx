@@ -1,8 +1,8 @@
 import { CButton, CCardBody, CCol, CCollapse, CContainer, CRow, CSmartTable, CSpinner } from '@coreui/react-pro';
 import { DatabaseService, User, emptyUser, formatCurrency } from 'src/db/database.ts';
 import { useEffect, useState } from 'react';
-import CreateClient from './CreateNewClient';
-import { DisplayDetails } from './DisplayDetails';
+import CreateClient from './CreateClient';
+import { DisplayClient } from './DisplayClient';
 import { DeleteClient } from './DeleteClient';
 import { EditClient } from './EditClient';
 
@@ -16,25 +16,34 @@ const UsersTable = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState<string[]>([])
 
+    // useEffect hook to fetch users when the component mounts
     useEffect(() => {
         const fetchUsers = async () => {
+            // Create an instance of the DatabaseService
             const db = new DatabaseService();
+            
+            // Fetch users from the database
             let users = await db.getUsers();
+            
+            // If users are fetched successfully, update the state
             if (users !== null) {
                 users = users as User[];
                 setUsers(users);
-                setIsLoading(false);``
+                setIsLoading(false);
             }
         };
+        
+        // Call the fetchUsers function
         fetchUsers();
-    }, []);
+    }, []); // Empty dependency array ensures this runs only once when the component mounts
 
+    // If data is still loading, display a spinner
     if (isLoading) {
         return( 
-        <div className="text-center">
-            <CSpinner color="primary"/>
-        </div>
-        )
+            <div className="text-center">
+                <CSpinner color="primary"/>
+            </div>
+        );
     }
     
     const columns = [
@@ -71,21 +80,30 @@ const UsersTable = () => {
         },
     ]
 
+    // Function to toggle the visibility of details for a specific item
     const toggleDetails = (index: string) => {
-        const position = details.indexOf( index)
-        let newDetails = details.slice()
+        // Find the position of the index in the details array
+        const position = details.indexOf(index);
+    
+        // Create a copy of the details array
+        let newDetails = details.slice();
+    
+        // If the index is already in the details array, remove it
         if (position !== -1) {
-            newDetails.splice(position, 1)
+            newDetails.splice(position, 1);
         } else {
-            newDetails = [...details, index]
+            // If the index is not in the details array, add it
+            newDetails = [...details, index];
         }
-        setDetails(newDetails)
+    
+        // Update the state with the new details array
+        setDetails(newDetails);
     }
     
     return (
         <CContainer>
             {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} currentUser={currentUser}/>}
-            {showDisplayDetailsModal && <DisplayDetails showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} users={users} currentUser={currentUser ?? emptyUser}/>}
+            {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} users={users} currentUser={currentUser ?? emptyUser}/>}
             {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} user={currentUser}/>}
             {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} users={users}/>} 
             <div className="d-grid gap-2">

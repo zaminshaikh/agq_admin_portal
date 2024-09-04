@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import React from "react";
 import { Activity, DatabaseService, User, emptyActivity } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
-import { ErrorModal, ValidateActivity } from "./ActivityInputModalBody.tsx";
-
+import { ValidateActivity } from "./ActivityInputModalBody.tsx";
+import { ErrorModal } from '../../components/ErrorModal';
 
 interface ShowModalProps {
     showModal: boolean;
@@ -20,7 +20,6 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
-
 
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName}))
     const handleCreateActivity = async () => {
