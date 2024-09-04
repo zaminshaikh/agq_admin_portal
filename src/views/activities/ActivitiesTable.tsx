@@ -138,6 +138,9 @@ const ActivitiesTable = () => {
                                 if (selectedValue.length > 0) {
                                     // If the user has selected an option, update the variable to the value
                                     val = selectedValue[0].value; 
+                                } else {
+                                    // If the selections have been cleared
+                                    console.log('Selections cleared');
                                 }
                                 setSelectedUser(val);
                                 if (val) {
@@ -155,6 +158,11 @@ const ActivitiesTable = () => {
                         shape="square"
                         className="w-100"
                         onClick={() => {
+                            setUserOptions((prevOptions) =>
+                                prevOptions.map((option) =>
+                                    option.value === selectedUser ? { ...option, selected: false } : option
+                                ) 
+                            );
                             setFilteredActivities(allActivities); // Reset activities to original state
                         }}
                     >
