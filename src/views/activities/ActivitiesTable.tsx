@@ -11,8 +11,8 @@ import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/
 const ActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
 
-    const [activities, setActivities] = useState<Activity[]>([]);
-    const [originalActivities, setOriginalActivities] = useState<Activity[]>([]); // New state for original activities
+    const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
+    const [allActivities, setAllActivities] = useState<Activity[]>([]); // New state for original activities
     const [users, setUsers] = useState<User[]>([]);
     const [userOptions, setUserOptions] = useState<Option[]>([]); 
     const [selectedUser, setSelectedUser] = useState<string | number>(); 
@@ -34,8 +34,8 @@ const ActivitiesTable = () => {
                     .map(user => ({ value: user.cid, label: user.firstName + ' ' + user.lastName }))
                     .sort((a, b) => a.label.localeCompare(b.label))
             ); 
-            setActivities(activities);
-            setOriginalActivities(activities); // Store the original activities
+            setFilteredActivities(activities);
+            setAllActivities(activities); // Store the original activities
             setUsers(users);
 
             setIsLoading(false);
@@ -115,7 +115,7 @@ const ActivitiesTable = () => {
         <CContainer>
             {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity}/>}
             {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} activity={currentActivity}/>}
-            {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users}/>}
+            {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             <div className="d-grid gap-2 py-3">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
             </div> 
@@ -130,7 +130,8 @@ const ActivitiesTable = () => {
                             multiple={false}
                             allowCreateOptions={false}
                             onChange={async (selectedValue) => {
-                                setActivities(originalActivities.filter((activity) => activity.parentDocId === selectedValue[0].value));
+                                setSelectedUser(selectedValue[0].value);
+                                setFilteredActivities(allActivities.filter((activity) => activity.parentDocId === selectedValue[0].value));
                             }}
                         />
                 </CCol>
@@ -141,7 +142,7 @@ const ActivitiesTable = () => {
                         shape="square"
                         className="w-100"
                         onClick={() => {
-                            setActivities(originalActivities); // Reset activities to original state
+                            setFilteredActivities(allActivities); // Reset activities to original state
                         }}
                     >
                         Reset <CIcon icon={cilReload} />
@@ -155,7 +156,7 @@ const ActivitiesTable = () => {
                 columns={columns}
                 columnFilter
                 columnSorter
-                items={activities}
+                items={filteredActivities}
                 itemsPerPageSelect
                 itemsPerPage={50}
                 pagination

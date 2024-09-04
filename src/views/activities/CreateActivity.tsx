@@ -5,19 +5,23 @@ import { Activity, DatabaseService, User, emptyActivity } from '../../db/databas
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
+import Activities from './Activities';
 
 
 interface ShowModalProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
     users?: User[];
+    selectedUser?: string | number;
+    setAllActivities: (activites: Activity[]) => void;
+    setFilteredActivities: (activites: Activity[]) => void;
 }
 
 
-export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModal, users}) => {
-    const db = new DatabaseService();
+export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModal, users, selectedUser, setAllActivities, setFilteredActivities}) => {
+const db = new DatabaseService();
     const [activityState, setActivityState] = useState<Activity>(emptyActivity);
-    const [clientState, setClientState] = useState<User | null>(null);
+    const [clientState, setClientState] = useState<User | null>(users?.find(user => user.cid === selectedUser) || null);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
@@ -39,7 +43,10 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                 await db.setAssets(clientState);
             }
             setShowModal(false);
-            window.location.reload();
+            const activities = await db.getActivities();
+            setAllActivities(activities)
+            console.log()
+            setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedUser));
         }
     }
 
