@@ -6,7 +6,6 @@ import AppHeader from './AppHeader'
 import AppSidebar from './AppSidebar'
 import DocsCallout from './DocsCallout'
 import DocsExample from './DocsExample'
-import ProBadge from './ProBadge'
 
 export {
   AppAside,
@@ -17,5 +16,4 @@ export {
   AppSidebar,
   DocsCallout,
   DocsExample,
-  ProBadge,
 }

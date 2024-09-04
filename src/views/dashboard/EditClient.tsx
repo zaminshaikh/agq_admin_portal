@@ -1,11 +1,12 @@
 import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 // import { IMaskMixin } from 'react-imask'
 import React from "react";
 import { DatabaseService, User, emptyUser } from '../../db/database.ts'
 import { ClientInputModalBody, ValidateClient } from './ClientInputModalBody.tsx'
+import { FormValidationErrorModal } from '../../components/ErrorModal';
 
 // const CFormInputWithMask = React.forwardRef<HTMLInputElement, any>((props, ref) => (
 //     <CFormInput
@@ -37,50 +38,43 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
     const [useCompanyName, setUseCompanyName] = useState(clientState.companyName ? true : false) ;
     const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: (currentUser?.connectedUsers?.includes(user.cid))}))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
+    const [override, setOverride] = useState(false);
 
-    const UpdateClient = async () => {
-        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields)) {
+    const handleEditClient = async () => {
+        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields) && !override) {
+            // If validation fails, show error modal
             setShowErrorModal(true);
         } else {
+            if (override) {
+                setClientState({
+                    ...clientState,
+                    dob: null,
+                    firstDepositDate: null,
+                });
+            }
+            // If validation passes, create the client and reload the page
             await db.updateUser(clientState);
             setShowModal(false);
             window.location.reload();
         }
     }
 
-    const ErrorModal = () => {
-        return (
-            <CModal
-                scrollable
-                alignment="center"
-                visible={showErrorModal} 
-                backdrop="static" 
-                onClose={() => setShowErrorModal(false)}
-            >
-                <CModalHeader>
-                    <CModalTitle>
-                        <FontAwesomeIcon className="pr-5" icon={faExclamationTriangle} color="red" />  Error
-                    </CModalTitle>
-                </CModalHeader>
-                <CModalBody>
-                    <h5>The following fields have been left empty:</h5>
-                    <ul>
-                        {invalidInputFields.map((message, index) => (
-                            <li key={index}>{message}</li>
-                        ))}
-                    </ul>
-                </CModalBody>
-                <CModalFooter>
-                    <CButton color="primary" onClick={() => setShowErrorModal(false)}>OK</CButton>
-                </CModalFooter>
-            </CModal>
-        )
-    }
+    useEffect(() => {
+        const editClientIfOverride = async () => {
+            if (override) {
+                await handleEditClient();
+            }
+        };
+        editClientIfOverride();
+    }, [override]);
 
     return (
         
         <div>
-            <ErrorModal/>
+            {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} 
+                setShowErrorModal={setShowErrorModal}
+                invalidInputFields={invalidInputFields}
+                setOverride={setOverride}/>} 
             <CModal 
                 scrollable
                 alignment="center"
@@ -100,7 +94,7 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
                     viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
-                    <CButton color="primary" onClick={() => UpdateClient()}>Update</CButton>
+                    <CButton color="primary" onClick={() => handleEditClient()}>Update</CButton>
                 </CModalFooter>
             </CModal>
         </div>
