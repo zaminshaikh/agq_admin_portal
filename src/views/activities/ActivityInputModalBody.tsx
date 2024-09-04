@@ -162,6 +162,8 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                                     setIsRecipientSameAsUser(e.target.checked);
                                     if (e.target.checked && clientState) {
                                         setActivityState({ ...activityState, recipient: clientState.firstName + ' ' + clientState.lastName });
+                                    } else if (clientState) {
+                                        setActivityState({ ...activityState, recipient: clientState.companyName});
                                     }
                                 }}
                             />
@@ -172,7 +174,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     <CFormInput
                         id="recipient"
                         className="mb-3a custom-multiselect-dropdown"
-                        value={activityState.recipient}
+                        value={activityState.recipient }
                         placeholder="Select Recipient"
                         multiple={false}
                         disabled={isRecipientSameAsUser} // Disable this dropdown if the checkbox is checked

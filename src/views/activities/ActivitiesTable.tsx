@@ -4,7 +4,7 @@ import { Activity, DatabaseService, User, formatCurrency } from "src/db/database
 import { CreateActivity } from "./CreateActivity";
 import DeleteActivity from "./DeleteActivity";
 import EditActivity from "./EditActivity";
-import { cilArrowRight } from "@coreui/icons";
+import { cilArrowRight, cilReload } from "@coreui/icons";
 import CIcon from "@coreui/icons-react";
 import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 
@@ -144,7 +144,7 @@ const ActivitiesTable = () => {
                             setActivities(originalActivities); // Reset activities to original state
                         }}
                     >
-                        Reset <CIcon icon={cilArrowRight} />
+                        Reset <CIcon icon={cilReload} />
                     </CButton>
                 </CCol>
             </CRow>
