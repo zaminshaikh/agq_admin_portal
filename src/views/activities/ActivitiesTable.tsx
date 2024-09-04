@@ -1,22 +1,26 @@
-import { CBadge, CButton, CContainer, CSmartTable, CSpinner } from "@coreui/react-pro";
 import { useEffect, useState } from "react";
+import { CBadge, CButton, CCol, CContainer, CMultiSelect, CRow, CSmartTable, CSpinner } from "@coreui/react-pro";
 import { Activity, DatabaseService, User, formatCurrency } from "src/db/database";
 import { CreateActivity } from "./CreateActivity";
 import DeleteActivity from "./DeleteActivity";
 import EditActivity from "./EditActivity";
-
+import { cilArrowRight } from "@coreui/icons";
+import CIcon from "@coreui/icons-react";
+import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 
 const ActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     const [activities, setActivities] = useState<Activity[]>([]);
+    const [originalActivities, setOriginalActivities] = useState<Activity[]>([]); // New state for original activities
     const [users, setUsers] = useState<User[]>([]);
+    const [userOptions, setUserOptions] = useState<Option[]>([]); 
+    const [selectedUser, setSelectedUser] = useState<string | number>(); 
 
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
 
-    // The current activity selected in the table
     const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
     
     useEffect(() => {
@@ -24,14 +28,21 @@ const ActivitiesTable = () => {
             const db = new DatabaseService();
             const activities = await db.getActivities();
             const users = await db.getUsers();
+
+            setUserOptions(
+                users!
+                    .map(user => ({ value: user.cid, label: user.firstName + ' ' + user.lastName }))
+                    .sort((a, b) => a.label.localeCompare(b.label))
+            ); 
             setActivities(activities);
+            setOriginalActivities(activities); // Store the original activities
             setUsers(users);
+
             setIsLoading(false);
         };
         fetchActivities();
     }, []);
 
-    // If our data is still loading, we display a spinner
     if (isLoading) {
         return( 
             <div className="text-center">
@@ -105,9 +116,38 @@ const ActivitiesTable = () => {
             {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity}/>}
             {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} activity={currentActivity}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users}/>}
-            <div className="d-grid gap-2">
+            <div className="d-grid gap-2 py-3">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
             </div> 
+            <CRow className="justify-content-center py-3">
+                <CCol>
+                    <CMultiSelect
+                            id="user"
+                            className="mb-3a custom-multiselect-dropdown"
+                            options={userOptions}
+                            placeholder="Type or select a specific user to view activities for"
+                            selectAll={false}
+                            multiple={false}
+                            allowCreateOptions={false}
+                            onChange={async (selectedValue) => {
+                                setActivities(originalActivities.filter((activity) => activity.parentDocId === selectedValue[0].value));
+                            }}
+                        />
+                </CCol>
+                <CCol xl={2} style={{ float: 'left' }}>
+                    <CButton
+                        color="danger"
+                        variant="outline"
+                        shape="square"
+                        className="w-100"
+                        onClick={() => {
+                            setActivities(originalActivities); // Reset activities to original state
+                        }}
+                    >
+                        Reset <CIcon icon={cilArrowRight} />
+                    </CButton>
+                </CCol>
+            </CRow>
             <CSmartTable
                 activePage={1}
                 cleaner

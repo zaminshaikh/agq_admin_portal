@@ -1,5 +1,5 @@
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip } from "@coreui/react-pro";
-import { OptionsGroup } from "@coreui/react-pro/dist/esm/components/multi-select/types";
+import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import React, { act, useEffect, useState } from "react";
 import { Activity, User, DatabaseService, emptyUser, roundToNearestHour} from "src/db/database";
 import { EditAssetsSection } from "../../components/EditAssetsSection";
@@ -14,7 +14,7 @@ interface ActivityInputProps {
     setActivityState: (clientState: Activity) => void,
     clientState: User | null,
     setClientState: (clientState: User | null) => void,
-    userOptions: OptionsGroup[],
+    userOptions: Option[],
 }
 
 interface ErrorModalProps {

@@ -6,6 +6,7 @@ import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 
+
 interface ShowModalProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
