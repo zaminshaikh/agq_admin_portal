@@ -1,7 +1,7 @@
 import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
 import { useEffect, useState } from "react";
 import React from "react";
-import { Activity, DatabaseService, User, emptyActivity } from '../../db/database.ts'
+import { Activity, DatabaseService, User, emptyActivity, emptyUser } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
@@ -22,12 +22,13 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     const db = new DatabaseService();
     const [activityState, setActivityState] = useState<Activity>(emptyActivity);
     const [clientState, setClientState] = useState<User | null>(users?.find(user => user.cid === selectedUser) ?? null);
-    console.log("ClientState: ",clientState)
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
-    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName}))
+    const userOptions = users!
+        .map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: selectedUser === user.cid }))
+        .sort((a, b) => a.label.localeCompare(b.label));
     const handleCreateActivity = async () => {
         if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
             setShowErrorModal(true);

@@ -23,7 +23,9 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
-    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: activity?.parentDocId === user.cid }));
+    const userOptions = users!
+        .map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: activity?.parentDocId === user.cid }))
+        .sort((a, b) => a.label.localeCompare(b.label));;
     
     // TODO: THIS DOES NOT WORK UNTIL NON USER CAN BE A RECIPIENT   
     // if (userOptions.find(option => option.value === activity?.recipient) === undefined ) {

@@ -131,6 +131,7 @@ const ActivitiesTable = () => {
                             placeholder="Type or select a specific user to view activities for"
                             selectAll={false}
                             multiple={false}
+                            optionsStyle={'text'}
                             allowCreateOptions={false}
                             onChange={async (selectedValue) => {
                                 let val: string | number | undefined
