@@ -115,7 +115,7 @@ const ActivitiesTable = () => {
     return (
         <CContainer>
             {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
-            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} activity={currentActivity}/>}
+            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} activity={currentActivity}  selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             <div className="d-grid gap-2 py-3">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>

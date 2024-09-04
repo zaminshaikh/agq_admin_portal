@@ -86,7 +86,6 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         setIsRecipientSameAsUser(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
     }, [activityState.recipient, clientState]);
 
-    console.log(activityState);
     return (
         <CModalBody>
             <CInputGroup className="mb-3 py-1 px-3">

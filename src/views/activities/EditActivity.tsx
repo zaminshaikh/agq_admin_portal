@@ -9,9 +9,12 @@ interface EditActivityProps {
     setShowModal: (show: boolean) => void;
     users: User[]; 
     activity?: Activity;
+    selectedUser?: string | number;
+    setAllActivities: (activites: Activity[]) => void;
+    setFilteredActivities: (activites: Activity[]) => void;
 }
 
-const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, users, activity }) => {
+const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, users, activity, selectedUser, setAllActivities, setFilteredActivities}) => {
     const db = new DatabaseService();
 
     const [activityState, setActivityState] = useState<Activity>(activity ?? emptyActivity);
@@ -41,6 +44,11 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
             });
         }
 
+        if (!clientState) {
+            console.error("Invalid client state");
+            return;
+        }
+
         // Create activity with client cid
         await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
 
@@ -49,7 +57,10 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
         }
         
         setShowModal(false);
-        window.location.reload();
+        const activities = await db.getActivities(); // Get the new updated activities
+        setAllActivities(activities)
+        // Filter by the user we just edited an activity for
+        setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedUser ?? clientState.cid)));
     }
 
     useEffect(() => {
