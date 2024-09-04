@@ -19,9 +19,10 @@ interface ShowModalProps {
 
 
 export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModal, users, selectedUser, setAllActivities, setFilteredActivities}) => {
-const db = new DatabaseService();
+    const db = new DatabaseService();
     const [activityState, setActivityState] = useState<Activity>(emptyActivity);
-    const [clientState, setClientState] = useState<User | null>(users?.find(user => user.cid === selectedUser) || null);
+    const [clientState, setClientState] = useState<User | null>(users?.find(user => user.cid === selectedUser) ?? null);
+    console.log("ClientState: ",clientState)
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
@@ -37,15 +38,20 @@ const db = new DatabaseService();
                     time: new Date(),
                 });
             }
+            if (!clientState) {
+                console.error("Invalid client state");
+                return;
+            }
             // Create activity with client cid
-            await db.createActivity(activityState, clientState!.cid);
+            await db.createActivity(activityState, clientState.cid);
             if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
                 await db.setAssets(clientState);
             }
             setShowModal(false);
-            const activities = await db.getActivities();
+            const activities = await db.getActivities(); // Get the new updated activities
             setAllActivities(activities)
-            setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedUser ?? clientState?.cid)));
+            // Filter by the user we just created an activity for
+            setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedUser ?? clientState.cid)));
         }
     }
 

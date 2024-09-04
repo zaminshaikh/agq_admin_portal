@@ -7,22 +7,31 @@ import { Activity, DatabaseService, formatCurrency } from 'src/db/database';
 interface DeleteActivityProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
-    activity?: Activity; // Replace `any` with the appropriate type for `user`
+    activity?: Activity; 
+    selectedUser?: string | number;
+    setAllActivities: (activites: Activity[]) => void;
+    setFilteredActivities: (activites: Activity[]) => void;
 }
 
-const DeleteActivity: React.FC<DeleteActivityProps> = ({ showModal, setShowModal, activity }) => {
-    const service = new DatabaseService();
+const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedUser, setAllActivities, setFilteredActivities}) => {
+    const db = new DatabaseService();
 
     const deleteActivity = async () => {
         if (activity && activity.id) {
             try {
-                await service.deleteActivity(activity);
-                await service.deleteNotification(activity);
+                await db.deleteActivity(activity);
+                await db.deleteNotification(activity);
                 setShowModal(false);
-                window.location.reload();
+                const activities = await db.getActivities(); // Get the new updated activities
+                setAllActivities(activities)
+                // Filter by the user we just deleted an activity for
+                if (selectedUser) {
+                    setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedUser));
+                } else {
+                    setFilteredActivities(activities);
+                }
             } catch (error) {
                 console.error('Failed to delete activity:', error);
-                // Optionally, show an error message to the user
             }
         }
     };
