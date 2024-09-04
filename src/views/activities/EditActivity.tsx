@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
 import { DatabaseService, Activity, emptyActivity, User, emptyUser } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
-import { ErrorModal } from '../../components/ErrorModal';
+import { FormValidationErrorModal } from '../../components/ErrorModal';
 
 interface EditActivityProps {
     showModal: boolean;
@@ -76,7 +76,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
 
     return (
         <>
-            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
+            {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
             <CModal 
                 scrollable
                 visible={showModal} 

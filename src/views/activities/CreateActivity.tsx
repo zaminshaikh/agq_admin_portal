@@ -4,7 +4,7 @@ import React from "react";
 import { Activity, DatabaseService, User, emptyActivity } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
-import { ErrorModal } from '../../components/ErrorModal';
+import { FormValidationErrorModal } from '../../components/ErrorModal';
 
 interface ShowModalProps {
     showModal: boolean;
@@ -53,7 +53,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
 
     return (
         <>
-            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
+            {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
             <CModal 
                 scrollable
                 visible={showModal} 

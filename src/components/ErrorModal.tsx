@@ -2,14 +2,20 @@ import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton } 
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-interface ErrorModalProps {
+interface FormValidationErrorModalProps {
     showErrorModal: boolean,
     setShowErrorModal: (show: boolean) => void,
     invalidInputFields: string[],
     setOverride: (override: boolean) => void,
 }
 
-export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowErrorModal, invalidInputFields, setOverride}) => {
+interface AuthErrorModalProps {
+    message: string;
+    showErrorModal: boolean;
+    setShowErrorModal: (show: boolean) => void,
+}
+
+export const FormValidationErrorModal: React.FC<FormValidationErrorModalProps> = ({showErrorModal, setShowErrorModal, invalidInputFields, setOverride}) => {
     return (
         <CModal
             scrollable
@@ -43,4 +49,30 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowEr
             </CModalFooter>
         </CModal>
     )
+}
+
+export const AuthErrorModal: React.FC<AuthErrorModalProps> = ({message, showErrorModal, setShowErrorModal}) => {
+    return (
+        <CModal
+            scrollable
+            alignment="center"
+            visible={showErrorModal} 
+            backdrop="static" 
+            onClose={() => setShowErrorModal(false)}
+        >
+            <CModalHeader>
+                <CModalTitle>
+                    <FontAwesomeIcon className="pr-5" icon={faExclamationTriangle} color="red" />  ERROR
+                </CModalTitle>
+            </CModalHeader>
+            <CModalBody>
+                {message}
+            </CModalBody>
+            <CModalFooter>
+                <CButton color="primary" onClick={() => {
+                    setShowErrorModal(false);
+                }}>Close</CButton>
+            </CModalFooter>
+        </CModal>
+    );
 }

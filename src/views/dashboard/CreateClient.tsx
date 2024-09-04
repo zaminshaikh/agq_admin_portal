@@ -4,7 +4,7 @@ import React from "react";
 import { DatabaseService, User, emptyUser } from '../../db/database.ts'
 import { ClientInputModalBody } from "./ClientInputModalBody.tsx";
 import { ValidateClient } from "./ClientInputModalBody.tsx";
-import { ErrorModal } from '../../components/ErrorModal.tsx';
+import { FormValidationErrorModal } from '../../components/ErrorModal.tsx';
 
 // const CFormInputWithMask = React.forwardRef<HTMLInputElement, any>((props, ref) => (
 //     <CFormInput
@@ -67,7 +67,7 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
     return (
         
         <div>
-            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} 
+            {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} 
             setShowErrorModal={setShowErrorModal} 
             invalidInputFields={invalidInputFields} 
             setOverride={setOverride}/>}

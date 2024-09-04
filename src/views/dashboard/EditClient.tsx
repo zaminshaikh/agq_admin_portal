@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React from "react";
 import { DatabaseService, User, emptyUser } from '../../db/database.ts'
 import { ClientInputModalBody, ValidateClient } from './ClientInputModalBody.tsx'
-import { ErrorModal } from '../../components/ErrorModal';
+import { FormValidationErrorModal } from '../../components/ErrorModal';
 
 // const CFormInputWithMask = React.forwardRef<HTMLInputElement, any>((props, ref) => (
 //     <CFormInput
@@ -71,7 +71,7 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
     return (
         
         <div>
-            {showErrorModal && <ErrorModal showErrorModal={showErrorModal} 
+            {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} 
                 setShowErrorModal={setShowErrorModal}
                 invalidInputFields={invalidInputFields}
                 setOverride={setOverride}/>} 

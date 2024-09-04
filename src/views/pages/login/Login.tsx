@@ -17,13 +17,18 @@ import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilUser } from '@coreui/icons';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../../App'; // Adjust the path as necessary
+import { AuthErrorModal } from 'src/components/ErrorModal';
+import { error } from 'console';
+import { FirebaseError } from '@firebase/app';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Logging in...');
     try {
@@ -31,13 +36,35 @@ const Login = () => {
         console.log('Logged in');
         navigate('/dashboard'); // Navigate to the dashboard on successful login
     } catch (error) {
-        console.error('Error logging in:', error);
-        // Handle error (e.g., show error message to the user)
+        if (error instanceof FirebaseError) {
+            // Handle Firebase auth errors
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    setErrorMessage('Invalid email address.');
+                    break;
+                case 'auth/user-disabled':
+                    setErrorMessage('User account is disabled.');
+                    break;
+                case 'auth/user-not-found':
+                    setErrorMessage('User not found.');
+                    break;
+                case 'auth/wrong-password':
+                    setErrorMessage('Incorrect password.');
+                    break;
+                default:
+                    setErrorMessage('An unknown error occurred.');
+            }
+        } else {
+            // Handle other errors (e.g., network issues)
+            setErrorMessage('An error occurred. Please try again.');
+        }
+        setShowErrorModal(true);
     }
-  };
+};
 
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+      {showErrorModal && <AuthErrorModal message={errorMessage} showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} />}
       <CContainer>
         <CRow className="justify-content-center">
           <CCol md={8}>
