@@ -45,8 +45,7 @@ const db = new DatabaseService();
             setShowModal(false);
             const activities = await db.getActivities();
             setAllActivities(activities)
-            console.log()
-            setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedUser));
+            setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedUser ?? clientState?.cid)));
         }
     }
 

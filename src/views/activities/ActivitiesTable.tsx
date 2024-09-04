@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import { CBadge, CButton, CCol, CContainer, CMultiSelect, CRow, CSmartTable, CSpinner } from "@coreui/react-pro";
 import { Activity, DatabaseService, User, formatCurrency } from "src/db/database";
 import { CreateActivity } from "./CreateActivity";
@@ -7,6 +7,7 @@ import EditActivity from "./EditActivity";
 import { cilArrowRight, cilReload } from "@coreui/icons";
 import CIcon from "@coreui/icons-react";
 import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
+import Activities from './Activities';
 
 const ActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -130,8 +131,17 @@ const ActivitiesTable = () => {
                             multiple={false}
                             allowCreateOptions={false}
                             onChange={async (selectedValue) => {
-                                setSelectedUser(selectedValue[0].value);
-                                setFilteredActivities(allActivities.filter((activity) => activity.parentDocId === selectedValue[0].value));
+                                let val: string | number | undefined
+                                if (selectedValue.length > 0) {
+                                    // If the user has selected an option, update the variable to the value
+                                    val = selectedValue[0].value; 
+                                }
+                                setSelectedUser(val);
+                                if (val) {
+                                    setFilteredActivities(allActivities.filter((activity) => activity.parentDocId === val));
+                                } else {
+                                    setFilteredActivities(allActivities)
+                                }
                             }}
                         />
                 </CCol>
@@ -158,7 +168,7 @@ const ActivitiesTable = () => {
                 columnSorter
                 items={filteredActivities}
                 itemsPerPageSelect
-                itemsPerPage={50}
+                itemsPerPage={20}
                 pagination
                 sorterValue={{ column: 'formattedTime', state: 'desc' }}
                 scopedColumns={{
