@@ -1,5 +1,5 @@
-import { SetStateAction, useEffect, useState } from "react";
-import { CBadge, CButton, CCol, CContainer, CMultiSelect, CRow, CSmartTable, CSpinner } from "@coreui/react-pro";
+import { SetStateAction, useEffect, useRef, useState } from "react";
+import { CBadge, CButton, CCol, CContainer, CMultiSelect, CRow, CSmartTable, CSpinner, CToaster } from "@coreui/react-pro";
 import { Activity, DatabaseService, User, formatCurrency } from "src/db/database";
 import { CreateActivity } from "./CreateActivity";
 import DeleteActivity from "./DeleteActivity";
@@ -11,6 +11,8 @@ import Activities from './Activities';
 
 const ActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
+    const [toast, addToast] = useState<any>(0)
+    const toaster = useRef<HTMLDivElement | null>(null); 
 
     const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
     const [allActivities, setAllActivities] = useState<Activity[]>([]); // New state for original activities
@@ -114,7 +116,7 @@ const ActivitiesTable = () => {
 
     return (
         <CContainer>
-            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
+            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities} addToast={addToast}/>}
             {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} activity={currentActivity}  selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             <div className="d-grid gap-2 py-3">
@@ -215,6 +217,7 @@ const ActivitiesTable = () => {
                             >
                             Delete
                             </CButton>
+                            {/* <CToaster className="p-3" placement="top-end" push={toast} ref={toaster} /> */}
                         </td>
                         )
                     },

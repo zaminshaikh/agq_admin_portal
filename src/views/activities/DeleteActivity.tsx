@@ -1,5 +1,5 @@
 import React from 'react';
-import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton } from '@coreui/react-pro';
+import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton, CToast, CToastBody, CToastHeader } from '@coreui/react-pro';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Activity, DatabaseService, formatCurrency } from 'src/db/database';
@@ -11,9 +11,31 @@ interface DeleteActivityProps {
     selectedUser?: string | number;
     setAllActivities: (activites: Activity[]) => void;
     setFilteredActivities: (activites: Activity[]) => void;
+    addToast: (dispatch: any) => void;
 }
 
-const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedUser, setAllActivities, setFilteredActivities}) => {
+const exampleToast = (
+  <CToast>
+    <CToastHeader closeButton>
+      <svg
+        className="rounded me-2"
+        width="20"
+        height="20"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid slice"
+        focusable="false"
+        role="img"
+      >
+        <rect width="100%" height="100%" fill="#007aff"></rect>
+      </svg>
+      <div className="fw-bold me-auto">CoreUI for React.js</div>
+      <small>7 min ago</small>
+    </CToastHeader>
+    <CToastBody>Hello, world! This is a toast message.</CToastBody>
+  </CToast>
+)
+
+const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedUser, setAllActivities, setFilteredActivities, addToast}) => {
     const db = new DatabaseService();
 
     const deleteActivity = async () => {
@@ -30,6 +52,7 @@ const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal,
                 } else {
                     setFilteredActivities(activities);
                 }
+                // addToast(exampleToast);
             } catch (error) {
                 console.error('Failed to delete activity:', error);
             }
