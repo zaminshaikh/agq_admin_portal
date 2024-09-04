@@ -35,7 +35,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowEr
                 <CButton color="danger" variant="outline" onClick={() => {
                     setOverride(true);
                     setShowErrorModal(false);
-                }}>OVERRIDE & CREATE</CButton>
+                }}>OVERRIDE & PROCEED</CButton>
 
                 <CButton color="primary" onClick={() => {
                     setShowErrorModal(false);

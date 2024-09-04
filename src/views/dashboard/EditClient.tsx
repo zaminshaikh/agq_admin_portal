@@ -41,7 +41,8 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
     const [override, setOverride] = useState(false);
 
     const handleEditClient = async () => {
-        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields)) {
+        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields) && !override) {
+            // If validation fails, show error modal
             setShowErrorModal(true);
         } else {
             if (override) {
@@ -51,6 +52,7 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
                     firstDepositDate: null,
                 });
             }
+            // If validation passes, create the client and reload the page
             await db.updateUser(clientState);
             setShowModal(false);
             window.location.reload();
