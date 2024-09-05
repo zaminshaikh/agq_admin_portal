@@ -407,9 +407,9 @@ export class DatabaseService {
         const newUserDocData: DocumentData = {
             ...user,
             name: {
-                first: user.firstName,
-                last: user.lastName,
-                company: user.companyName,
+                first: user.firstName.trimEnd(),
+                last: user.lastName.trimEnd(),
+                company: user.companyName.trimEnd(),
             },
         };
 

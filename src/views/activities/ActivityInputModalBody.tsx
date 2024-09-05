@@ -1,8 +1,8 @@
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip } from "@coreui/react-pro";
-import { OptionsGroup } from "@coreui/react-pro/dist/esm/components/multi-select/types";
+import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import React, { act, useEffect, useState } from "react";
 import { Activity, User, DatabaseService, emptyUser, roundToNearestHour} from "src/db/database";
-import { EditAssetsSection } from "../dashboard/ClientInputModalBody";
+import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { time } from "console";
@@ -14,7 +14,7 @@ interface ActivityInputProps {
     setActivityState: (clientState: Activity) => void,
     clientState: User | null,
     setClientState: (clientState: User | null) => void,
-    userOptions: OptionsGroup[],
+    userOptions: Option[],
 }
 
 interface ErrorModalProps {
@@ -47,43 +47,6 @@ export const ValidateActivity = (activityState: Activity, setInvalidInputFields:
 
     return validClient;
 }
-
-export const ErrorModal: React.FC<ErrorModalProps> = ({showErrorModal, setShowErrorModal, invalidInputFields, setOverride}) => {
-    return (
-        <CModal
-            scrollable
-            alignment="center"
-            visible={showErrorModal} 
-            backdrop="static" 
-            onClose={() => setShowErrorModal(false)}
-        >
-            <CModalHeader>
-                <CModalTitle>
-                    <FontAwesomeIcon className="pr-5" icon={faExclamationTriangle} color="red" />  WARNING
-                </CModalTitle>
-            </CModalHeader>
-            <CModalBody>
-                <h5>The following fields have not been filled:</h5>
-                <ul>
-                    {invalidInputFields.map((message, index) => (
-                        <li key={index}>{message}</li>
-                    ))}
-                </ul>
-            </CModalBody>
-            <CModalFooter>
-                <CButton color="danger" variant="outline" onClick={() => {
-                    setOverride(true);
-                    setShowErrorModal(false);
-                }}>OVERRIDE & CREATE</CButton>
-
-                <CButton color="primary" onClick={() => {
-                    setShowErrorModal(false);
-                }}>Go Back</CButton>
-            </CModalFooter>
-        </CModal>
-    )
-}
-
 
 
 export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
@@ -123,7 +86,6 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         setIsRecipientSameAsUser(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
     }, [activityState.recipient, clientState]);
 
-    console.log(activityState);
     return (
         <CModalBody>
             <CInputGroup className="mb-3 py-1 px-3">
@@ -199,6 +161,8 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                                     setIsRecipientSameAsUser(e.target.checked);
                                     if (e.target.checked && clientState) {
                                         setActivityState({ ...activityState, recipient: clientState.firstName + ' ' + clientState.lastName });
+                                    } else if (clientState) {
+                                        setActivityState({ ...activityState, recipient: clientState.companyName});
                                     }
                                 }}
                             />
@@ -209,7 +173,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     <CFormInput
                         id="recipient"
                         className="mb-3a custom-multiselect-dropdown"
-                        value={activityState.recipient}
+                        value={activityState.recipient }
                         placeholder="Select Recipient"
                         multiple={false}
                         disabled={isRecipientSameAsUser} // Disable this dropdown if the checkbox is checked
@@ -255,8 +219,13 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     } 
                 }}/>
             </CInputGroup>
-            {clientState && ((activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry') && activityState.fund && 
-                <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={clientState.companyName !== null} activeFund={activityState.fund}/>}
+            {clientState && ((activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry' || activityState.type === 'deposit' || activityState.type === 'withdrawal') && activityState.fund && 
+                <EditAssetsSection 
+                    clientState={clientState} 
+                    setClientState={setClientState} 
+                    useCompanyName={clientState.companyName !== null} 
+                    activeFund={activityState.fund}
+                    incrementAmount={activityState.amount}/>}
             
         </CModalBody>
     )

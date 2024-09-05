@@ -13,11 +13,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (loading) {
         return (<div className="text-center">
             <CSpinner color="primary"/>
-        </div>); // Or a spinner component
+        </div>);
     }
 
     if (error) {
         console.error('Error fetching auth state:', error);
+        return <Navigate to="/500" state={{ from: location }} replace />
     }
 
     return user ? (
