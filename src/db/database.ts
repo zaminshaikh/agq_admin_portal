@@ -63,7 +63,7 @@ export interface Activity {
     amount: number;
     fund: string;
     recipient: string;
-    time: Date | Timestamp | null;
+    time: Date | Timestamp;
     formattedTime?: string;
     type: string;
     isDividend?: boolean;
@@ -123,12 +123,25 @@ export const emptyUser: User = {
     },
 };
 
+export const roundToNearestHour = (date: Date): Date => {
+    const minutes = date.getMinutes();
+    const roundedDate = new Date(date);
+
+    if (minutes >= 30) {
+        roundedDate.setHours(date.getHours() + 1);
+    }
+    
+    roundedDate.setMinutes(0, 0, 0); // Reset minutes, seconds, and milliseconds to 0
+
+    return roundedDate;
+};
+
 export const emptyActivity: Activity = {
     amount: 0,
-    fund: '',
+    fund: 'AGQ',
     recipient: '',
-    time: new Date(),
-    type: '',
+    time: roundToNearestHour(new Date()),
+    type: 'profit',
     isDividend: false,
     sendNotif: true,
 };
@@ -153,6 +166,7 @@ export const emptyActivity: Activity = {
 export const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
+
 
 export class DatabaseService {
     private db: Firestore = getFirestore(app);
@@ -393,9 +407,9 @@ export class DatabaseService {
         const newUserDocData: DocumentData = {
             ...user,
             name: {
-                first: user.firstName,
-                last: user.lastName,
-                company: user.companyName,
+                first: user.firstName.trimEnd(),
+                last: user.lastName.trimEnd(),
+                company: user.companyName.trimEnd(),
             },
         };
 

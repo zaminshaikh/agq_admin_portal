@@ -1,5 +1,5 @@
 import React from 'react';
-import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton } from '@coreui/react-pro';
+import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton, CToast, CToastBody, CToastHeader } from '@coreui/react-pro';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Activity, DatabaseService, formatCurrency } from 'src/db/database';
@@ -7,22 +7,54 @@ import { Activity, DatabaseService, formatCurrency } from 'src/db/database';
 interface DeleteActivityProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
-    activity?: Activity; // Replace `any` with the appropriate type for `user`
+    activity?: Activity; 
+    selectedUser?: string | number;
+    setAllActivities: (activites: Activity[]) => void;
+    setFilteredActivities: (activites: Activity[]) => void;
+    addToast: (dispatch: any) => void;
 }
 
-const DeleteActivity: React.FC<DeleteActivityProps> = ({ showModal, setShowModal, activity }) => {
-    const service = new DatabaseService();
+const exampleToast = (
+  <CToast>
+    <CToastHeader closeButton>
+      <svg
+        className="rounded me-2"
+        width="20"
+        height="20"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid slice"
+        focusable="false"
+        role="img"
+      >
+        <rect width="100%" height="100%" fill="#007aff"></rect>
+      </svg>
+      <div className="fw-bold me-auto">CoreUI for React.js</div>
+      <small>7 min ago</small>
+    </CToastHeader>
+    <CToastBody>Hello, world! This is a toast message.</CToastBody>
+  </CToast>
+)
+
+const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedUser, setAllActivities, setFilteredActivities, addToast}) => {
+    const db = new DatabaseService();
 
     const deleteActivity = async () => {
         if (activity && activity.id) {
             try {
-                await service.deleteActivity(activity);
-                await service.deleteNotification(activity);
+                await db.deleteActivity(activity);
+                await db.deleteNotification(activity);
                 setShowModal(false);
-                window.location.reload();
+                const activities = await db.getActivities(); // Get the new updated activities
+                setAllActivities(activities)
+                // Filter by the user we just deleted an activity for
+                if (selectedUser) {
+                    setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedUser));
+                } else {
+                    setFilteredActivities(activities);
+                }
+                // addToast(exampleToast);
             } catch (error) {
                 console.error('Failed to delete activity:', error);
-                // Optionally, show an error message to the user
             }
         }
     };

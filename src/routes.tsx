@@ -13,13 +13,6 @@ const Activities = React.lazy(() => import('./views/activities/Activities'))
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Statements = React.lazy(() => import('./views/statements/Statements'))
 
-
-// Notifications
-const Alerts = React.lazy(() => import('./views/notifications/alerts/Alerts'))
-const Badges = React.lazy(() => import('./views/notifications/badges/Badges'))
-const Modals = React.lazy(() => import('./views/notifications/modals/Modals'))
-const Toasts = React.lazy(() => import('./views/notifications/toasts/Toasts'))
-
 const routes: Route[] = [
   { path: '/', exact: true, name: <Translation>{(t) => t('home')}</Translation> },
   {
