@@ -355,7 +355,7 @@ exports.calculateYTD = functions.https.onCall(async (data, context): Promise<obj
             .get();
 
         let ytdTotal = 0;
-        snapshot.forEach((a c) => {
+        snapshot.forEach((doc) => {
             const activity = doc.data();
             ytdTotal += activity.amount;
         });
