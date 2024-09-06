@@ -32,6 +32,7 @@ module.exports = {
       "max-len": ["warn", {"code": 80}], // If you want to add max-len as a warning
       "no-trailing-spaces": "off", // Disables the rule about trailing spaces
       "object-curly-spacing": ["warn", "always"], // Change "error" to "warn"
+      "valid-jsdoc": ["warn"],
     },
   };
   
