@@ -169,6 +169,7 @@ export const formatCurrency = (amount: number): string => {
 
 
 export class DatabaseService {
+
     private db: Firestore = getFirestore(app);
     private usersCollection: CollectionReference<DocumentData, DocumentData>;
     private cidArray: string[];
@@ -644,6 +645,10 @@ export class DatabaseService {
         } else {
             return;
         }
+    }
+
+    updateYTD(cid: string): void | PromiseLike<void> {
+        throw new Error("Method not implemented.")
     }
 }
 
