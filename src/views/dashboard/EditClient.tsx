@@ -93,10 +93,14 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
                     userOptions={userOptions}
                     viewOnly={false}/>
                 <CModalFooter>
-                    <CButton color="info" variant="outline" onClick={async () => {
-                        await db.updateYTD(clientState.cid)
-                        setShowModal(false);
-                    }}>Reset</CButton>
+                    <CButton color="info" variant="outline" onClick={async () => {    
+                        setClientState({ 
+                            ...clientState,
+                            ytd: await db.updateYTD(clientState.cid)
+                        });
+                        console.log(clientState);
+                    }}
+                    >Reset</CButton>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
                     <CButton color="primary" onClick={() => handleEditClient()}>Update</CButton>
                 </CModalFooter>

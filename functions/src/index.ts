@@ -335,3 +335,36 @@ exports.checkDocumentLinked = functions.https.onCall(async (data, context): Prom
     }
 });
 
+exports.calculateYTD = functions.https.onCall(async (data, context): Promise<object> => {
+    const cid = data.cid;
+    if (!cid) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "cid".');
+    }
+
+    try {
+        const currentYear = new Date().getFullYear();
+        const startOfYear = new Date(currentYear, 0, 1);
+        const endOfYear = new Date(currentYear, 11, 31);
+
+        const activitiesRef = admin.firestore().collection(`/users/${cid}/activities`);
+        const snapshot = await activitiesRef
+            .where("fund", "==", "AGQ")
+            .where("type", "in", ["profit", "income"])
+            .where("time", ">=", startOfYear)
+            .where("time", "<=", endOfYear)
+            .get();
+
+        let ytdTotal = 0;
+        snapshot.forEach((a c) => {
+            const activity = doc.data();
+            ytdTotal += activity.amount;
+        });
+
+        return { ytdTotal };
+    } catch (error) {
+        console.error("Error calculating YTD:", error);
+        throw new functions.https.HttpsError('unknown', 'Failed to calculate YTD due to an unexpected error.', {
+            errorDetails: (error as Error).message,
+        });
+    }
+});
