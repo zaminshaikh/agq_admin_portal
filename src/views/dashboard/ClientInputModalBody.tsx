@@ -210,8 +210,8 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     viewOnly,
 }) => {
     const db = new DatabaseService();
-    const [ytdLoading, setYtdLoading] = useState(false);
-
+    const [ytdLoading, setYTDLoading] = useState(false);
+    const [totalYTDLoading, setTotalYTDLoading] = useState(false);
 
     return (
         <CModalBody className="px-5">
@@ -375,7 +375,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             disabled={clientState.cid == '' || clientState.cid == null || viewOnly} 
                             loading={ytdLoading}
                             onClick={async () => {    
-                                setYtdLoading(true);
+                                setYTDLoading(true);
                                 try {const ytd = await db.getYTD(clientState.cid); 
                                 const newClientState = {
                                         ...clientState,
@@ -387,14 +387,14 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                 } catch (error) {
                                     console.error(error);
                                 } finally {
-                                    setYtdLoading(false);
+                                    setYTDLoading(false);
                                 }
                             }}
                         >Update YTD</CLoadingButton>
                     </CInputGroup>
                     <CInputGroup className='py-3'>
                         <CInputGroupText>Total YTD</CInputGroupText>
-                        <CFormInput type="number" id="ytd" value={clientState.totalYTD ?? clientState.ytd} disabled={viewOnly}
+                        <CFormInput type="number" id="ytd" value={clientState.totalYTD ?? clientState.ytd} disabled={clientState.connectedUsers.length == 0 || viewOnly}
                             onChange={(e) => {
                                 const newClientState = {
                                     ...clientState,
@@ -405,14 +405,14 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <CLoadingButton 
                             color="primary" 
                             variant="outline" 
-                            disabled={clientState.cid == '' || clientState.cid == null || viewOnly} 
-                            loading={ytdLoading}
+                            disabled={clientState.connectedUsers.length == 0 || clientState.cid == '' || clientState.cid == null || viewOnly} 
+                            loading={totalYTDLoading}
                             onClick={async () => {    
-                                setYtdLoading(true);
-                                try {const ytd = await db.getYTD(clientState.cid); 
+                                setTotalYTDLoading(true);
+                                try {const ytd = await db.getTotalYTD(clientState.cid); 
                                 const newClientState = {
                                         ...clientState,
-                                        ytd: ytd,
+                                        totalYTD: ytd,
                                 };
                                 setClientState(newClientState);
                                 console.log(ytd);
@@ -420,7 +420,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                 } catch (error) {
                                     console.error(error);
                                 } finally {
-                                    setYtdLoading(false);
+                                    setTotalYTDLoading(false);
                                 }
                             }}
                         >Update Total YTD</CLoadingButton>

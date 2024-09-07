@@ -312,7 +312,7 @@ export class DatabaseService {
                 connectedUsers: data?.connectedUsers ?? [],
                 totalAssets: generalAssetsData ? generalAssetsData.total : 0,
                 ytd: generalAssetsData ? generalAssetsData.ytd : 0,
-                totalYTD: generalAssetsData ? generalAssetsData.ytd : 0,
+                totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
                 phoneNumber: data?.phoneNumber ?? '',
                 firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
                 beneficiaries: data?.beneficiaries ?? [],
