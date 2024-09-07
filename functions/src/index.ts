@@ -345,7 +345,7 @@ exports.calculateYTD = functions.https.onCall(async (data, context): Promise<obj
         const startOfYear = new Date(currentYear, 0, 1);
         const endOfYear = new Date(currentYear, 11, 31);
 
-        const activitiesRef = admin.firestore().collection(`/testUsers/${cid}/activities`);
+        const activitiesRef = admin.firestore().collection(`/${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}/${config.ACTIVITIES_SUBCOLLECTION}`);
         const snapshot = await activitiesRef
             .where("fund", "==", "AGQ")
             .where("type", "in", ["profit", "income"])
@@ -381,7 +381,7 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
 
         // Function to calculate YTD for a single user
         const calculateYTDForUser = async (userCid: string): Promise<number> => {
-            const activitiesRef = admin.firestore().collection(`/testUsers/${userCid}/activities`);
+            const activitiesRef = admin.firestore().collection(`/${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
             const snapshot = await activitiesRef
                 .where("fund", "==", "AGQ")
                 .where("type", "in", ["profit", "income"])
@@ -415,7 +415,7 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
                 totalYTD += await calculateYTDForUser(currentUserCid);
 
                 // Get the user document to retrieve connectedUsers
-                const userDoc = await admin.firestore().collection('testUsers').doc(currentUserCid).get();
+                const userDoc = await admin.firestore().collection(`${config.FIRESTORE_ACTIVE_USERS_COLLECTION}`).doc(currentUserCid).get();
                 const userData = userDoc.data();
 
                 // Add connected users to the queue if they exist
