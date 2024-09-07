@@ -31,6 +31,7 @@ export interface User {
     beneficiaries: string[];
     connectedUsers: string[];
     totalAssets: number,
+    ytd: number,
     _selected?: boolean;
     activities?: Activity[];
     graphPoints?: GraphPoint[];
@@ -101,6 +102,7 @@ export const emptyUser: User = {
     appEmail: '',
     initEmail: '',
     totalAssets: 0,
+    ytd: 0,
     assets: {
         agq: {
             personal: 0,
@@ -169,6 +171,7 @@ export const formatCurrency = (amount: number): string => {
 
 
 export class DatabaseService {
+
     private db: Firestore = getFirestore(app);
     private usersCollection: CollectionReference<DocumentData, DocumentData>;
     private cidArray: string[];
@@ -306,6 +309,7 @@ export class DatabaseService {
                 appEmail: data?.appEmail ?? data?.email ?? 'User has not logged in yet',
                 connectedUsers: data?.connectedUsers ?? [],
                 totalAssets: generalAssetsData ? generalAssetsData.total : 0,
+                ytd: generalAssetsData ? generalAssetsData.ytd : 0,
                 phoneNumber: data?.phoneNumber ?? '',
                 firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
                 beneficiaries: data?.beneficiaries ?? [],
@@ -643,6 +647,18 @@ export class DatabaseService {
             await batch.commit();
         } else {
             return;
+        }
+    }
+
+    async updateYTD(cid: string): Promise<number> {
+        const calculateYTD = httpsCallable<{cid: string}, {ytdTotal: number}>(functions, 'calculateYTD');
+        try {
+            const result = await calculateYTD({ cid });
+            console.log('YTD Total:', result.data.ytdTotal);
+            return result.data.ytdTotal;
+        } catch (error) {
+            console.error('Error updating YTD:', error);
+            throw new Error('Failed to update YTD.');
         }
     }
 }
