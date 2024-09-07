@@ -1,11 +1,12 @@
-import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton } from '@coreui/react-pro';
+import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton } from '@coreui/react-pro';
 import { Activity, DatabaseService, GraphPoint, User } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
 import { EditAssetsSection } from "../../components/EditAssetsSection";
-import { isValid, parse } from 'date-fns';
+import { isValid, parse, set } from 'date-fns';
 import CIcon from '@coreui/icons-react';
 import * as icon from '@coreui/icons';
+import { useState } from 'react';
 
 
 interface ClientInputProps {
@@ -200,7 +201,6 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
     });
 }
 
-
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 
     setClientState,
@@ -210,6 +210,9 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     viewOnly,
 }) => {
     const db = new DatabaseService();
+    const [ytdLoading, setYtdLoading] = useState(false);
+
+
     return (
         <CModalBody className="px-5">
             <CInputGroup className="mb-3 py-3">
@@ -366,17 +369,28 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                 };
                                 setClientState(newClientState)
                         }}/>
-                        <CButton color="info" variant="outline" disabled={clientState.cid == '' || clientState.cid == null || viewOnly} onClick={async () => {    
-                            const ytd = await db.updateYTD(clientState.cid); 
-                            const newClientState = {
-                                    ...clientState,
-                                    ytd: ytd,
-                            };
-                            setClientState(newClientState);
-                            console.log(ytd);
-                            console.log(clientState);
-                        }}
-                        >Update YTD</CButton>
+                        <CLoadingButton 
+                            color="primary" 
+                            variant="outline" 
+                            disabled={clientState.cid == '' || clientState.cid == null || viewOnly} 
+                            loading={ytdLoading}
+                            onClick={async () => {    
+                                setYtdLoading(true);
+                                try {const ytd = await db.updateYTD(clientState.cid); 
+                                const newClientState = {
+                                        ...clientState,
+                                        ytd: ytd,
+                                };
+                                setClientState(newClientState);
+                                console.log(ytd);
+                                console.log(clientState);
+                                } catch (error) {
+                                    console.error(error);
+                                } finally {
+                                    setYtdLoading(false);
+                                }
+                            }}
+                        >Update YTD</CLoadingButton>
                     </CInputGroup>
 
                     <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>
