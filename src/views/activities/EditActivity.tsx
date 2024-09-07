@@ -108,7 +108,6 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
                     userOptions={userOptions}            
                 />
                 <CModalFooter>
-                    TEST
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
                     <CButton color="primary" onClick={handleEditActivity}>Update</CButton>
                 </CModalFooter>
