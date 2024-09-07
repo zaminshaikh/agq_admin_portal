@@ -651,7 +651,7 @@ export class DatabaseService {
     }
 
     async updateYTD(cid: string): Promise<number> {
-        const calculateYTD = await httpsCallable<{cid: string}, {ytdTotal: number}>(functions, 'calculateYTD');
+        const calculateYTD = httpsCallable<{cid: string}, {ytdTotal: number}>(functions, 'calculateYTD');
         try {
             const result = await calculateYTD({ cid });
             console.log('YTD Total:', result.data.ytdTotal);
