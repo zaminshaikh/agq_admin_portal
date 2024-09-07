@@ -32,6 +32,7 @@ export interface User {
     connectedUsers: string[];
     totalAssets: number,
     ytd: number,
+    totalYTD: number
     _selected?: boolean;
     activities?: Activity[];
     graphPoints?: GraphPoint[];
@@ -103,6 +104,7 @@ export const emptyUser: User = {
     initEmail: '',
     totalAssets: 0,
     ytd: 0,
+    totalYTD: 0,
     assets: {
         agq: {
             personal: 0,
@@ -310,6 +312,7 @@ export class DatabaseService {
                 connectedUsers: data?.connectedUsers ?? [],
                 totalAssets: generalAssetsData ? generalAssetsData.total : 0,
                 ytd: generalAssetsData ? generalAssetsData.ytd : 0,
+                totalYTD: generalAssetsData ? generalAssetsData.ytd : 0,
                 phoneNumber: data?.phoneNumber ?? '',
                 firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
                 beneficiaries: data?.beneficiaries ?? [],
@@ -418,7 +421,7 @@ export class DatabaseService {
         };
 
         // Delete these unused properties from the newUserDocData object
-        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints'].forEach(key => {
+        ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints', 'ytd', 'totalYTD'].forEach(key => {
                 delete newUserDocData[key];
         });
 
@@ -472,6 +475,7 @@ export class DatabaseService {
 
         let general = {
             ytd: user.ytd ?? 0, 
+            totalYTD: user.totalYTD ?? 0,
             total: agqDoc.total + ak1Doc.total
         }
 
@@ -650,8 +654,20 @@ export class DatabaseService {
         }
     }
 
-    async updateYTD(cid: string): Promise<number> {
-        const calculateYTD = httpsCallable<{cid: string}, {ytdTotal: number}>(functions, 'calculateYTD');
+    async getYTD(cid: string): Promise<number> {
+        const calculateYTD = httpsCallable<{cid: string}, {ytd: number}>(functions, 'calculateYTD');
+        try {
+            const result = await calculateYTD({ cid });
+            console.log('YTD Total:', result.data.ytd);
+            return result.data.ytd;
+        } catch (error) {
+            console.error('Error updating YTD:', error);
+            throw new Error('Failed to update YTD.');
+        }
+    }
+
+    async getTotalYTD(cid: string): Promise<number> {
+        const calculateYTD = httpsCallable<{cid: string}, {ytdTotal: number}>(functions, 'calculateTotalYTD');
         try {
             const result = await calculateYTD({ cid });
             console.log('YTD Total:', result.data.ytdTotal);

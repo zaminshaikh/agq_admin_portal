@@ -376,7 +376,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             loading={ytdLoading}
                             onClick={async () => {    
                                 setYtdLoading(true);
-                                try {const ytd = await db.updateYTD(clientState.cid); 
+                                try {const ytd = await db.getYTD(clientState.cid); 
                                 const newClientState = {
                                         ...clientState,
                                         ytd: ytd,
@@ -391,6 +391,39 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                 }
                             }}
                         >Update YTD</CLoadingButton>
+                    </CInputGroup>
+                    <CInputGroup className='py-3'>
+                        <CInputGroupText>Total YTD</CInputGroupText>
+                        <CFormInput type="number" id="ytd" value={clientState.totalYTD ?? clientState.ytd} disabled={viewOnly}
+                            onChange={(e) => {
+                                const newClientState = {
+                                    ...clientState,
+                                    ytd: parseFloat(e.target.value),
+                                };
+                                setClientState(newClientState)
+                        }}/>
+                        <CLoadingButton 
+                            color="primary" 
+                            variant="outline" 
+                            disabled={clientState.cid == '' || clientState.cid == null || viewOnly} 
+                            loading={ytdLoading}
+                            onClick={async () => {    
+                                setYtdLoading(true);
+                                try {const ytd = await db.getYTD(clientState.cid); 
+                                const newClientState = {
+                                        ...clientState,
+                                        ytd: ytd,
+                                };
+                                setClientState(newClientState);
+                                console.log(ytd);
+                                console.log(clientState);
+                                } catch (error) {
+                                    console.error(error);
+                                } finally {
+                                    setYtdLoading(false);
+                                }
+                            }}
+                        >Update Total YTD</CLoadingButton>
                     </CInputGroup>
 
                     <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>

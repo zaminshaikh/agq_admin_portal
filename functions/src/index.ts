@@ -353,13 +353,80 @@ exports.calculateYTD = functions.https.onCall(async (data, context): Promise<obj
             .where("time", "<=", endOfYear)
             .get();
 
-        let ytdTotal = 0;
+        let ytd = 0;
         snapshot.forEach((doc) => {
             const activity = doc.data();
-            ytdTotal += activity.amount;
+            ytd += activity.amount;
         });
 
-        return { ytdTotal };
+        return { ytd: ytd };
+    } catch (error) {
+        console.error("Error calculating YTD:", error);
+        throw new functions.https.HttpsError('unknown', 'Failed to calculate YTD due to an unexpected error.', {
+            errorDetails: (error as Error).message,
+        });
+    }
+});
+
+exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promise<object> => {
+    const cid = data.cid;
+    if (!cid) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "cid".');
+    }
+
+    try {
+        const currentYear = new Date().getFullYear();
+        const startOfYear = new Date(currentYear, 0, 1);
+        const endOfYear = new Date(currentYear, 11, 31);
+
+        // Function to calculate YTD for a single user
+        const calculateYTDForUser = async (userCid: string): Promise<number> => {
+            const activitiesRef = admin.firestore().collection(`/testUsers/${userCid}/activities`);
+            const snapshot = await activitiesRef
+                .where("fund", "==", "AGQ")
+                .where("type", "in", ["profit", "income"])
+                .where("time", ">=", startOfYear)
+                .where("time", "<=", endOfYear)
+                .get();
+
+            let ytdTotal = 0;
+            snapshot.forEach((doc) => {
+                const activity = doc.data();
+                ytdTotal += activity.amount;
+            });
+
+            return ytdTotal;
+        };
+
+        // Queue to track users that need to be processed
+        const userQueue: string[] = [cid];
+        let totalYTD = 0;
+        const processedUsers: Set<string> = new Set();
+
+        // Iteratively process the queue of users
+        while (userQueue.length > 0) {
+            const currentUserCid = userQueue.shift();
+            
+            // Avoid processing the same user more than once
+            if (currentUserCid && !processedUsers.has(currentUserCid)) {
+                processedUsers.add(currentUserCid);
+
+                // Calculate YTD for the current user
+                totalYTD += await calculateYTDForUser(currentUserCid);
+
+                // Get the user document to retrieve connectedUsers
+                const userDoc = await admin.firestore().collection('testUsers').doc(currentUserCid).get();
+                const userData = userDoc.data();
+
+                // Add connected users to the queue if they exist
+                if (userData && userData.connectedUsers) {
+                    const connectedUsers = userData.connectedUsers as string[];
+                    userQueue.push(...connectedUsers);
+                }
+            }
+        }
+
+        return { ytdTotal: totalYTD };
     } catch (error) {
         console.error("Error calculating YTD:", error);
         throw new functions.https.HttpsError('unknown', 'Failed to calculate YTD due to an unexpected error.', {
