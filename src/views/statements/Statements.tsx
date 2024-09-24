@@ -1,13 +1,14 @@
-import { useTranslation } from "react-i18next";
+import React from 'react';
+import { CContainer } from "@coreui/react-pro";
+import StatementsSearch from './components/StatementsSearch';
+import StatementsUsersButtons from './components/StatementsUsersButtons';
 
-const Statements = () => {
-    const { t } = useTranslation()
+const Statements: React.FC = () => {
 
-    // TODO: Implement Statements page
     return (
-        <div>
-            This page is not implemented.
-        </div>
+        <CContainer>
+            <StatementsUsersButtons />
+        </CContainer>
     );
 };
 
