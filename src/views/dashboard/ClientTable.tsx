@@ -5,8 +5,10 @@ import CreateClient from './CreateClient';
 import { DisplayClient } from './DisplayClient';
 import { DeleteClient } from './DeleteClient';
 import { EditClient } from './EditClient';
+import ImportClients from './ImportClients';
 
 const UsersTable = () => {
+    const [showImportClientsModal, setShowImportClientsModal] = useState(false);
     const [showCreateNewClientModal, setShowCreateNewClientModal] = useState(false);
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
@@ -102,10 +104,14 @@ const UsersTable = () => {
     
     return (
         <CContainer>
+            {showImportClientsModal && <ImportClients showModal={showImportClientsModal} setShowModal={setShowImportClientsModal} users={users}/>}
             {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} currentUser={currentUser}/>}
             {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} users={users} currentUser={currentUser ?? emptyUser}/>}
             {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} user={currentUser}/>}
             {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} users={users}/>} 
+            <div className="d-grid gap-2 py-3">
+                <CButton color='secondary' onClick={() => setShowImportClientsModal(true)}>Import Clients</CButton>
+            </div> 
             <div className="d-grid gap-2">
                 <CButton color='primary' onClick={() => setShowCreateNewClientModal(true)}>Add Client +</CButton>
             </div> 
