@@ -1,9 +1,10 @@
-import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro";
-import { useEffect, useState } from "react";
+import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow } from "@coreui/react-pro";
+import { useState } from "react";
 import React from "react";
 import { User, emptyUser } from "src/db/database";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import EditClient from './EditClient';
 
 interface ShowModalProps {
     showModal: boolean;
@@ -14,6 +15,7 @@ interface ShowModalProps {
 export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModal }) => {
     const [file, setFile] = useState<File | null>(null);
     const [clientStates, setClientStates] = useState<User[]>([]);
+    const [editClientIndex, setEditClientIndex] = useState<number | null>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
@@ -75,7 +77,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
             address: row["ADDRESS"] || '',
             dob: row["DOB"] ? new Date(row["DOB"]) : null,
             phoneNumber: row["PHONE NUMBER"] || '',
-            initEmail: row["Initial Email"] || '',
+            initEmail: row["Email"] || '',
             firstDepositDate: row["FIRST DEPOSIT DATE"] ? new Date(row["FIRST DEPOSIT DATE"]) : null,
             beneficiaries: row["BENEFICIARY"] ? [row["BENEFICIARY"]] : [],
             assets: {
@@ -101,9 +103,18 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
         };
     };
 
-    useEffect(() => {
-        console.log(clientStates);
-    }, [clientStates]);
+    const handleEditClient = (index: number) => {
+        setEditClientIndex(index);
+    };
+
+    const handleSaveClient = (updatedClient: User) => {
+        const updatedClients = [...clientStates];
+        if (editClientIndex !== null) {
+            updatedClients[editClientIndex] = updatedClient;
+            setClientStates(updatedClients);
+            setEditClientIndex(null);
+        }
+    };
 
     return (
         <div>
@@ -118,14 +129,47 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 <CModalHeader>
                     <CModalTitle>Import Clients</CModalTitle>
                 </CModalHeader>
-                <CModalBody>
+                <CModalBody className="p-5">
                     <CFormInput type="file" onChange={handleFileChange} />
+                    <div className="mt-3"></div>
+                    <CTable >
+                        <CTableHead >
+                            <CTableRow>
+                                <CTableHeaderCell>Index</CTableHeaderCell>
+                                <CTableHeaderCell>Last Name</CTableHeaderCell>
+                                <CTableHeaderCell>First Name</CTableHeaderCell>
+                                <CTableHeaderCell>Actions</CTableHeaderCell>
+                            </CTableRow>
+                        </CTableHead>
+                        <CTableBody>
+                            {clientStates.map((client, index) => (
+                                <CTableRow key={index}>
+                                    <CTableDataCell>{index + 1}</CTableDataCell>
+                                    <CTableDataCell>{client.lastName}</CTableDataCell>
+                                    <CTableDataCell>{client.firstName}</CTableDataCell>
+                                    <CTableDataCell>
+                                        <CButton color="warning"  variant='outline' onClick={() => handleEditClient(index)}>Edit Client</CButton>
+                                    </CTableDataCell>
+                                </CTableRow>
+                            ))}
+                        </CTableBody>
+                    </CTable>
                 </CModalBody>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
-                    <CButton color="primary" onClick={undefined}>Import</CButton>
+                    <CButton color="primary" onClick={() => console.log(clientStates)}>Import</CButton>
                 </CModalFooter>
             </CModal>
+
+            {editClientIndex !== null && (
+                <EditClient
+                    showModal={editClientIndex !== null}
+                    setShowModal={() => setEditClientIndex(null)}
+                    users={clientStates}
+                    currentUser={clientStates[editClientIndex]}
+                    onSave={handleSaveClient}
+                />
+            )}
         </div>
     );
 };

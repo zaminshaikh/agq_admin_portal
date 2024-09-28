@@ -382,8 +382,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                         ytd: ytd,
                                 };
                                 setClientState(newClientState);
-                                console.log(ytd);
-                                console.log(clientState);
                                 } catch (error) {
                                     console.error(error);
                                 } finally {
