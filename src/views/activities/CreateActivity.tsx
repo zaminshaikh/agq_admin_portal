@@ -1,7 +1,7 @@
 import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
 import { useEffect, useState } from "react";
 import React from "react";
-import { Activity, DatabaseService, User, emptyActivity, emptyUser } from '../../db/database.ts'
+import { Activity, DatabaseService, Client, emptyActivity, emptyUser } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
@@ -11,23 +11,23 @@ import Activities from './Activities';
 interface ShowModalProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
-    users?: User[];
+    clients?: Client[];
     selectedUser?: string | number;
     setAllActivities: (activites: Activity[]) => void;
     setFilteredActivities: (activites: Activity[]) => void;
 }
 
 
-export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModal, users, selectedUser, setAllActivities, setFilteredActivities}) => {
+export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, selectedUser, setAllActivities, setFilteredActivities}) => {
     const db = new DatabaseService();
     const [activityState, setActivityState] = useState<Activity>(emptyActivity);
-    const [clientState, setClientState] = useState<User | null>(users?.find(user => user.cid === selectedUser) ?? null);
+    const [clientState, setClientState] = useState<Client | null>(clients?.find(client => client.cid === selectedUser) ?? null);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
-    const userOptions = users!
-        .map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: selectedUser === user.cid }))
+    const clientOptions = clients!
+        .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: selectedUser === client.cid }))
         .sort((a, b) => a.label.localeCompare(b.label));
     const handleCreateActivity = async () => {
         if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
@@ -51,7 +51,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
             setShowModal(false);
             const activities = await db.getActivities(); // Get the new updated activities
             setAllActivities(activities)
-            // Filter by the user we just created an activity for
+            // Filter by the client we just created an activity for
             setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedUser ?? clientState.cid)));
         }
     }
@@ -83,7 +83,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                     setActivityState={setActivityState}
                     clientState={clientState}
                     setClientState={setClientState}
-                    userOptions={userOptions}            
+                    clientOptions={clientOptions}            
                 />
                 <CModalFooter>
                     <CButton color="primary" onClick={handleCreateActivity}>Create</CButton>

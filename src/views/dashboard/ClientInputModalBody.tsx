@@ -1,5 +1,5 @@
 import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton } from '@coreui/react-pro';
-import { Activity, DatabaseService, GraphPoint, User } from '../../db/database.ts'
+import { Activity, DatabaseService, GraphPoint, Client } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
 import { EditAssetsSection } from "../../components/EditAssetsSection";
@@ -10,16 +10,16 @@ import { useState } from 'react';
 
 
 interface ClientInputProps {
-    clientState: User,
-    setClientState: (clientState: User) => void,
+    clientState: Client,
+    setClientState: (clientState: Client) => void,
     useCompanyName: boolean,
     setUseCompanyName: (useCompanyName: boolean) => void,
-    userOptions: (Option | OptionsGroup)[],
+    clientOptions: (Option | OptionsGroup)[],
     viewOnly: boolean,
 }
 
-// Handles the file input from the user
-const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
+// Handles the file input from the client
+const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
 
     const getActivityType = (type: string | undefined) => {
         if (!type) return "none";
@@ -140,7 +140,7 @@ const parseDateWithTwoDigitYear = (dateString: string) => {
     return parsedDate;
 };
 
-const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
+const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -206,7 +206,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     setClientState,
     useCompanyName,
     setUseCompanyName,
-    userOptions,
+    clientOptions,
     viewOnly,
 }) => {
     const db = new DatabaseService();
@@ -342,9 +342,9 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     </CInputGroup>
 
                     <CMultiSelect 
-                        id="connected-users"
+                        id="connected-clients"
                         className="mb-3  py-3" 
-                        options={userOptions} 
+                        options={clientOptions} 
                         placeholder="Select Connected Users" 
                         selectAll={false}
                         disabled={viewOnly}
@@ -443,7 +443,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     )
 } 
 
-export const ValidateClient = (clientState: User, useCompanyName: boolean, setInvalidInputFields: (fields: string[]) => void) => {
+export const ValidateClient = (clientState: Client, useCompanyName: boolean, setInvalidInputFields: (fields: string[]) => void) => {
     let validClient = true;
     let fields: string[] = [];
 

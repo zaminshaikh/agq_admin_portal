@@ -4,7 +4,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 // import { IMaskMixin } from 'react-imask'
 import React from "react";
-import { DatabaseService, User, emptyUser } from '../../db/database.ts'
+import { DatabaseService, Client, emptyUser } from '../../db/database.ts'
 import { ClientInputModalBody, ValidateClient } from './ClientInputModalBody.tsx'
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 
@@ -21,22 +21,23 @@ import { FormValidationErrorModal } from '../../components/ErrorModal';
 interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
-        users?: User[];
-        currentUser?: User;
+        clients?: Client[];
+        activeClient?: Client;
+        onSave?: (updatedClient: Client) => void;
 }
 
 // TODO: Perform validation on address and email
 // Initial modal to create new client
-export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users, currentUser}) => {
+export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients: clients, activeClient: activeClient}) => {
     // Initialize the client state
-    const initialClientState: User = {...currentUser ?? emptyUser,};
+    const initialClientState: Client = {...activeClient ?? emptyUser,};
 
     const db = new DatabaseService();
-    const [clientState, setClientState] = useState<User>(initialClientState);
+    const [clientState, setClientState] = useState<Client>(initialClientState);
     
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [useCompanyName, setUseCompanyName] = useState(clientState.companyName ? true : false) ;
-    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: (currentUser?.connectedUsers?.includes(user.cid))}))
+    const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (activeClient?.connectedUsers?.includes(client.cid))}))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
@@ -83,14 +84,14 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, u
                 size="xl" 
                 onClose={() => setShowModal(false)}>
                 <CModalHeader>
-                    <CModalTitle>Edit {currentUser?.firstName} {currentUser?.lastName}</CModalTitle>
+                    <CModalTitle>Edit {activeClient?.firstName} {activeClient?.lastName}</CModalTitle>
                 </CModalHeader>
                 <ClientInputModalBody 
                     clientState={clientState} 
                     setClientState={setClientState} 
                     useCompanyName={useCompanyName}
                     setUseCompanyName={setUseCompanyName} 
-                    userOptions={userOptions}
+                    clientOptions={clientOptions}
                     viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>

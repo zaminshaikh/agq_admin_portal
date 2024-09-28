@@ -1,7 +1,7 @@
 import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow } from "@coreui/react-pro";
 import { useState } from "react";
 import React from "react";
-import { User, emptyUser } from "src/db/database";
+import { Client, emptyUser } from "src/db/database";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import EditClient from './EditClient';
@@ -9,12 +9,12 @@ import EditClient from './EditClient';
 interface ShowModalProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
-    users: User[];
+    clients: Client[];
 }
 
 export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModal }) => {
     const [file, setFile] = useState<File | null>(null);
-    const [clientStates, setClientStates] = useState<User[]>([]);
+    const [clientStates, setClientStates] = useState<Client[]>([]);
     const [editClientIndex, setEditClientIndex] = useState<number | null>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +68,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
         reader.readAsArrayBuffer(file);
     };
 
-    const createClientState = (row: any): User => {
+    const createClientState = (row: any): Client => {
         return {
             ...emptyUser,
             firstName: row["CLIENT'S FIRST NAME"] || '',
@@ -107,13 +107,18 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
         setEditClientIndex(index);
     };
 
-    const handleSaveClient = (updatedClient: User) => {
+    const handleSaveClient = (updatedClient: Client) => {
         const updatedClients = [...clientStates];
         if (editClientIndex !== null) {
             updatedClients[editClientIndex] = updatedClient;
             setClientStates(updatedClients);
             setEditClientIndex(null);
         }
+    };
+
+    const handleRemoveClient = (index: number) => {
+        const updatedClients = clientStates.filter((_, i) => i !== index);
+        setClientStates(updatedClients);
     };
 
     return (
@@ -132,7 +137,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 <CModalBody className="p-5">
                     <CFormInput type="file" onChange={handleFileChange} />
                     <div className="mt-3"></div>
-                    <CTable >
+                    <CTable striped hover >
                         <CTableHead >
                             <CTableRow>
                                 <CTableHeaderCell>Index</CTableHeaderCell>
@@ -148,7 +153,8 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                                     <CTableDataCell>{client.lastName}</CTableDataCell>
                                     <CTableDataCell>{client.firstName}</CTableDataCell>
                                     <CTableDataCell>
-                                        <CButton color="warning"  variant='outline' onClick={() => handleEditClient(index)}>Edit Client</CButton>
+                                        <CButton className="me-5" color="warning"  variant='outline' onClick={() => handleEditClient(index)}>Edit Client</CButton>
+                                        <CButton color="danger"  variant='outline' onClick={() => handleRemoveClient(index)}>Remove</CButton>
                                     </CTableDataCell>
                                 </CTableRow>
                             ))}
@@ -165,8 +171,8 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 <EditClient
                     showModal={editClientIndex !== null}
                     setShowModal={() => setEditClientIndex(null)}
-                    users={clientStates}
-                    currentUser={clientStates[editClientIndex]}
+                    clients={clientStates}
+                    activeClient={clientStates[editClientIndex]}
                     onSave={handleSaveClient}
                 />
             )}

@@ -1,36 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
-import { DatabaseService, Activity, emptyActivity, User, emptyUser } from 'src/db/database';
+import { DatabaseService, Activity, emptyActivity, Client, emptyUser } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 
 interface EditActivityProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
-    users: User[]; 
+    clients: Client[]; 
     activity?: Activity;
     selectedUser?: string | number;
     setAllActivities: (activites: Activity[]) => void;
     setFilteredActivities: (activites: Activity[]) => void;
 }
 
-const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, users, activity, selectedUser, setAllActivities, setFilteredActivities}) => {
+const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, selectedUser, setAllActivities, setFilteredActivities}) => {
     const db = new DatabaseService();
 
     const [activityState, setActivityState] = useState<Activity>(activity ?? emptyActivity);
-    const [clientState, setClientState] = useState<User | null>(emptyUser);
+    const [clientState, setClientState] = useState<Client | null>(emptyUser);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
-    const userOptions = users!
-        .map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: activity?.parentDocId === user.cid }))
+    const clientOptions = clients!
+        .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: activity?.parentDocId === client.cid }))
         .sort((a, b) => a.label.localeCompare(b.label));;
     
     // TODO: THIS DOES NOT WORK UNTIL NON USER CAN BE A RECIPIENT   
-    // if (userOptions.find(option => option.value === activity?.recipient) === undefined ) {
+    // if (clientOptions.find(option => option.value === activity?.recipient) === undefined ) {
     //     const nonUserOption = {value: activity?.recipient as string, label: activity?.recipient as string, selected: true};   
-    //     userOptions.push(nonUserOption);
+    //     clientOptions.push(nonUserOption);
     // }
 
     const handleEditActivity = async () => {
@@ -61,7 +61,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
         setShowModal(false);
         const activities = await db.getActivities(); // Get the new updated activities
         setAllActivities(activities)
-        // Filter by the user we just edited an activity for
+        // Filter by the client we just edited an activity for
         setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedUser ?? clientState.cid)));
     }
 
@@ -77,11 +77,11 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const user = await db.getUser(activityState.parentDocId ?? '');
-                setClientState(user);
+                const client = await db.getUser(activityState.parentDocId ?? '');
+                setClientState(client);
 
             } catch (error) {
-                console.error('Failed to fetch user:', error);
+                console.error('Failed to fetch client:', error);
             }
         };
         fetchUser();
@@ -105,7 +105,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, us
                     setActivityState={setActivityState}
                     clientState={clientState}
                     setClientState={setClientState}
-                    userOptions={userOptions}            
+                    clientOptions={clientOptions}            
                 />
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>

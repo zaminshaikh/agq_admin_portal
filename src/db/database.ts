@@ -15,7 +15,7 @@ const functions = getFunctions();
  * 
  * .uid - The user's UID, or the empty string if they have not signed up
  */
-export interface User {
+export interface Client {
     [key: string]: any;
     cid: string;
     uid: string;
@@ -88,7 +88,7 @@ export interface GraphPoint {
     amount: number | null;
 }
 
-export const emptyUser: User = {
+export const emptyUser: Client = {
     firstName: '',
     lastName: '',
     companyName: '',
@@ -255,7 +255,7 @@ export class DatabaseService {
         const querySnapshot = await getDocs(this.usersCollection);
 
         // Initialize an empty array to hold the user objects
-        const users: User[] = [];
+        const users: Client[] = [];
 
         // Use Promise.all to fetch all users concurrently
         const userPromises = querySnapshot.docs.map(async (userSnapshot) => {
@@ -292,14 +292,14 @@ export class DatabaseService {
         userSnapshot: DocumentSnapshot,
         generalAssetsSnapshot: DocumentSnapshot,
         agqAssetsSnapshot: DocumentSnapshot,
-        ak1AssetsSnapshot: DocumentSnapshot): User | null => {
+        ak1AssetsSnapshot: DocumentSnapshot): Client | null => {
         if (userSnapshot.exists()) {
             const data = userSnapshot.data();
             const generalAssetsData = generalAssetsSnapshot.data();
             const agqAssetsData = agqAssetsSnapshot.data();
             const ak1AssetsData = ak1AssetsSnapshot.data();
 
-            const user: User = {
+            const user: Client = {
                 cid: userSnapshot.id,
                 uid: data?.uid ?? '',
                 firstName: data?.name?.first ?? '',
@@ -392,7 +392,7 @@ export class DatabaseService {
      *
      * @returns {Promise<void>} Returns a Promise that resolves when the user and associated documents have been created in the Firestore database.
      */
-    createUser = async (newUser: User) => {
+    createUser = async (newUser: Client) => {
 
         // Using the passed email, first name, and initial email to create a unique 8 digit CID using our hash function
         const newUserDocId = await this.hash(newUser.firstName + '-' + newUser.lastName + '-' + newUser.initEmail);
@@ -409,7 +409,7 @@ export class DatabaseService {
      * @param cid 
      * 
      */
-    setUser = async (user: User) => {
+    setUser = async (user: Client) => {
         // Create a new DocumentData object from the newUser object, with a name property that is an object containing first, last, and company properties.
         const newUserDocData: DocumentData = {
             ...user,
@@ -455,7 +455,7 @@ export class DatabaseService {
         }
     }
 
-    async setAssets(user: User) {
+    async setAssets(user: Client) {
         // Create a reference to the assets subcollection for this user
         const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, user.cid);
 
@@ -517,7 +517,7 @@ export class DatabaseService {
      * @param updatedUser 
      *
      */
-    updateUser = async (updatedUser: User) => {
+    updateUser = async (updatedUser: Client) => {
         await this.setUser(updatedUser);
     }
 

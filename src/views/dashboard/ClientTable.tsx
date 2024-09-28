@@ -1,5 +1,5 @@
 import { CButton, CCardBody, CCol, CCollapse, CContainer, CRow, CSmartTable, CSpinner } from '@coreui/react-pro';
-import { DatabaseService, User, emptyUser, formatCurrency } from 'src/db/database.ts';
+import { DatabaseService, Client, emptyUser, formatCurrency } from 'src/db/database.ts';
 import { useEffect, useState } from 'react';
 import CreateClient from './CreateClient';
 import { DisplayClient } from './DisplayClient';
@@ -13,24 +13,24 @@ const UsersTable = () => {
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
-    const [users, setUsers] = useState<User[]>([]);
-    const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
+    const [clients, setUsers] = useState<Client[]>([]);
+    const [currentUser, setCurrentUser] = useState<Client | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState<string[]>([])
 
-    // useEffect hook to fetch users when the component mounts
+    // useEffect hook to fetch clients when the component mounts
     useEffect(() => {
         const fetchUsers = async () => {
             // Create an instance of the DatabaseService
             const db = new DatabaseService();
             
-            // Fetch users from the database
-            let users = await db.getUsers();
+            // Fetch clients from the database
+            let clients = await db.getUsers();
             
-            // If users are fetched successfully, update the state
-            if (users !== null) {
-                users = users as User[];
-                setUsers(users);
+            // If clients are fetched successfully, update the state
+            if (clients !== null) {
+                clients = clients as Client[];
+                setUsers(clients);
                 setIsLoading(false);
             }
         };
@@ -104,11 +104,11 @@ const UsersTable = () => {
     
     return (
         <CContainer>
-            {showImportClientsModal && <ImportClients showModal={showImportClientsModal} setShowModal={setShowImportClientsModal} users={users}/>}
-            {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} currentUser={currentUser}/>}
-            {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} users={users} currentUser={currentUser ?? emptyUser}/>}
-            {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} user={currentUser}/>}
-            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} users={users}/>} 
+            {showImportClientsModal && <ImportClients showModal={showImportClientsModal} setShowModal={setShowImportClientsModal} clients={clients}/>}
+            {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} activeClient={currentUser}/>}
+            {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} clients={clients} currentUser={currentUser ?? emptyUser}/>}
+            {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} client={currentUser}/>}
+            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients}/>} 
             <div className="d-grid gap-2 py-3">
                 <CButton color='secondary' onClick={() => setShowImportClientsModal(true)}>Import Clients</CButton>
             </div> 
@@ -123,18 +123,18 @@ const UsersTable = () => {
                 columns={columns}
                 columnFilter
                 columnSorter
-                items={users}
+                items={clients}
                 itemsPerPageSelect
                 itemsPerPage={50}
                 pagination
                 sorterValue={{ column: 'firstName', state: 'asc' }}
                 scopedColumns={{
-                    totalAssets: (item: User) => (
+                    totalAssets: (item: Client) => (
                         <td>
                             {formatCurrency(item.totalAssets)}
                         </td>
                     ),
-                    show_details: (item: User) => {
+                    show_details: (item: Client) => {
                         return (
                         <td className="py-2">
                             <CButton
@@ -160,7 +160,7 @@ const UsersTable = () => {
                                     <CButton size="sm" color="info" className='ml-1' variant="outline" 
                                         onClick={() => {
                                             setShowDisplayDetailsModal(true)
-                                            setCurrentUser(users.find(user => user.cid === item.cid))
+                                            setCurrentUser(clients.find(client => client.cid === item.cid))
                                         }}>
                                         Client Details
                                     </CButton>
@@ -169,7 +169,7 @@ const UsersTable = () => {
                                     <CButton size="sm" color="warning" className="ml-1" variant="outline"
                                     onClick={() => {
                                         setShowEditClientModal(true);
-                                        setCurrentUser(users.find(user => user.cid === item.cid))
+                                        setCurrentUser(clients.find(client => client.cid === item.cid))
                                     }}>
                                         Edit Client 
                                     </CButton>
@@ -180,14 +180,14 @@ const UsersTable = () => {
                                         const db = new DatabaseService();
                                         db.unlinkUser(item.cid);
                                     }}>
-                                        Unlink User 
+                                        Unlink Client 
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
                                     <CButton size="sm" color="danger" className="ml-1" variant="outline" 
                                         onClick={() => {
                                             setShowDeleteClientModal(true);
-                                            setCurrentUser(users.find(user => user.cid === item.cid))
+                                            setCurrentUser(clients.find(client => client.cid === item.cid))
                                         }}>
                                         Delete Client
                                     </CButton>

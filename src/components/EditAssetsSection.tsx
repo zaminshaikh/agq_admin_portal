@@ -1,5 +1,5 @@
 import { CContainer, CRow, CCol, CInputGroup, CInputGroupText, CFormInput } from "@coreui/react-pro";
-import { User } from "../db/database";
+import { Client } from "../db/database";
 
 const getAssetType = (id: string) => {
     switch (id) {
@@ -30,8 +30,8 @@ const getAssetType = (id: string) => {
 }
 
 export const EditAssetsSection: React.FC<{
-    clientState: User, 
-    setClientState: (clientState: User) => void, 
+    clientState: Client, 
+    setClientState: (clientState: Client) => void, 
     useCompanyName: boolean, 
     activeFund?: string, 
     incrementAmount?: number,
@@ -72,7 +72,7 @@ export const EditAssetsSection: React.FC<{
     );
 }
 
-export const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, clientState: User, setClientState: (clientState: User) => void, incrementAmount: number}> = ({title, id, disabled, fund, clientState, setClientState, incrementAmount}) => {
+export const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, clientState: Client, setClientState: (clientState: Client) => void, incrementAmount: number}> = ({title, id, disabled, fund, clientState, setClientState, incrementAmount}) => {
     return (
         <CInputGroup className="mb-3 py-3">
             <CInputGroupText style={{ width: "200px" }}>{title}</CInputGroupText>
