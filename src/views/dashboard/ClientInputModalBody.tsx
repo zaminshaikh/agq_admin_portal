@@ -1,5 +1,5 @@
-import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton } from '@coreui/react-pro';
-import { Activity, DatabaseService, GraphPoint, Client } from '../../db/database.ts'
+import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton, CTable, CTableHead, CTableHeaderCell, CTableRow, CTableBody, CTableDataCell } from '@coreui/react-pro';
+import { Activity, DatabaseService, GraphPoint, Client, formatCurrency } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
 import { EditAssetsSection } from "../../components/EditAssetsSection";
@@ -7,6 +7,7 @@ import { isValid, parse, set } from 'date-fns';
 import CIcon from '@coreui/icons-react';
 import * as icon from '@coreui/icons';
 import { useState } from 'react';
+import { formatDate, toTitleCase } from 'src/utils/utilities.ts';
 
 
 interface ClientInputProps {
@@ -39,14 +40,6 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
     // List of exceptions to preserve original casing
     const exceptions = ["LLC", "Inc", "Ltd"];
 
-    // Function to convert a string to title case while preserving exceptions
-    const toTitleCase = (str: string, exceptions: string[]) => {
-        return str.split(' ').map(word => {
-            return exceptions.includes(word.toUpperCase()) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-        }).join(' ');
-    };
-
-
     // Parse the CSV file
     Papa.parse(file, {
         header: true,
@@ -66,15 +59,6 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
     
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName.trimEnd() + ' ' + clientState.lastName.trimEnd();
-
-                // console.log("SECURITY NAME:", row["Security Name"].toLowerCase());
-                console.log("NAME:", name.toLowerCase());
-                console.log("CLIENT FULL NAME:", clientFullName.toLowerCase());
-                console.log("CLIENT COMPANY NAME:", clientState.companyName.toLowerCase());
-
-                console.log(name.toLowerCase() !== clientFullName.toLowerCase())
-                console.log(name.toLowerCase() !== clientState.companyName.toLowerCase())
-
     
                 if (name.toLowerCase() !== clientFullName.toLowerCase() && name.toLowerCase() !== clientState.companyName.toLowerCase()) return;
                 else if (name.toLowerCase() === clientState.companyName.toLowerCase()) { name = clientState.companyName }
@@ -89,8 +73,6 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                     return;
                 }
     
-                console.log(`Raw date string: ${dateString}`);
-    
                 // Parse the date string correctly
                 const parsedDate = parseDateWithTwoDigitYear(dateString);
                 if (parsedDate === null) return;
@@ -101,6 +83,7 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                     amount: Math.abs(parseFloat(row["Amount (Unscaled)"])),
                     recipient: name,
                     time: parsedDate,
+                    formattedTime: formatDate(parsedDate),
                     type: getActivityType(row["Type"]),
                 };
     
@@ -110,10 +93,12 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
 
             console.log(activities);
 
-            // Update the client state with the new activities
             const newClientState = {
                 ...clientState,
-                activities: [...(clientState.activities || []), ...activities],
+                activities: [
+                    ...(clientState.activities || []),
+                    ...activities
+                ].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
             };
 
             setClientState(newClientState)
@@ -201,6 +186,20 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
     });
 }
 
+/**
+ * Component representing the body of the client input modal.
+ * 
+ * @component
+ * @param {ClientInputProps} props - The properties passed to the component.
+ * @param {ClientState} props.clientState - The current state of the client.
+ * @param {React.Dispatch<React.SetStateAction<ClientState>>} props.setClientState - Function to update the client state.
+ * @param {boolean} props.useCompanyName - Flag indicating whether to use the company name.
+ * @param {React.Dispatch<React.SetStateAction<boolean>>} props.setUseCompanyName - Function to update the useCompanyName flag.
+ * @param {Array<Option>} props.clientOptions - Options for connected clients.
+ * @param {boolean} props.viewOnly - Flag indicating whether the form is in view-only mode.
+ * 
+ * @returns {JSX.Element} The rendered component.
+ */
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 
     setClientState,
@@ -212,6 +211,15 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     const db = new DatabaseService();
     const [ytdLoading, setYTDLoading] = useState(false);
     const [totalYTDLoading, setTotalYTDLoading] = useState(false);
+
+    const handleRemoveActivity = (index: number) => {
+        const updatedClient = clientState.activities?.filter((_, i) => i !== index);
+        const newState = {
+            ...clientState,
+            activities: updatedClient
+        }
+        setClientState(newState);
+    };
 
     return (
         <CModalBody className="px-5">
@@ -426,12 +434,39 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
                     <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>
 
-                    <div className="mb-3  py-3">
+                    <div className="mb-3 ">
                         <h5>Upload Previous Activities</h5>
                         <div  className="mb-3 py-3">
                             <CFormInput type="file" id="formFile" onChange={(event) => handleActivitiesFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
                         </div>
                     </div>
+                    
+                    {/* Imported Activities Table */}
+                    {(clientState.activities && clientState.activities.length > 0) && <CTable striped hover >
+                        <CTableHead >
+                            <CTableRow>
+                                <CTableHeaderCell>Index</CTableHeaderCell>
+                                <CTableHeaderCell>Type</CTableHeaderCell>
+                                <CTableHeaderCell>Time</CTableHeaderCell>
+                                <CTableHeaderCell>Amount</CTableHeaderCell>
+                                <CTableHeaderCell>Actions</CTableHeaderCell>
+                            </CTableRow>
+                        </CTableHead>
+                        <CTableBody>
+                            {clientState.activities?.map((activity, index) => (
+                                <CTableRow key={index}>
+                                    <CTableDataCell>{index + 1}</CTableDataCell>
+                                    <CTableDataCell>{toTitleCase(activity.type)}</CTableDataCell>
+                                    <CTableDataCell>{activity.formattedTime}</CTableDataCell>
+                                    <CTableDataCell>{formatCurrency(activity.amount)}</CTableDataCell>
+                                    <CTableDataCell>
+                                        <CButton className="me-5" color="warning"  variant='outline' onClick={() => {}}>Edit Activity</CButton>
+                                        <CButton color="danger"  variant='outline' onClick={() => handleRemoveActivity(index)}>Remove</CButton>
+                                    </CTableDataCell>
+                                </CTableRow>
+                            ))}
+                        </CTableBody>
+                    </CTable>}
 
                     <div className="mb-3 ">
                         <h5>Upload Graph Points</h5>

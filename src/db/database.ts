@@ -5,6 +5,7 @@ import config from '../../config.json'
 import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { formatDate } from 'src/utils/utilities.ts'
 
 const functions = getFunctions();
 
@@ -65,7 +66,7 @@ export interface Activity {
     amount: number;
     fund: string;
     recipient: string;
-    time: Date | Timestamp;
+    time: Date;
     formattedTime?: string;
     type: string;
     isDividend?: boolean;
@@ -535,7 +536,7 @@ export class DatabaseService {
             let formattedTime = '';
             const time = data.time instanceof Timestamp ? data.time.toDate() : data.time;
             if (time instanceof Date) {
-                formattedTime = this.formatDate(time);
+                formattedTime = formatDate(time);
             }
 
             return {
@@ -547,17 +548,6 @@ export class DatabaseService {
         });
 
         return activities;
-    }
-
-    // Utility function for formatting Date
-    formatDate = (date: Date): string => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        const seconds = date.getSeconds().toString().padStart(2, '0');
-        return `${year}/${month}/${day} at ${hours}:${minutes}:${seconds} EST`;
     }
 
     createActivity = async (activity: Activity, cid: string) => {
