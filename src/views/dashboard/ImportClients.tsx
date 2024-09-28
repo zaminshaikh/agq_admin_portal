@@ -1,7 +1,7 @@
 import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow } from "@coreui/react-pro";
 import { useState } from "react";
 import React from "react";
-import { Client, emptyClient } from "src/db/database";
+import { Client, DatabaseService, emptyClient } from "src/db/database";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import EditClient from './EditClient';
@@ -123,9 +123,15 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
     };
 
     const handleImportClients = () => {
-        clientStates.map(client => {
-            CreateClient
+        console.log("CALLED")
+        const db = new DatabaseService();
+        const promises = clientStates.map(client => {
+            return db.createClient(client)
         })
+        Promise.all(promises).then(() => {
+            setShowModal(false);
+            window.location.reload();
+        });
     }
 
     return (
@@ -170,7 +176,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 </CModalBody>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
-                    <CButton color="primary" onClick={() => console.log(clientStates)}>Import</CButton>
+                    <CButton color="primary" onClick={() => handleImportClients()}>Import</CButton>
                 </CModalFooter>
             </CModal>
 
