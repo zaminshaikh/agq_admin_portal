@@ -4,7 +4,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 // import { IMaskMixin } from 'react-imask'
 import React from "react";
-import { DatabaseService, Client, emptyUser } from '../../db/database.ts'
+import { DatabaseService, Client, emptyClient } from '../../db/database.ts'
 import { ClientInputModalBody, ValidateClient } from './ClientInputModalBody.tsx'
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 
@@ -17,7 +17,7 @@ import { FormValidationErrorModal } from '../../components/ErrorModal';
 
 // const MaskedInput = IMaskMixin(CFormInputWithMask);
 
-// State variable, determines if modal is shown based on UsersTable.tsx state
+// State variable, determines if modal is shown based on ClientsTable.tsx state
 interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
@@ -30,7 +30,7 @@ interface ShowModalProps {
 // Initial modal to create new client
 export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients: clients, activeClient: activeClient}) => {
     // Initialize the client state
-    const initialClientState: Client = {...activeClient ?? emptyUser,};
+    const initialClientState: Client = {...activeClient ?? emptyClient,};
 
     const db = new DatabaseService();
     const [clientState, setClientState] = useState<Client>(initialClientState);
@@ -54,7 +54,7 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
                 });
             }
             // If validation passes, create the client and reload the page
-            await db.updateUser(clientState);
+            await db.updateClient(clientState);
             setShowModal(false);
             window.location.reload();
         }

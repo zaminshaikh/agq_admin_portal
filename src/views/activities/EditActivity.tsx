@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
-import { DatabaseService, Activity, emptyActivity, Client, emptyUser } from 'src/db/database';
+import { DatabaseService, Activity, emptyActivity, Client, emptyClient } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 
@@ -9,16 +9,16 @@ interface EditActivityProps {
     setShowModal: (show: boolean) => void;
     clients: Client[]; 
     activity?: Activity;
-    selectedUser?: string | number;
+    selectedClient?: string | number;
     setAllActivities: (activites: Activity[]) => void;
     setFilteredActivities: (activites: Activity[]) => void;
 }
 
-const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, selectedUser, setAllActivities, setFilteredActivities}) => {
+const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, selectedClient, setAllActivities, setFilteredActivities}) => {
     const db = new DatabaseService();
 
     const [activityState, setActivityState] = useState<Activity>(activity ?? emptyActivity);
-    const [clientState, setClientState] = useState<Client | null>(emptyUser);
+    const [clientState, setClientState] = useState<Client | null>(emptyClient);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
@@ -29,8 +29,8 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     
     // TODO: THIS DOES NOT WORK UNTIL NON USER CAN BE A RECIPIENT   
     // if (clientOptions.find(option => option.value === activity?.recipient) === undefined ) {
-    //     const nonUserOption = {value: activity?.recipient as string, label: activity?.recipient as string, selected: true};   
-    //     clientOptions.push(nonUserOption);
+    //     const nonClientOption = {value: activity?.recipient as string, label: activity?.recipient as string, selected: true};   
+    //     clientOptions.push(nonClientOption);
     // }
 
     const handleEditActivity = async () => {
@@ -62,7 +62,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
         const activities = await db.getActivities(); // Get the new updated activities
         setAllActivities(activities)
         // Filter by the client we just edited an activity for
-        setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedUser ?? clientState.cid)));
+        setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedClient ?? clientState.cid)));
     }
 
     useEffect(() => {
@@ -75,16 +75,16 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     }, [override]);
 
     useEffect(() => {
-        const fetchUser = async () => {
+        const fetchClient = async () => {
             try {
-                const client = await db.getUser(activityState.parentDocId ?? '');
+                const client = await db.getClient(activityState.parentDocId ?? '');
                 setClientState(client);
 
             } catch (error) {
                 console.error('Failed to fetch client:', error);
             }
         };
-        fetchUser();
+        fetchClient();
     }, []);
 
     return (

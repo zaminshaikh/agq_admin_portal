@@ -8,12 +8,12 @@ import { ClientInputModalBody } from "./ClientInputModalBody";
 interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
-        currentUser: Client;
+        currentClient: Client;
         clients?: Client[];
 }
 
-export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, currentUser: currentUser}) => {
-    const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (currentUser?.connectedUsers?.includes(client.cid))}))
+export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, currentClient: currentClient}) => {
+    const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (currentClient?.connectedUsers?.includes(client.cid))}))
     return (
         <CModal         
             scrollable
@@ -23,12 +23,12 @@ export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal
             size="xl" 
             onClose={() => setShowModal(false)}>
             <CModalHeader>
-                <CModalTitle>{currentUser?.firstName + ' ' + currentUser?.lastName}</CModalTitle>
+                <CModalTitle>{currentClient?.firstName + ' ' + currentClient?.lastName}</CModalTitle>
             </CModalHeader>
             <ClientInputModalBody 
-                    clientState={currentUser} 
+                    clientState={currentClient} 
                     setClientState={(client: Client) => {}} 
-                    useCompanyName={currentUser.companyName ? true : false}
+                    useCompanyName={currentClient.companyName ? true : false}
                     setUseCompanyName={(useCompanyName: boolean) => {}} 
                     clientOptions={clientOptions}
                     viewOnly={true}/>

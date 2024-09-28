@@ -1,10 +1,11 @@
 import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow } from "@coreui/react-pro";
 import { useState } from "react";
 import React from "react";
-import { Client, emptyUser } from "src/db/database";
+import { Client, emptyClient } from "src/db/database";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import EditClient from './EditClient';
+import CreateClient from "./CreateClient";
 
 interface ShowModalProps {
     showModal: boolean;
@@ -70,7 +71,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
 
     const createClientState = (row: any): Client => {
         return {
-            ...emptyUser,
+            ...emptyClient,
             firstName: row["CLIENT'S FIRST NAME"] || '',
             lastName: row["CLIENT'S LAST NAME"] || '',
             companyName: row["COMPANY NAME"] || '',
@@ -120,6 +121,12 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
         const updatedClients = clientStates.filter((_, i) => i !== index);
         setClientStates(updatedClients);
     };
+
+    const handleImportClients = () => {
+        clientStates.map(client => {
+            CreateClient
+        })
+    }
 
     return (
         <div>

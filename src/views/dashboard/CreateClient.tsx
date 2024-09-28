@@ -1,7 +1,7 @@
 import { CButton, CModal, CModalHeader, CModalTitle, CModalFooter} from "@coreui/react-pro"
 import { useEffect, useState } from "react";
 import React from "react";
-import { DatabaseService, Client, emptyUser } from '../../db/database.ts'
+import { DatabaseService, Client, emptyClient } from '../../db/database.ts'
 import { ClientInputModalBody } from "./ClientInputModalBody.tsx";
 import { ValidateClient } from "./ClientInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal.tsx';
@@ -15,14 +15,14 @@ import { FormValidationErrorModal } from '../../components/ErrorModal.tsx';
 
 // const MaskedInput = IMaskMixin(CFormInputWithMask);
 
-// State variable, determines if modal is shown based on UsersTable.tsx state
+// State variable, determines if modal is shown based on ClientsTable.tsx state
 interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
         clients?: Client[];
 }
 // Initialize the client state
-const initialClientState: Client = emptyUser
+const initialClientState: Client = emptyClient
 
 // TODO: Perform validation on address and email
 // Initial modal to create new client
@@ -49,7 +49,7 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
                 });
             }
             // If validation passes, create the client and reload the page
-            await db.createUser(clientState);
+            await db.createClient(clientState);
             setShowModal(false);
             window.location.reload();
         }

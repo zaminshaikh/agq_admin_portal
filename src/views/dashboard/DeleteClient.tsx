@@ -21,7 +21,7 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
     }, [firstName, lastName, client]);
     
     const deleteClient = async () => {
-        await service.deleteUser(client?.cid)
+        await service.deleteClient(client?.cid)
         setShowModal(false);
         window.location.reload();
     }

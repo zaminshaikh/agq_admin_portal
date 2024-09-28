@@ -14,7 +14,7 @@ import {
   CRow,
 } from '@coreui/react-pro';
 import CIcon from '@coreui/icons-react';
-import { cilLockLocked, cilUser } from '@coreui/icons';
+import { cilLockLocked, cilClient } from '@coreui/icons';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../../App'; // Adjust the path as necessary
 import { AuthErrorModal } from 'src/components/ErrorModal';
@@ -43,10 +43,10 @@ const handleLogin = async (e: React.FormEvent) => {
                     setErrorMessage('Invalid email address.');
                     break;
                 case 'auth/user-disabled':
-                    setErrorMessage('User account is disabled.');
+                    setErrorMessage('Client account is disabled.');
                     break;
                 case 'auth/user-not-found':
-                    setErrorMessage('User not found.');
+                    setErrorMessage('Client not found.');
                     break;
                 case 'auth/wrong-password':
                     setErrorMessage('Incorrect password.');
@@ -76,7 +76,7 @@ const handleLogin = async (e: React.FormEvent) => {
                     <p className="text-body-secondary">Sign In to your account</p>
                     <CInputGroup className="mb-3">
                       <CInputGroupText>
-                        <CIcon icon={cilUser} />
+                        <CIcon icon={cilClient} />
                       </CInputGroupText>
                       <CFormInput
                         placeholder="Email"

@@ -16,9 +16,9 @@ const ActivitiesTable = () => {
 
     const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
     const [allActivities, setAllActivities] = useState<Activity[]>([]); // New state for original activities
-    const [clients, setUsers] = useState<Client[]>([]);
-    const [clientOptions, setUserOptions] = useState<Option[]>([]); 
-    const [selectedUser, setSelectedUser] = useState<string | number>(); 
+    const [clients, setClients] = useState<Client[]>([]);
+    const [clientOptions, setClientOptions] = useState<Option[]>([]); 
+    const [selectedClient, setSelectedClient] = useState<string | number>(); 
 
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
@@ -30,16 +30,16 @@ const ActivitiesTable = () => {
         const fetchActivities = async () => {
             const db = new DatabaseService();
             const activities = await db.getActivities();
-            const clients = await db.getUsers();
+            const clients = await db.getClients();
 
-            setUserOptions(
+            setClientOptions(
                 clients!
                     .map(client => ({ value: client.cid, label: client.firstName + ' ' + client.lastName }))
                     .sort((a, b) => a.label.localeCompare(b.label))
             ); 
             setFilteredActivities(activities);
             setAllActivities(activities); // Store the original activities
-            setUsers(clients);
+            setClients(clients);
 
             setIsLoading(false);
         };
@@ -116,9 +116,9 @@ const ActivitiesTable = () => {
 
     return (
         <CContainer>
-            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities} addToast={addToast}/>}
-            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} activity={currentActivity}  selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
-            {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} clients={clients} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
+            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities} addToast={addToast}/>}
+            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
+            {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} clients={clients} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             <div className="d-grid gap-2 py-3">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
             </div> 
@@ -142,7 +142,7 @@ const ActivitiesTable = () => {
                                     // If the selections have been cleared
                                     console.log('Selections cleared');
                                 }
-                                setSelectedUser(val);
+                                setSelectedClient(val);
                                 if (val) {
                                     setFilteredActivities(allActivities.filter((activity) => activity.parentDocId === val));
                                 } else {
@@ -158,9 +158,9 @@ const ActivitiesTable = () => {
                         shape="square"
                         className="w-100"
                         onClick={() => {
-                            setUserOptions((prevOptions) =>
+                            setClientOptions((prevOptions) =>
                                 prevOptions.map((option) =>
-                                    option.value === selectedUser ? { ...option, selected: false } : option
+                                    option.value === selectedClient ? { ...option, selected: false } : option
                                 ) 
                             );
                             setFilteredActivities(allActivities); // Reset activities to original state
