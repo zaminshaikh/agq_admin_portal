@@ -7,7 +7,7 @@ import { isValid, parse, set } from 'date-fns';
 import CIcon from '@coreui/icons-react';
 import * as icon from '@coreui/icons';
 import { useState } from 'react';
-import { formatDate, toTitleCase } from 'src/utils/utilities.ts';
+import { formatDate, parseDateWithTwoDigitYear, toTitleCase } from 'src/utils/utilities.ts';
 
 
 interface ClientInputProps {
@@ -106,24 +106,6 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
     });
 };
 
-const parseDateWithTwoDigitYear = (dateString: string) => {
-    const dateFormats = ['yyyy-MM-dd', 'MM/dd/yyyy', 'MM/dd/yy', 'MM-dd-yy', 'MM-dd-yyyy'];
-    let parsedDate = null;
-
-    for (const format of dateFormats) {
-        parsedDate = parse(dateString, format, new Date());
-        if (isValid(parsedDate)) {
-            // Handle two-digit year
-            const year = parsedDate.getFullYear();
-            if (year < 100) {
-                parsedDate.setFullYear(year + 2000);
-            }
-            break;
-        }
-    }
-
-    return parsedDate;
-};
 
 const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
     const file = event.target.files?.[0];

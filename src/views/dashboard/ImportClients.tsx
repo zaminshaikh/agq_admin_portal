@@ -6,6 +6,7 @@ import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import EditClient from './EditClient';
 import CreateClient from "./CreateClient";
+import { ValidateClient } from "./ClientInputModalBody";
 
 interface ShowModalProps {
     showModal: boolean;
@@ -13,7 +14,7 @@ interface ShowModalProps {
     clients: Client[];
 }
 
-export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModal }) => {
+export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModal, clients }) => {
     const [file, setFile] = useState<File | null>(null);
     const [clientStates, setClientStates] = useState<Client[]>([]);
     const [editClientIndex, setEditClientIndex] = useState<number | null>(null);
@@ -101,6 +102,15 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                     nuviewRoth: 0,
                 },
             },
+            activities: [
+                {
+                    amount: row["FIRST DEPOSIT AMOUNT"], 
+                    fund: 'AGQ', type: 'Deposit', 
+                    time: new Date(row["FIRST DEPOSIT DATE"]), 
+                    recipient: row["CLIENT'S FIRST NAME"] + '' + row["CLIENT'S LAST NAME"],
+                    formattedTime: new Date(row["FIRST DEPOSIT DATE"]).toLocaleDateString(),
+                },
+            ]
         };
     };
 
@@ -184,9 +194,10 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 <EditClient
                     showModal={editClientIndex !== null}
                     setShowModal={() => setEditClientIndex(null)}
-                    clients={clientStates}
+                    clients={clients}
                     activeClient={clientStates[editClientIndex]}
-                    onSave={handleSaveClient}
+                    onSubmit={handleSaveClient}
+                    reload={false}
                 />
             )}
         </div>

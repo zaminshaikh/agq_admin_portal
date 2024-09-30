@@ -12,6 +12,7 @@ interface EditActivityProps {
     selectedClient?: string | number;
     setAllActivities: (activites: Activity[]) => void;
     setFilteredActivities: (activites: Activity[]) => void;
+    onSubmit?: (updatedClient: Client) => void;
 }
 
 const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, selectedClient, setAllActivities, setFilteredActivities}) => {
