@@ -21,8 +21,8 @@ const ActivitiesTable = () => {
     const [selectedClient, setSelectedClient] = useState<string | number>(); 
 
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
-    const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
-    const [showEditClientModal, setShowEditClientModal] = useState(false);
+    const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
+    const [showEditActivityModal, setShowEditActivityModal] = useState(false);
 
     const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
     
@@ -116,8 +116,8 @@ const ActivitiesTable = () => {
 
     return (
         <CContainer>
-            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities} addToast={addToast}/>}
-            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
+            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities} addToast={addToast}/>}
+            {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} clients={clients} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             <div className="d-grid gap-2 py-3">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
@@ -203,7 +203,7 @@ const ActivitiesTable = () => {
                             size="sm"
                             onClick={async () => {
                                 setCurrentActivity(item);
-                                setShowEditClientModal(true);
+                                setShowEditActivityModal(true);
                             }}
                             >
                             Edit
@@ -221,7 +221,7 @@ const ActivitiesTable = () => {
                             size="sm"
                             onClick={() => {
                                 setCurrentActivity(item);
-                                setShowDeleteClientModal(true);
+                                setShowDeleteActivityModal(true);
                             }}
                             >
                             Delete

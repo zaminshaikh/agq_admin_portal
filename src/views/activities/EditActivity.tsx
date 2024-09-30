@@ -10,12 +10,23 @@ interface EditActivityProps {
     clients: Client[]; 
     activity?: Activity;
     selectedClient?: string | number;
-    setAllActivities: (activites: Activity[]) => void;
-    setFilteredActivities: (activites: Activity[]) => void;
-    onSubmit?: (updatedClient: Client) => void;
+    setAllActivities?: (activites: Activity[]) => void;
+    setFilteredActivities?: (activites: Activity[]) => void;
+    onSubmit?: (updatedActivity: Activity) => void;
 }
 
-const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, selectedClient, setAllActivities, setFilteredActivities}) => {
+const handleEditActivity = async (activityState: Activity, clientState: Client) => {
+    const db = new DatabaseService();
+    
+    // Create activity with client cid
+    await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
+
+    if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
+        await db.setAssets(clientState);
+    }
+}
+
+const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, selectedClient, setAllActivities, setFilteredActivities, onSubmit=handleEditActivity}) => {
     const db = new DatabaseService();
 
     const [activityState, setActivityState] = useState<Activity>(activity ?? emptyActivity);
@@ -34,42 +45,39 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     //     clientOptions.push(nonClientOption);
     // }
 
-    const handleEditActivity = async () => {
-        if (!ValidateActivity(activityState, setInvalidInputFields)) {
-            setShowErrorModal(true);
-            return;
-        }
 
-        if (override) {
-            setActivityState({
-                ...activityState,
-                time: new Date(),
-            });
-        }
-
-        if (!clientState) {
-            console.error("Invalid client state");
-            return;
-        }
-
-        // Create activity with client cid
-        await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
-
-        if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
-            await db.setAssets(clientState);
-        }
-        
-        setShowModal(false);
-        const activities = await db.getActivities(); // Get the new updated activities
-        setAllActivities(activities)
-        // Filter by the client we just edited an activity for
-        setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedClient ?? clientState.cid)));
-    }
 
     useEffect(() => {
         const createActivityIfOverride = async () => {
             if (override) {
-                await handleEditActivity();
+                if (!ValidateActivity(activityState, setInvalidInputFields)) {
+                    setShowErrorModal(true);
+                    return;
+                }
+
+                if (override) {
+                    setActivityState({
+                        ...activityState,
+                        time: new Date(),
+                    });
+                }
+
+                if (!clientState) {
+                    console.error("Invalid client state");
+                    return;
+                }
+                
+                handleEditActivity(activityState, clientState);
+                
+                setShowModal(false);
+                const activities = await db.getActivities(); // Get the new updated activities
+                if (setAllActivities) {
+                    setAllActivities(activities);
+                }
+                // Filter by the client we just edited an activity for
+                if (setFilteredActivities) {
+                    setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedClient ?? clientState.cid)));
+                }
             }
         };
         createActivityIfOverride();
@@ -110,7 +118,36 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                 />
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
-                    <CButton color="primary" onClick={handleEditActivity}>Update</CButton>
+                    <CButton color="primary" onClick={ async () => {
+                        if (!ValidateActivity(activityState, setInvalidInputFields)) {
+                            setShowErrorModal(true);
+                            return;
+                        }
+
+                        if (override) {
+                            setActivityState({
+                                ...activityState,
+                                time: new Date(),
+                            });
+                        }
+
+                        if (!clientState) {
+                            console.error("Invalid client state");
+                            return;
+                        }
+                        
+                        onSubmit(activityState, clientState);
+                        
+                        setShowModal(false);
+                        const activities = await db.getActivities(); // Get the new updated activities
+                        if (setAllActivities) {
+                            setAllActivities(activities);
+                        }
+                        // Filter by the client we just edited an activity for
+                        if (setFilteredActivities) {
+                            setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedClient ?? clientState.cid)));
+                        }
+                    }}>Update</CButton>
                 </CModalFooter>
             </CModal>
         </>
