@@ -1,5 +1,5 @@
-import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton, CTable, CTableHead, CTableHeaderCell, CTableRow, CTableBody, CTableDataCell } from '@coreui/react-pro';
-import { Activity, DatabaseService, GraphPoint, Client, formatCurrency } from '../../db/database.ts'
+import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton, CTable, CTableHead, CTableHeaderCell, CTableRow, CTableBody, CTableDataCell, CForm, CFormSelect } from '@coreui/react-pro';
+import { Activity, DatabaseService, GraphPoint, Client, formatCurrency, emptyActivity } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
 import { EditAssetsSection } from "../../components/EditAssetsSection";
@@ -53,8 +53,6 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
             results.data.forEach((row: any) => {
                 // Skip if row is empty
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
-
-                
     
                 // Remove the fund type after the dash and convert the name to title case
                 let [recipientName, fundInfo] = row["Security Name"].split('-').map((s: string) => s.trim());
@@ -197,8 +195,9 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     const db = new DatabaseService();
     const [ytdLoading, setYTDLoading] = useState(false);
     const [totalYTDLoading, setTotalYTDLoading] = useState(false);
+
     const [editActivityIndex, setEditActivityIndex] = useState<number | null>(null);
-    const [showEditActivityModal, setShowEditActivityModal] = useState(false);
+    const [editedActivity, setEditedActivity] = useState<Activity>(emptyActivity);
 
     const handleRemoveActivity = (index: number) => {
         const updatedActivities = clientState.activities?.filter((_, i) => i !== index);
@@ -207,15 +206,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
             activities: updatedActivities
         }
         setClientState(newState);
-    };
-
-    const handleSaveActivities = (updatedActivity: Activity) => {
-        const updatedActivities = [...(clientState.activities || [])];
-        if (editActivityIndex !== null) {
-            updatedActivities[editActivityIndex] = updatedActivity;
-            setClientState({...clientState, activities: updatedActivities});
-            setEditActivityIndex(null);
-        }
     };
 
     return (
@@ -444,24 +434,140 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 <CTableRow>
                     <CTableHeaderCell>Index</CTableHeaderCell>
                     <CTableHeaderCell>Type</CTableHeaderCell>
+                    <CTableHeaderCell>Recipient</CTableHeaderCell>
                     <CTableHeaderCell>Time</CTableHeaderCell>
                     <CTableHeaderCell>Amount</CTableHeaderCell>
                     <CTableHeaderCell>Actions</CTableHeaderCell>
                 </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                {clientState.activities?.map((activity, index) => (
+                {clientState.activities?.map((activity, index) => {
+                const isEditing = editActivityIndex === index;
+                return (
                     <CTableRow key={index}>
                     <CTableDataCell>{index + 1}</CTableDataCell>
-                    <CTableDataCell>{toTitleCase(activity.type)}</CTableDataCell>
-                    <CTableDataCell>{activity.formattedTime}</CTableDataCell>
-                    <CTableDataCell>{formatCurrency(activity.amount)}</CTableDataCell>
-                    <CTableDataCell>
-                        <CButton className="me-5" color="warning"  variant='outline' onClick={() => setShowEditActivityModal(true)}>Edit Activity</CButton>
-                        <CButton color="danger"  variant='outline' onClick={() => handleRemoveActivity(index)}>Remove</CButton>
-                    </CTableDataCell>
+                    {isEditing ? (
+                        // Editable fields when in edit mode
+                        <>
+                        <CTableDataCell>
+                            <CFormSelect 
+                                value={editedActivity?.type || ''}
+                                onChange={(e) => setEditedActivity({ ...editedActivity, type: e.target.value.toLowerCase() })
+                                }
+                                options={[
+                                    { label: 'Profit', value: 'profit' },
+                                    { label: 'Deposit', value: 'deposit' },
+                                    { label: 'Withdrawal', value: 'withdrawal'},
+                                ]}
+                            />
+                        </CTableDataCell>
+                        <CTableDataCell>
+                            <CFormInput
+                            value={editedActivity?.recipient || ''}
+                            onChange={(e) =>
+                                setEditedActivity({ ...editedActivity, recipient: e.target.value })
+                            }
+                            />
+                        </CTableDataCell>
+                        <CTableDataCell>
+                            <CFormInput
+                            type="date"
+                            value={
+                                editedActivity?.time
+                                ? editedActivity.time.toISOString().split('T')[0]
+                                : ''
+                            }
+                            onChange={(e) => {
+                                const newTime = parse(
+                                e.target.value,
+                                'yyyy-MM-dd',
+                                new Date()
+                                );
+                                setEditedActivity({
+                                ...editedActivity,
+                                time: newTime,
+                                formattedTime: formatDate(newTime),
+                                });
+                            }}
+                            />
+                        </CTableDataCell>
+                        <CTableDataCell>
+                        <CFormInput
+                            type="number"
+                            value={editedActivity?.amount || ''}
+                            onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                setEditedActivity({
+                                ...editedActivity!,
+                                amount: !isNaN(value) ? value : 0, // Ensure amount is a number
+                                });
+                            }}
+                        />
+                        </CTableDataCell>
+                        <CTableDataCell className="d-flex gap-2">
+                            <CButton
+                            className='me-2'
+                            color="success"
+                            variant="outline"
+                            onClick={() => {
+                                // Update the activity in the client state
+                                const updatedActivities = [...(clientState.activities || [])];
+                                updatedActivities[index] = editedActivity!;
+                                setClientState({
+                                ...clientState,
+                                activities: updatedActivities,
+                                });
+                                setEditActivityIndex(null);
+                                setEditedActivity(emptyActivity);
+                            }}
+                            >
+                            Save
+                            </CButton>
+                            <CButton
+                            color="secondary"
+                            variant="outline"
+                            onClick={() => {
+                                // Cancel editing
+                                setEditActivityIndex(null);
+                                setEditedActivity(emptyActivity);
+                            }}
+                            >
+                            Cancel
+                            </CButton>
+                        </CTableDataCell>
+                        </>
+                    ) : (
+                        // Static fields when not in edit mode
+                        <>
+                        <CTableDataCell>{toTitleCase(activity.type)}</CTableDataCell>
+                        <CTableDataCell>{activity.recipient}</CTableDataCell>
+                        <CTableDataCell>{activity.formattedTime}</CTableDataCell>
+                        <CTableDataCell>{formatCurrency(activity.amount)}</CTableDataCell>
+                        <CTableDataCell className="d-flex gap-2">
+                            <CButton
+                                color="warning"
+                                variant="outline"
+                                className="me-3" // Adds margin-end
+                                onClick={() => {
+                                setEditActivityIndex(index);
+                                setEditedActivity({ ...activity }); // Clone the activity
+                                }}
+                            >
+                                Edit
+                            </CButton>
+                            <CButton
+                                color="danger"
+                                variant="outline"
+                                onClick={() => handleRemoveActivity(index)}
+                            >
+                                Remove
+                            </CButton>
+                            </CTableDataCell>
+                        </>
+                    )}
                     </CTableRow>
-                ))}
+                );
+                })}
                 </CTableBody>
             </CTable>}
 
@@ -471,13 +577,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 <CFormInput type="file" id="formFile" onChange={(event) => handleGraphPointsFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
                 </div>
             </div>
-            {/* {showEditActivityModal && 
-            <EditActivity 
-                showModal={showEditActivityModal} 
-                setShowModal={setShowEditActivityModal} 
-                clients={clients ?? []}
-                activity={clientState.activities![editActivityIndex!]}
-                onSubmit={handleSaveActivities}/>} */}
             </CModalBody>
     )
 } 

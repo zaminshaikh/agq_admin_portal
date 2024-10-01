@@ -94,7 +94,7 @@ const ActivitiesTable = () => {
     ]
 
     const getBadge = (status: string) => {
-        switch (status) {
+        switch (status.toLowerCase()) {
             case 'deposit':
                 return 'success'
             case 'profit':

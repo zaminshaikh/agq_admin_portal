@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import EditClient from './EditClient';
 import CreateClient from "./CreateClient";
 import { ValidateClient } from "./ClientInputModalBody";
+import { parseDateWithTwoDigitYear } from "src/utils/utilities";
 
 interface ShowModalProps {
     showModal: boolean;
@@ -105,9 +106,9 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
             activities: [
                 {
                     amount: row["FIRST DEPOSIT AMOUNT"], 
-                    fund: 'AGQ', type: 'Deposit', 
-                    time: new Date(row["FIRST DEPOSIT DATE"]), 
-                    recipient: row["CLIENT'S FIRST NAME"] + '' + row["CLIENT'S LAST NAME"],
+                    fund: 'AGQ', type: 'deposit', 
+                    time: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(row["FIRST DEPOSIT DATE"]), 
+                    recipient: row["CLIENT'S FIRST NAME"] + ' ' + row["CLIENT'S LAST NAME"],
                     formattedTime: new Date(row["FIRST DEPOSIT DATE"]).toLocaleDateString(),
                 },
             ]
@@ -164,8 +165,8 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                         <CTableHead >
                             <CTableRow>
                                 <CTableHeaderCell>Index</CTableHeaderCell>
-                                <CTableHeaderCell>Last Name</CTableHeaderCell>
                                 <CTableHeaderCell>First Name</CTableHeaderCell>
+                                <CTableHeaderCell>Last Name</CTableHeaderCell>
                                 <CTableHeaderCell>Actions</CTableHeaderCell>
                             </CTableRow>
                         </CTableHead>
@@ -173,8 +174,8 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                             {clientStates.map((client, index) => (
                                 <CTableRow key={index}>
                                     <CTableDataCell>{index + 1}</CTableDataCell>
-                                    <CTableDataCell>{client.lastName}</CTableDataCell>
                                     <CTableDataCell>{client.firstName}</CTableDataCell>
+                                    <CTableDataCell>{client.lastName}</CTableDataCell>
                                     <CTableDataCell>
                                         <CButton className="me-5" color="warning"  variant='outline' onClick={() => handleEditClient(index)}>Edit Client</CButton>
                                         <CButton color="danger"  variant='outline' onClick={() => handleRemoveClient(index)}>Remove</CButton>
