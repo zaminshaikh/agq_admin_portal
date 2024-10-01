@@ -248,12 +248,12 @@ const addUidToConnectedUsers = async (connectedUsers: string[], uid: string, use
 
         if (connectedUserSnapshot.exists) {
             const connectedUserData = connectedUserSnapshot.data() as admin.firestore.DocumentData;
-            const uidAccessGranted: string[] = connectedUserData.uidAccessGranted || [];
+            const uidGrantedAccess: string[] = connectedUserData.uidGrantedAccess || [];
 
-            if (!uidAccessGranted.includes(uid)) {
-                uidAccessGranted.push(uid);
-                await connectedUserRef.update({ uidAccessGranted });
-                console.log(`User ${uid} has been added to uidAccessGranted of connected user ${connectedUser}`);
+            if (!uidGrantedAccess.includes(uid)) {
+                uidGrantedAccess.push(uid);
+                await connectedUserRef.update({ uidGrantedAccess });
+                console.log(`User ${uid} has been added to uidGrantedAccess of connected user ${connectedUser}`);
             }
         } else {
             console.log(`Connected user document ${connectedUser} does not exist`);
