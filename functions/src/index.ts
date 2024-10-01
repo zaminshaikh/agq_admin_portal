@@ -84,7 +84,6 @@ function getActivityMessage(activity: Activity): string {
     return message;
 }
 
-
 /**
  * Creates a notification document in Firestore based on given activity details.
  * 
@@ -433,4 +432,83 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
             errorDetails: (error as Error).message,
         });
     }
+});
+
+/**
+ * UnlinkUser Callable Function
+ * 
+ * @param {Object} data - The data payload containing 'uid' and 'cid'.
+ * @param {string} data.uid - The UID of the user in Firebase Auth.
+ * @param {string} data.cid - The document ID of the user in the 'testUsers' Firestore collection.
+ * 
+ * @returns {Object} - An object containing the success status and a message.
+ * 
+ * @throws {HttpsError} - Throws an error if input is invalid or operations fail.
+ */
+exports.unlinkUser = functions.https.onCall(async (data, context) => {
+  // Destructure 'uid' and 'cid' from the incoming data
+  const { uid, cid } = data;
+
+  // Input validation: Ensure both 'uid' and 'cid' are provided
+  if (!uid || !cid) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'The function must be called with both "uid" and "cid" arguments.'
+    );
+  }
+
+  // Optional: Authentication Check
+  // Uncomment the following lines if you want to restrict access to authenticated users
+  /*
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'The function must be called while authenticated.'
+    );
+  }
+
+  // Optional: Authorization Logic
+  // Add any additional checks to ensure the caller has permission to unlink the user
+  */
+
+  try {
+    // Reference to the specific user document in 'testUsers' collection
+    const userRef = admin.firestore().collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION).doc(cid);
+
+    // Fetch the user document to verify existence
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        `User document with cid ${cid} does not exist.`
+      );
+    }
+
+    // Update the Firestore document: Set specified fields to empty strings
+    await userRef.update({
+      appEmail: '',
+      uid: '',
+    });
+
+    console.log(`Firestore: Cleared fields for user with cid ${cid}.`);
+
+    // Delete the user from Firebase Authentication using the provided UID
+    await admin.auth().deleteUser(uid);
+
+    console.log(`Firebase Auth: Deleted user with uid ${uid}.`);
+
+    // Return a success response
+    return { success: true, message: `User with uid ${uid} and cid ${cid} has been unlinked.` };
+  } catch (error) {
+    // Log the error for debugging purposes
+    console.error('Error unlinking user:', error);
+
+    // Throw an HTTPS error to send back to the client
+    throw new functions.https.HttpsError(
+      'unknown',
+      'An error occurred while unlinking the user.',
+      (error as Error).message
+    );
+  }
 });
