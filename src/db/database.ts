@@ -524,7 +524,9 @@ export class DatabaseService {
 
     getActivities = async () => {
         // Fetch all activities from all clients' 'activities' subcollections using collectionGroup
-        const querySnapshot = await getDocs(collectionGroup(this.db, 'activities'));
+        const activitiesCollectionGroup = collectionGroup(this.db, config.ACTIVITIES_SUBCOLLECTION);
+        const q = query(activitiesCollectionGroup, where('parentCollection', '==', config.FIRESTORE_ACTIVE_USERS_COLLECTION));
+        const querySnapshot = await getDocs(q);
 
         // Map the query snapshot to an array of Activity with formatted time
         const activities: Activity[] = querySnapshot.docs.map((doc) => {
