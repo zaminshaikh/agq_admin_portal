@@ -557,8 +557,16 @@ export class DatabaseService {
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
         // Create a reference to the activities subcollection for the client
         const activityCollectionRef = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION);
+        
+        // Add the parentCollectionId field to the activity
+        const activityWithParentId = {
+            ...activity,
+            parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION
+        };
+
         // Add the activity to the subcollection
-        await addDoc(activityCollectionRef, activity);
+        await addDoc(activityCollectionRef, activityWithParentId);
+
 
         // // If the activity requires a notification, create a notification for the recipient
         // if (activity.sendNotif === true) {
