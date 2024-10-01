@@ -478,11 +478,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                                 : ''
                             }
                             onChange={(e) => {
-                                const newTime = parse(
-                                e.target.value,
-                                'yyyy-MM-dd',
-                                new Date()
-                                );
+                                const newTime = parseDateWithTwoDigitYear(e.target.value) || new Date();
                                 setEditedActivity({
                                 ...editedActivity,
                                 time: newTime,

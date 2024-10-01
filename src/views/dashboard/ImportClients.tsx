@@ -107,9 +107,9 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 {
                     amount: row["FIRST DEPOSIT AMOUNT"], 
                     fund: 'AGQ', type: 'deposit', 
-                    time: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(row["FIRST DEPOSIT DATE"]), 
+                    time: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(), 
                     recipient: row["CLIENT'S FIRST NAME"] + ' ' + row["CLIENT'S LAST NAME"],
-                    formattedTime: new Date(row["FIRST DEPOSIT DATE"]).toLocaleDateString(),
+                    formattedTime: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"])?.toLocaleDateString(),
                 },
             ]
         };
