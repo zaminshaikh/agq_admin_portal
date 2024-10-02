@@ -64,8 +64,10 @@ const exceptions = ["LLC", "Inc", "Ltd"];
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName.trimEnd() + ' ' + clientState.lastName.trimEnd();
     
-                if (name.toLowerCase() !== clientFullName.toLowerCase() && name.toLowerCase() !== clientState.companyName.toLowerCase()) return;
-                else if (name.toLowerCase() === clientState.companyName.toLowerCase()) { name = clientState.companyName }
+                if (!name.toLowerCase().includes(clientFullName.toLowerCase()) && name.toLowerCase().includes(clientState.companyName.toLowerCase())) return;
+                else if (name.toLowerCase().includes(clientState.companyName.toLowerCase())) { name = clientState.companyName } else {
+                    name = clientFullName;
+                }
     
                 // Determine the fund type
                 let fund = fundInfo.split(' ')[0];
