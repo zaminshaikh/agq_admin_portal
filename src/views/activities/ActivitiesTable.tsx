@@ -1,6 +1,6 @@
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import { CBadge, CButton, CCol, CContainer, CMultiSelect, CRow, CSmartTable, CSpinner, CToaster } from "@coreui/react-pro";
-import { Activity, DatabaseService, User, formatCurrency } from "src/db/database";
+import { Activity, DatabaseService, Client, formatCurrency } from "src/db/database";
 import { CreateActivity } from "./CreateActivity";
 import DeleteActivity from "./DeleteActivity";
 import EditActivity from "./EditActivity";
@@ -16,13 +16,13 @@ const ActivitiesTable = () => {
 
     const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
     const [allActivities, setAllActivities] = useState<Activity[]>([]); // New state for original activities
-    const [users, setUsers] = useState<User[]>([]);
-    const [userOptions, setUserOptions] = useState<Option[]>([]); 
-    const [selectedUser, setSelectedUser] = useState<string | number>(); 
+    const [clients, setClients] = useState<Client[]>([]);
+    const [clientOptions, setClientOptions] = useState<Option[]>([]); 
+    const [selectedClient, setSelectedClient] = useState<string | number>(); 
 
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
-    const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
-    const [showEditClientModal, setShowEditClientModal] = useState(false);
+    const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
+    const [showEditActivityModal, setShowEditActivityModal] = useState(false);
 
     const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
     
@@ -30,16 +30,16 @@ const ActivitiesTable = () => {
         const fetchActivities = async () => {
             const db = new DatabaseService();
             const activities = await db.getActivities();
-            const users = await db.getUsers();
+            const clients = await db.getClients();
 
-            setUserOptions(
-                users!
-                    .map(user => ({ value: user.cid, label: user.firstName + ' ' + user.lastName }))
+            setClientOptions(
+                clients!
+                    .map(client => ({ value: client.cid, label: client.firstName + ' ' + client.lastName }))
                     .sort((a, b) => a.label.localeCompare(b.label))
             ); 
             setFilteredActivities(activities);
             setAllActivities(activities); // Store the original activities
-            setUsers(users);
+            setClients(clients);
 
             setIsLoading(false);
         };
@@ -94,7 +94,7 @@ const ActivitiesTable = () => {
     ]
 
     const getBadge = (status: string) => {
-        switch (status) {
+        switch (status.toLowerCase()) {
             case 'deposit':
                 return 'success'
             case 'profit':
@@ -116,19 +116,19 @@ const ActivitiesTable = () => {
 
     return (
         <CContainer>
-            {showDeleteClientModal && <DeleteActivity showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} activity={currentActivity} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities} addToast={addToast}/>}
-            {showEditClientModal && <EditActivity showModal={showEditClientModal} setShowModal={setShowEditClientModal} users={users} activity={currentActivity}  selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
-            {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} users={users} selectedUser={selectedUser} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
+            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities} addToast={addToast}/>}
+            {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
+            {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} clients={clients} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             <div className="d-grid gap-2 py-3">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
             </div> 
             <CRow className="justify-content-center py-3">
                 <CCol>
                     <CMultiSelect
-                            id="user"
+                            id="client"
                             className="mb-3a custom-multiselect-dropdown"
-                            options={userOptions}
-                            placeholder="Type or select a specific user to view activities for"
+                            options={clientOptions}
+                            placeholder="Type or select a specific client to view activities for"
                             selectAll={false}
                             multiple={false}
                             optionsStyle={'text'}
@@ -136,13 +136,13 @@ const ActivitiesTable = () => {
                             onChange={async (selectedValue) => {
                                 let val: string | number | undefined
                                 if (selectedValue.length > 0) {
-                                    // If the user has selected an option, update the variable to the value
+                                    // If the client has selected an option, update the variable to the value
                                     val = selectedValue[0].value; 
                                 } else {
                                     // If the selections have been cleared
                                     console.log('Selections cleared');
                                 }
-                                setSelectedUser(val);
+                                setSelectedClient(val);
                                 if (val) {
                                     setFilteredActivities(allActivities.filter((activity) => activity.parentDocId === val));
                                 } else {
@@ -158,9 +158,9 @@ const ActivitiesTable = () => {
                         shape="square"
                         className="w-100"
                         onClick={() => {
-                            setUserOptions((prevOptions) =>
+                            setClientOptions((prevOptions) =>
                                 prevOptions.map((option) =>
-                                    option.value === selectedUser ? { ...option, selected: false } : option
+                                    option.value === selectedClient ? { ...option, selected: false } : option
                                 ) 
                             );
                             setFilteredActivities(allActivities); // Reset activities to original state
@@ -203,7 +203,7 @@ const ActivitiesTable = () => {
                             size="sm"
                             onClick={async () => {
                                 setCurrentActivity(item);
-                                setShowEditClientModal(true);
+                                setShowEditActivityModal(true);
                             }}
                             >
                             Edit
@@ -221,7 +221,7 @@ const ActivitiesTable = () => {
                             size="sm"
                             onClick={() => {
                                 setCurrentActivity(item);
-                                setShowDeleteClientModal(true);
+                                setShowDeleteActivityModal(true);
                             }}
                             >
                             Delete

@@ -73,6 +73,7 @@
     "@types/papaparse": "^5.3.14",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
+    "@types/xlsx": "^0.0.36",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vitejs/plugin-react": "^4.2.1",
@@ -88,6 +89,7 @@
     "prettier": "3.2.5",
     "sass": "^1.75.0",
     "typescript": "^5.4.5",
-    "vite": "^5.2.10"
+    "vite": "^5.2.10",
+    "xlsx": "^0.18.5"
   }
 }

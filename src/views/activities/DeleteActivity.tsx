@@ -8,7 +8,7 @@ interface DeleteActivityProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
     activity?: Activity; 
-    selectedUser?: string | number;
+    selectedClient?: string | number;
     setAllActivities: (activites: Activity[]) => void;
     setFilteredActivities: (activites: Activity[]) => void;
     addToast: (dispatch: any) => void;
@@ -35,7 +35,7 @@ const exampleToast = (
   </CToast>
 )
 
-const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedUser, setAllActivities, setFilteredActivities, addToast}) => {
+const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedClient, setAllActivities, setFilteredActivities, addToast}) => {
     const db = new DatabaseService();
 
     const deleteActivity = async () => {
@@ -46,9 +46,9 @@ const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal,
                 setShowModal(false);
                 const activities = await db.getActivities(); // Get the new updated activities
                 setAllActivities(activities)
-                // Filter by the user we just deleted an activity for
-                if (selectedUser) {
-                    setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedUser));
+                // Filter by the client we just deleted an activity for
+                if (selectedClient) {
+                    setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedClient));
                 } else {
                     setFilteredActivities(activities);
                 }

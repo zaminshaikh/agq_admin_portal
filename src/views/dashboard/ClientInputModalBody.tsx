@@ -1,5 +1,5 @@
-import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton } from '@coreui/react-pro';
-import { Activity, DatabaseService, GraphPoint, User } from '../../db/database.ts'
+import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton, CTable, CTableHead, CTableHeaderCell, CTableRow, CTableBody, CTableDataCell, CForm, CFormSelect } from '@coreui/react-pro';
+import { Activity, DatabaseService, GraphPoint, Client, formatCurrency, emptyActivity } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
 import { EditAssetsSection } from "../../components/EditAssetsSection";
@@ -7,47 +7,45 @@ import { isValid, parse, set } from 'date-fns';
 import CIcon from '@coreui/icons-react';
 import * as icon from '@coreui/icons';
 import { useState } from 'react';
+import { formatDate, parseDateWithTwoDigitYear, toTitleCase } from 'src/utils/utilities.ts';
+import Activities from '../activities/Activities.tsx';
+import EditActivity from '../activities/EditActivity.tsx';
 
 
 interface ClientInputProps {
-    clientState: User,
-    setClientState: (clientState: User) => void,
+    clientState: Client,
+    setClientState: (clientState: Client) => void,
     useCompanyName: boolean,
     setUseCompanyName: (useCompanyName: boolean) => void,
-    userOptions: (Option | OptionsGroup)[],
+    clientOptions: (Option | OptionsGroup)[],
+    clients?: Client[],
     viewOnly: boolean,
 }
 
-// Handles the file input from the user
-const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
+// Handles the file input from the client
+const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
 
-    const getActivityType = (type: string | undefined) => {
+    const getActivityType = (type: string | undefined, amount: number) => {
         if (!type) return "none";
         switch (type) {
             case "withdrawal":
-                return "profit";
+                if (amount > 15000) return "withdrawal";
+                else return "profit";
             case "deposit":
-                return "deposit";
+                if (amount > 15000) return "deposit";
+                else return "profit";
             default:
-                return "other";
+                return "profit";
         }
     }
 
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // List of exceptions to preserve original casing
-    const exceptions = ["LLC", "Inc", "Ltd"];
+// List of exceptions to preserve original casing
+const exceptions = ["LLC", "Inc", "Ltd"];
 
-    // Function to convert a string to title case while preserving exceptions
-    const toTitleCase = (str: string, exceptions: string[]) => {
-        return str.split(' ').map(word => {
-            return exceptions.includes(word.toUpperCase()) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-        }).join(' ');
-    };
-
-
-    // Parse the CSV file
+// Parse the CSV file
     Papa.parse(file, {
         header: true,
         complete: (results) => {
@@ -57,24 +55,14 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
             results.data.forEach((row: any) => {
                 // Skip if row is empty
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
-
-                
     
                 // Remove the fund type after the dash and convert the name to title case
+                
                 let [recipientName, fundInfo] = row["Security Name"].split('-').map((s: string) => s.trim());
                 let name = toTitleCase(recipientName.trimEnd(), exceptions);
     
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName.trimEnd() + ' ' + clientState.lastName.trimEnd();
-
-                // console.log("SECURITY NAME:", row["Security Name"].toLowerCase());
-                console.log("NAME:", name.toLowerCase());
-                console.log("CLIENT FULL NAME:", clientFullName.toLowerCase());
-                console.log("CLIENT COMPANY NAME:", clientState.companyName.toLowerCase());
-
-                console.log(name.toLowerCase() !== clientFullName.toLowerCase())
-                console.log(name.toLowerCase() !== clientState.companyName.toLowerCase())
-
     
                 if (name.toLowerCase() !== clientFullName.toLowerCase() && name.toLowerCase() !== clientState.companyName.toLowerCase()) return;
                 else if (name.toLowerCase() === clientState.companyName.toLowerCase()) { name = clientState.companyName }
@@ -89,19 +77,31 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                     return;
                 }
     
-                console.log(`Raw date string: ${dateString}`);
-    
                 // Parse the date string correctly
                 const parsedDate = parseDateWithTwoDigitYear(dateString);
                 if (parsedDate === null) return;
+
+                            // Check for specific keywords in the Security Name and set the recipient accordingly
+                let recipient = '';
+                const securityNameLower = row["Security Name"].toLowerCase();
+                if (securityNameLower.includes('roth')) {
+                    recipient = 'ROTH IRA';
+                } else if (securityNameLower.includes('sep')) {
+                    recipient = 'SEP IRA';
+                } else if (securityNameLower.includes('ira')) {
+                    recipient = 'IRA';
+                } else {
+                    recipient = name; // Default to the parsed name if no specific keyword is found
+                }
     
                 // Create an activity from each row of the CSV
                 const activity: Activity = {
                     fund: fund,
                     amount: Math.abs(parseFloat(row["Amount (Unscaled)"])),
-                    recipient: name,
+                    recipient: recipient,
                     time: parsedDate,
-                    type: getActivityType(row["Type"]),
+                    formattedTime: formatDate(parsedDate),
+                    type: getActivityType(row["Type"], Math.abs(parseFloat(row["Amount (Unscaled)"]))),
                 };
     
                 // Add the activity to the activities array
@@ -110,10 +110,12 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
 
             console.log(activities);
 
-            // Update the client state with the new activities
             const newClientState = {
                 ...clientState,
-                activities: [...(clientState.activities || []), ...activities],
+                activities: [
+                    ...(clientState.activities || []),
+                    ...activities
+                ].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
             };
 
             setClientState(newClientState)
@@ -121,26 +123,8 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
     });
 };
 
-const parseDateWithTwoDigitYear = (dateString: string) => {
-    const dateFormats = ['yyyy-MM-dd', 'MM/dd/yyyy', 'MM/dd/yy', 'MM-dd-yy', 'MM-dd-yyyy'];
-    let parsedDate = null;
 
-    for (const format of dateFormats) {
-        parsedDate = parse(dateString, format, new Date());
-        if (isValid(parsedDate)) {
-            // Handle two-digit year
-            const year = parsedDate.getFullYear();
-            if (year < 100) {
-                parsedDate.setFullYear(year + 2000);
-            }
-            break;
-        }
-    }
-
-    return parsedDate;
-};
-
-const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: User, setClientState: (state: User) => void) => {
+const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -201,251 +185,415 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
     });
 }
 
+/**
+ * Component representing the body of the client input modal.
+ * 
+ * @component
+ * @param {ClientInputProps} props - The properties passed to the component.
+ * @param {ClientState} props.clientState - The current state of the client.
+ * @param {React.Dispatch<React.SetStateAction<ClientState>>} props.setClientState - Function to update the client state.
+ * @param {boolean} props.useCompanyName - Flag indicating whether to use the company name.
+ * @param {React.Dispatch<React.SetStateAction<boolean>>} props.setUseCompanyName - Function to update the useCompanyName flag.
+ * @param {Array<Option>} props.clientOptions - Options for connected clients.
+ * @param {boolean} props.viewOnly - Flag indicating whether the form is in view-only mode.
+ * 
+ * @returns {JSX.Element} The rendered component.
+ */
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 
     setClientState,
     useCompanyName,
     setUseCompanyName,
-    userOptions,
+    clients,
+    clientOptions,
     viewOnly,
 }) => {
     const db = new DatabaseService();
     const [ytdLoading, setYTDLoading] = useState(false);
     const [totalYTDLoading, setTotalYTDLoading] = useState(false);
 
+    const [editActivityIndex, setEditActivityIndex] = useState<number | null>(null);
+    const [editedActivity, setEditedActivity] = useState<Activity>(emptyActivity);
+
+    const handleRemoveActivity = (index: number) => {
+        const updatedActivities = clientState.activities?.filter((_, i) => i !== index);
+        const newState = {
+            ...clientState,
+            activities: updatedActivities
+        }
+        setClientState(newState);
+    };
+
     return (
-        <CModalBody className="px-5">
+            <CModalBody className="px-5">
             <CInputGroup className="mb-3 py-3">
                 <CInputGroupText>Client's First Name</CInputGroupText>
                 <CFormInput
-                    id="first-name"
-                    value={clientState.firstName}
-                    disabled={viewOnly}
-                    onChange={(e) => {
-                        const newClientState = {
-                            ...clientState,
-                            firstName: e.target.value,
-                        };
-                        setClientState(newClientState);
-                    }}
+                id="first-name"
+                value={clientState.firstName}
+                disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    firstName: e.target.value,
+                    };
+                    setClientState(newClientState);
+                }}
                 />
                 <CInputGroupText>Client's Last Name</CInputGroupText>
                 <CFormInput
-                    id="last-name"
-                    value={clientState.lastName}
-                    disabled={viewOnly}
-                    onChange={(e) => {
-                        const newClientState = {
-                            ...clientState,
-                            lastName: e.target.value,
-                        };
-                        setClientState(newClientState);
-                    }}
+                id="last-name"
+                value={clientState.lastName}
+                disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    lastName: e.target.value,
+                    };
+                    setClientState(newClientState);
+                }}
                 />
             </CInputGroup>
 
-                    <CInputGroup className="mb-3  py-3">
-                        <CInputGroupText>
-                            <CFormCheck type="checkbox" id="useCompanyName" checked={useCompanyName} onChange={(e) => setUseCompanyName(e.target.checked)} disabled={viewOnly}/>
-                        </CInputGroupText>
-                        <CInputGroupText>Company Name</CInputGroupText>
-                        <CFormInput id="company-name" value={clientState.companyName} 
-                        onChange={
-                            (e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    companyName: e.target.value
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>
+                <CFormCheck type="checkbox" id="useCompanyName" checked={useCompanyName} onChange={(e) => setUseCompanyName(e.target.checked)} disabled={viewOnly}/>
+                </CInputGroupText>
+                <CInputGroupText>Company Name</CInputGroupText>
+                <CFormInput id="company-name" value={clientState.companyName} 
+                onChange={
+                (e) => {
+                    const newClientState = {
+                    ...clientState,
+                    companyName: e.target.value
+                    }
+                    setClientState(newClientState)
+                }
+                } 
+                disabled={viewOnly ? viewOnly : !useCompanyName}/>
+            </CInputGroup>
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>Address</CInputGroupText>
+                <CFormInput id="address" value={clientState.address} disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    address: e.target.value,
+                    };
+                    setClientState(newClientState)
+                }}/>
+            </CInputGroup>
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>DOB</CInputGroupText>
+                <CFormInput type="date" id="dob"  value = {clientState.dob?.toISOString().split('T')[0] ?? ''} disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    dob: parse(e.target.value, 'yyyy-MM-dd', new Date()),
+                    };
+                    setClientState(newClientState)
+                }}/>
+            </CInputGroup>
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>Phone Number</CInputGroupText>
+                <CFormInput id="phone-number" value={clientState.phoneNumber} disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    phoneNumber: e.target.value,
+                    };
+                    setClientState(newClientState)
+                }}/>
+            </CInputGroup>
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>Email</CInputGroupText>
+                <CFormInput type="email" id="email" value={clientState.initEmail} disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    initEmail: e.target.value,
+                    };
+                    setClientState(newClientState)
+                }}/>
+            </CInputGroup>
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>First Deposit Date</CInputGroupText>
+                <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate?.toISOString().split('T')[0] ?? ''} disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    firstDepositDate: parse(e.target.value, 'yyyy-MM-dd', new Date()),
+                    };
+                    setClientState(newClientState)
+                }}/>
+            </CInputGroup>
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>Beneficiary</CInputGroupText>
+                <CFormInput
+                id="beneficiary"
+                value={clientState.beneficiaries[0]} // Assuming you want to edit the first beneficiary
+                disabled={viewOnly}
+                onChange={(e) => {
+                    const newBeneficiaries = [...clientState.beneficiaries];
+                    newBeneficiaries[0] = e.target.value; // Update the first beneficiary
+                    const newClientState = {
+                    ...clientState,
+                    beneficiaries: newBeneficiaries,
+                    };
+                    setClientState(newClientState);
+                    console.log(clientState);
+                }}
+                />
+            </CInputGroup>
+
+            <CMultiSelect 
+                id="connected-clients"
+                className="mb-3  py-3" 
+                options={clientOptions} 
+                placeholder="Select Connected Clients" 
+                selectAll={false}
+                disabled={viewOnly}
+                onChange={
+                (selectedValues) => {
+                    const newClientState = {
+                    ...clientState,
+                    connectedUsers: selectedValues.map(selected => selected.value as string)
+                    }
+                    setClientState(newClientState)
+                }
+                }
+            /> 
+            
+            <CInputGroup className='py-3'>
+                <CInputGroupText>YTD</CInputGroupText>
+                <CFormInput type="number" id="ytd" value={clientState.ytd} disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    ytd: parseFloat(e.target.value),
+                    };
+                    setClientState(newClientState)
+                }}/>
+                <CLoadingButton 
+                color="primary" 
+                variant="outline" 
+                disabled={clientState.cid == '' || clientState.cid == null || viewOnly} 
+                loading={ytdLoading}
+                onClick={async () => {    
+                    setYTDLoading(true);
+                    try {const ytd = await db.getYTD(clientState.cid); 
+                    const newClientState = {
+                        ...clientState,
+                        ytd: ytd,
+                    };
+                    setClientState(newClientState);
+                    } catch (error) {
+                    console.error(error);
+                    } finally {
+                    setYTDLoading(false);
+                    }
+                }}
+                >Update YTD</CLoadingButton>
+            </CInputGroup>
+            <CInputGroup className='py-3'>
+                <CInputGroupText>Total YTD</CInputGroupText>
+                <CFormInput type="number" id="ytd" value={clientState.totalYTD ?? clientState.ytd} disabled={clientState.connectedUsers.length == 0 || viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    ytd: parseFloat(e.target.value),
+                    };
+                    setClientState(newClientState)
+                }}/>
+                <CLoadingButton 
+                color="primary" 
+                variant="outline" 
+                disabled={clientState.connectedUsers.length == 0 || clientState.cid == '' || clientState.cid == null || viewOnly} 
+                loading={totalYTDLoading}
+                onClick={async () => {    
+                    setTotalYTDLoading(true);
+                    try {const ytd = await db.getTotalYTD(clientState.cid); 
+                    const newClientState = {
+                        ...clientState,
+                        totalYTD: ytd,
+                    };
+                    setClientState(newClientState);
+                    console.log(ytd);
+                    console.log(clientState);
+                    } catch (error) {
+                    console.error(error);
+                    } finally {
+                    setTotalYTDLoading(false);
+                    }
+                }}
+                >Update Total YTD</CLoadingButton>
+            </CInputGroup>
+
+            <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>
+
+            <div className="mb-3 ">
+                <h5>Upload Previous Activities</h5>
+                <div  className="mb-3 py-3">
+                <CFormInput type="file" id="formFile" onChange={(event) => handleActivitiesFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
+                </div>
+            </div>
+            
+            {/* Imported Activities Table */}
+            {(clientState.activities && clientState.activities.length > 0) && <CTable striped hover >
+                <CTableHead >
+                <CTableRow>
+                    <CTableHeaderCell>Index</CTableHeaderCell>
+                    <CTableHeaderCell>Type</CTableHeaderCell>
+                    <CTableHeaderCell>Recipient</CTableHeaderCell>
+                    <CTableHeaderCell>Time</CTableHeaderCell>
+                    <CTableHeaderCell>Amount</CTableHeaderCell>
+                    <CTableHeaderCell>Actions</CTableHeaderCell>
+                </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                {clientState.activities?.map((activity, index) => {
+                const isEditing = editActivityIndex === index;
+                return (
+                    <CTableRow key={index}>
+                    <CTableDataCell>{index + 1}</CTableDataCell>
+                    {isEditing ? (
+                        // Editable fields when in edit mode
+                        <>
+                        <CTableDataCell>
+                            <CFormSelect 
+                                value={editedActivity?.type || ''}
+                                onChange={(e) => setEditedActivity({ ...editedActivity, type: e.target.value.toLowerCase() })
                                 }
-                                setClientState(newClientState)
+                                options={[
+                                    { label: 'Profit', value: 'profit' },
+                                    { label: 'Deposit', value: 'deposit' },
+                                    { label: 'Withdrawal', value: 'withdrawal'},
+                                ]}
+                            />
+                        </CTableDataCell>
+                        <CTableDataCell>
+                            <CFormInput
+                            value={editedActivity?.recipient || ''}
+                            onChange={(e) =>
+                                setEditedActivity({ ...editedActivity, recipient: e.target.value })
                             }
-                        } 
-                        disabled={viewOnly ? viewOnly : !useCompanyName}/>
-                    </CInputGroup>
-
-                    <CInputGroup className="mb-3  py-3">
-                        <CInputGroupText>Address</CInputGroupText>
-                        <CFormInput id="address" value={clientState.address} disabled={viewOnly}
+                            />
+                        </CTableDataCell>
+                        <CTableDataCell>
+                            <CFormInput
+                            type="date"
+                            value={
+                                editedActivity?.time
+                                ? editedActivity.time.toISOString().split('T')[0]
+                                : ''
+                            }
                             onChange={(e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    address: e.target.value,
-                                };
-                                setClientState(newClientState)
-                        }}/>
-                    </CInputGroup>
-
-                    <CInputGroup className="mb-3  py-3">
-                        <CInputGroupText>DOB</CInputGroupText>
-                        <CFormInput type="date" id="dob"  value = {clientState.dob?.toISOString().split('T')[0] ?? ''} disabled={viewOnly}
-                            onChange={(e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    dob: parse(e.target.value, 'yyyy-MM-dd', new Date()),
-                                };
-                                setClientState(newClientState)
-                        }}/>
-                    </CInputGroup>
-
-                    <CInputGroup className="mb-3  py-3">
-                        <CInputGroupText>Phone Number</CInputGroupText>
-                        <CFormInput id="phone-number" value={clientState.phoneNumber} disabled={viewOnly}
-                            onChange={(e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    phoneNumber: e.target.value,
-                                };
-                                setClientState(newClientState)
-                        }}/>
-                    </CInputGroup>
-
-                    <CInputGroup className="mb-3  py-3">
-                        <CInputGroupText>Email</CInputGroupText>
-                        <CFormInput type="email" id="email" value={clientState.initEmail} disabled={viewOnly}
-                            onChange={(e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    initEmail: e.target.value,
-                                };
-                                setClientState(newClientState)
-                        }}/>
-                    </CInputGroup>
-
-                    <CInputGroup className="mb-3  py-3">
-                        <CInputGroupText>First Deposit Date</CInputGroupText>
-                        <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate?.toISOString().split('T')[0] ?? ''} disabled={viewOnly}
-                            onChange={(e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    firstDepositDate: parse(e.target.value, 'yyyy-MM-dd', new Date()),
-                                };
-                                setClientState(newClientState)
-                        }}/>
-                    </CInputGroup>
-
-                    <CInputGroup className="mb-3  py-3">
-                        <CInputGroupText>Beneficiary</CInputGroupText>
+                                const newTime = parseDateWithTwoDigitYear(e.target.value) || new Date();
+                                setEditedActivity({
+                                ...editedActivity,
+                                time: newTime,
+                                formattedTime: formatDate(newTime),
+                                });
+                            }}
+                            />
+                        </CTableDataCell>
+                        <CTableDataCell>
                         <CFormInput
-                            id="beneficiary"
-                            value={clientState.beneficiaries[0]} // Assuming you want to edit the first beneficiary
-                            disabled={viewOnly}
+                            type="number"
+                            value={editedActivity?.amount || ''}
                             onChange={(e) => {
-                                const newBeneficiaries = [...clientState.beneficiaries];
-                                newBeneficiaries[0] = e.target.value; // Update the first beneficiary
-                                const newClientState = {
-                                    ...clientState,
-                                    beneficiaries: newBeneficiaries,
-                                };
-                                setClientState(newClientState);
-                                console.log(clientState);
+                                const value = parseFloat(e.target.value);
+                                setEditedActivity({
+                                ...editedActivity!,
+                                amount: !isNaN(value) ? value : 0, // Ensure amount is a number
+                                });
                             }}
                         />
-                    </CInputGroup>
-
-                    <CMultiSelect 
-                        id="connected-users"
-                        className="mb-3  py-3" 
-                        options={userOptions} 
-                        placeholder="Select Connected Users" 
-                        selectAll={false}
-                        disabled={viewOnly}
-                        onChange={
-                            (selectedValues) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    connectedUsers: selectedValues.map(selected => selected.value as string)
-                                }
-                                setClientState(newClientState)
-                            }
-                        }
-                    /> 
-                
-                    <CInputGroup className='py-3'>
-                        <CInputGroupText>YTD</CInputGroupText>
-                        <CFormInput type="number" id="ytd" value={clientState.ytd} disabled={viewOnly}
-                            onChange={(e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    ytd: parseFloat(e.target.value),
-                                };
-                                setClientState(newClientState)
-                        }}/>
-                        <CLoadingButton 
-                            color="primary" 
-                            variant="outline" 
-                            disabled={clientState.cid == '' || clientState.cid == null || viewOnly} 
-                            loading={ytdLoading}
-                            onClick={async () => {    
-                                setYTDLoading(true);
-                                try {const ytd = await db.getYTD(clientState.cid); 
-                                const newClientState = {
-                                        ...clientState,
-                                        ytd: ytd,
-                                };
-                                setClientState(newClientState);
-                                console.log(ytd);
-                                console.log(clientState);
-                                } catch (error) {
-                                    console.error(error);
-                                } finally {
-                                    setYTDLoading(false);
-                                }
+                        </CTableDataCell>
+                        <CTableDataCell className="d-flex gap-2">
+                            <CButton
+                            className='me-2'
+                            color="success"
+                            variant="outline"
+                            onClick={() => {
+                                // Update the activity in the client state
+                                const updatedActivities = [...(clientState.activities || [])];
+                                updatedActivities[index] = editedActivity!;
+                                setClientState({
+                                ...clientState,
+                                activities: updatedActivities,
+                                });
+                                setEditActivityIndex(null);
+                                setEditedActivity(emptyActivity);
                             }}
-                        >Update YTD</CLoadingButton>
-                    </CInputGroup>
-                    <CInputGroup className='py-3'>
-                        <CInputGroupText>Total YTD</CInputGroupText>
-                        <CFormInput type="number" id="ytd" value={clientState.totalYTD ?? clientState.ytd} disabled={clientState.connectedUsers.length == 0 || viewOnly}
-                            onChange={(e) => {
-                                const newClientState = {
-                                    ...clientState,
-                                    ytd: parseFloat(e.target.value),
-                                };
-                                setClientState(newClientState)
-                        }}/>
-                        <CLoadingButton 
-                            color="primary" 
-                            variant="outline" 
-                            disabled={clientState.connectedUsers.length == 0 || clientState.cid == '' || clientState.cid == null || viewOnly} 
-                            loading={totalYTDLoading}
-                            onClick={async () => {    
-                                setTotalYTDLoading(true);
-                                try {const ytd = await db.getTotalYTD(clientState.cid); 
-                                const newClientState = {
-                                        ...clientState,
-                                        totalYTD: ytd,
-                                };
-                                setClientState(newClientState);
-                                console.log(ytd);
-                                console.log(clientState);
-                                } catch (error) {
-                                    console.error(error);
-                                } finally {
-                                    setTotalYTDLoading(false);
-                                }
+                            >
+                            Save
+                            </CButton>
+                            <CButton
+                            color="secondary"
+                            variant="outline"
+                            onClick={() => {
+                                // Cancel editing
+                                setEditActivityIndex(null);
+                                setEditedActivity(emptyActivity);
                             }}
-                        >Update Total YTD</CLoadingButton>
-                    </CInputGroup>
+                            >
+                            Cancel
+                            </CButton>
+                        </CTableDataCell>
+                        </>
+                    ) : (
+                        // Static fields when not in edit mode
+                        <>
+                        <CTableDataCell>{toTitleCase(activity.type)}</CTableDataCell>
+                        <CTableDataCell>{activity.recipient}</CTableDataCell>
+                        <CTableDataCell>{activity.formattedTime}</CTableDataCell>
+                        <CTableDataCell>{formatCurrency(activity.amount)}</CTableDataCell>
+                        <CTableDataCell className="d-flex gap-2">
+                            <CButton
+                                color="warning"
+                                variant="outline"
+                                className="me-3" // Adds margin-end
+                                onClick={() => {
+                                setEditActivityIndex(index);
+                                setEditedActivity({ ...activity }); // Clone the activity
+                                }}
+                            >
+                                Edit
+                            </CButton>
+                            <CButton
+                                color="danger"
+                                variant="outline"
+                                onClick={() => handleRemoveActivity(index)}
+                            >
+                                Remove
+                            </CButton>
+                            </CTableDataCell>
+                        </>
+                    )}
+                    </CTableRow>
+                );
+                })}
+                </CTableBody>
+            </CTable>}
 
-                    <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>
-
-                    <div className="mb-3  py-3">
-                        <h5>Upload Previous Activities</h5>
-                        <div  className="mb-3 py-3">
-                            <CFormInput type="file" id="formFile" onChange={(event) => handleActivitiesFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
-                        </div>
-                    </div>
-
-                    <div className="mb-3 ">
-                        <h5>Upload Graph Points</h5>
-                        <div  className="mb-3 py-3">
-                            <CFormInput type="file" id="formFile" onChange={(event) => handleGraphPointsFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
-                        </div>
-                    </div>
-                </CModalBody>
+            <div className="mb-3 ">
+                <h5>Upload Graph Points</h5>
+                <div  className="mb-3 py-3">
+                <CFormInput type="file" id="formFile" onChange={(event) => handleGraphPointsFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
+                </div>
+            </div>
+            </CModalBody>
     )
 } 
 
-export const ValidateClient = (clientState: User, useCompanyName: boolean, setInvalidInputFields: (fields: string[]) => void) => {
+export const ValidateClient = (clientState: Client, useCompanyName: boolean, setInvalidInputFields: (fields: string[]) => void) => {
     let validClient = true;
     let fields: string[] = [];
 

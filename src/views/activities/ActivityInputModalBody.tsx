@@ -1,7 +1,7 @@
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip } from "@coreui/react-pro";
 import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import React, { act, useEffect, useState } from "react";
-import { Activity, User, DatabaseService, emptyUser, roundToNearestHour} from "src/db/database";
+import { Activity, Client, DatabaseService, emptyClient, roundToNearestHour} from "src/db/database";
 import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
@@ -12,9 +12,9 @@ import { Timestamp } from "firebase/firestore";
 interface ActivityInputProps {
     activityState: Activity,
     setActivityState: (clientState: Activity) => void,
-    clientState: User | null,
-    setClientState: (clientState: User | null) => void,
-    userOptions: Option[],
+    clientState: Client | null,
+    setClientState: (clientState: Client | null) => void,
+    clientOptions: Option[],
 }
 
 interface ErrorModalProps {
@@ -54,7 +54,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     setActivityState, 
     clientState,
     setClientState,
-    userOptions,
+    clientOptions,
 }) => {
     
     const db = new DatabaseService();
@@ -64,7 +64,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         ? roundToNearestHour(activityState.time.toDate())
         : roundToNearestHour(activityState.time);
     const [date, setDate] = React.useState<Date | null>(initialDate);
-    const [isRecipientSameAsUser, setIsRecipientSameAsUser] = useState<boolean>(true);
+    const [isRecipientSameAsClient, setIsRecipientSameAsClient] = useState<boolean>(true);
 
     const handleDateChange = (newDate: Date | null) => {
         if (newDate === null) { return; }
@@ -83,7 +83,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
 
     useEffect(() => {
         if (activityState.recipient === null || activityState.recipient === '') {return;}
-        setIsRecipientSameAsUser(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
+        setIsRecipientSameAsClient(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
     }, [activityState.recipient, clientState]);
 
     return (
@@ -119,25 +119,25 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                 </CCol>
                 <CCol>
                 <CMultiSelect
-                    id="user"
+                    id="client"
                     className="mb-3a custom-multiselect-dropdown"
-                    options={userOptions}
+                    options={clientOptions}
                     defaultValue={clientState?.cid}
-                    placeholder="Select User"
+                    placeholder="Select Client"
                     selectAll={false}
                     multiple={false}
                     allowCreateOptions={false}
                     onChange={async (selectedValue) => {
                         if (selectedValue.length === 0) {
-                            setClientState(await db.getUser(activityState.parentDocId ?? ''));
+                            setClientState(await db.getClient(activityState.parentDocId ?? ''));
                         } else {
-                            const user = selectedValue.map(selected => selected.label as string)[0];
+                            const client = selectedValue.map(selected => selected.label as string)[0];
                             const cid = selectedValue.map(selected => selected.value as string)[0];
-                            setClientState(await db.getUser(cid) ?? await db.getUser(activityState.parentDocId ?? ''));
+                            setClientState(await db.getClient(cid) ?? await db.getClient(activityState.parentDocId ?? ''));
 
                             // Update the recipient as well if the checkbox is checked
-                            if (isRecipientSameAsUser) {
-                                setActivityState({ ...activityState, recipient: user });
+                            if (isRecipientSameAsClient) {
+                                setActivityState({ ...activityState, recipient: client });
                             }
                         }
                     }}
@@ -151,14 +151,14 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     <CInputGroup>
                         <CTooltip
                             placement="left"
-                            content={"Sometimes you may need the recipient of the activity to differ from the user who's activity it is. Uncheck this box to type a different recipient."}
+                            content={"Sometimes you may need the recipient of the activity to differ from the client who's activity it is. Uncheck this box to type a different recipient."}
                         >
                             <CFormSwitch
-                                id="sameAsUserCheckbox"
-                                label="Recipient is the same as the user"
-                                checked={isRecipientSameAsUser}
+                                id="sameAsClientCheckbox"
+                                label="Recipient is the same as the client"
+                                checked={isRecipientSameAsClient}
                                 onChange={(e) => {
-                                    setIsRecipientSameAsUser(e.target.checked);
+                                    setIsRecipientSameAsClient(e.target.checked);
                                     if (e.target.checked && clientState) {
                                         setActivityState({ ...activityState, recipient: clientState.firstName + ' ' + clientState.lastName });
                                     } else if (clientState) {
@@ -176,7 +176,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                         value={activityState.recipient }
                         placeholder="Select Recipient"
                         multiple={false}
-                        disabled={isRecipientSameAsUser} // Disable this dropdown if the checkbox is checked
+                        disabled={isRecipientSameAsClient} // Disable this dropdown if the checkbox is checked
                         onChange={(e) => {
                             setActivityState({ ...activityState, recipient: e.target.value });
                         }}

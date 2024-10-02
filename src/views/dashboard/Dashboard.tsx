@@ -1,11 +1,11 @@
 
 import { useTranslation } from 'react-i18next'
-import UsersTable from './ClientTable'
+import ClientsTable from './ClientTable'
 
 const Dashboard = () => {
   useTranslation()
   return (
-      <UsersTable />
+      <ClientsTable />
   )
 }
 

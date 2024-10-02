@@ -1,5 +1,5 @@
 import { CCol, CContainer, CFormCheck, CFormInput, CInputGroup, CInputGroupText, CModal, CModalBody, CModalHeader, CModalTitle, CMultiSelect, CRow } from "@coreui/react-pro"
-import { User } from "src/db/database";
+import { Client } from "src/db/database";
 import config from '../../../config.json'
 import { formatCurrency } from '../../db/database';
 import { ClientInputModalBody } from "./ClientInputModalBody";
@@ -8,12 +8,12 @@ import { ClientInputModalBody } from "./ClientInputModalBody";
 interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
-        currentUser: User;
-        users?: User[];
+        currentClient: Client;
+        clients?: Client[];
 }
 
-export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users, currentUser: currentUser}) => {
-    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName, selected: (currentUser?.connectedUsers?.includes(user.cid))}))
+export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, currentClient: currentClient}) => {
+    const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (currentClient?.connectedUsers?.includes(client.cid))}))
     return (
         <CModal         
             scrollable
@@ -23,24 +23,24 @@ export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal
             size="xl" 
             onClose={() => setShowModal(false)}>
             <CModalHeader>
-                <CModalTitle>{currentUser?.firstName + ' ' + currentUser?.lastName}</CModalTitle>
+                <CModalTitle>{currentClient?.firstName + ' ' + currentClient?.lastName}</CModalTitle>
             </CModalHeader>
             <ClientInputModalBody 
-                    clientState={currentUser} 
-                    setClientState={(user: User) => {}} 
-                    useCompanyName={currentUser.companyName ? true : false}
+                    clientState={currentClient} 
+                    setClientState={(client: Client) => {}} 
+                    useCompanyName={currentClient.companyName ? true : false}
                     setUseCompanyName={(useCompanyName: boolean) => {}} 
-                    userOptions={userOptions}
+                    clientOptions={clientOptions}
                     viewOnly={true}/>
         </CModal>
     )
 }
 
-const AssetFormComponent: React.FC<{title: string, id: string, fund: string, user?: User}> = ({title, id, fund, user}) => {
+const AssetFormComponent: React.FC<{title: string, id: string, fund: string, client?: Client}> = ({title, id, fund, client}) => {
     return (
         <CInputGroup className="mb-3 py-3">
             <CInputGroupText style={{ width: "200px" }} id="personal">{title}</CInputGroupText>
-            <CFormInput id={id} disabled value={formatCurrency(user?.[config.ASSETS_SUBCOLLECTION]?.[fund]?.[getAssetType(id)])}/>
+            <CFormInput id={id} disabled value={formatCurrency(client?.[config.ASSETS_SUBCOLLECTION]?.[fund]?.[getAssetType(id)])}/>
         </CInputGroup>
     )      
 }

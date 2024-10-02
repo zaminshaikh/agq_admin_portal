@@ -1,7 +1,7 @@
 import { CButton, CModal, CModalHeader, CModalTitle, CModalFooter} from "@coreui/react-pro"
 import { useEffect, useState } from "react";
 import React from "react";
-import { DatabaseService, User, emptyUser } from '../../db/database.ts'
+import { DatabaseService, Client, emptyClient } from '../../db/database.ts'
 import { ClientInputModalBody } from "./ClientInputModalBody.tsx";
 import { ValidateClient } from "./ClientInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal.tsx';
@@ -15,24 +15,25 @@ import { FormValidationErrorModal } from '../../components/ErrorModal.tsx';
 
 // const MaskedInput = IMaskMixin(CFormInputWithMask);
 
-// State variable, determines if modal is shown based on UsersTable.tsx state
+// State variable, determines if modal is shown based on ClientsTable.tsx state
 interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
-        users?: User[];
+        clients?: Client[];
+        setClients: (clients: Client[]) => void;
 }
 // Initialize the client state
-const initialClientState: User = emptyUser
+const initialClientState: Client = emptyClient
 
 // TODO: Perform validation on address and email
 // Initial modal to create new client
-const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}) => {
+const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, setClients}) => {
     const db = new DatabaseService();
-    const [clientState, setClientState] = useState<User>(initialClientState);
+    const [clientState, setClientState] = useState<Client>(initialClientState);
 
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [useCompanyName, setUseCompanyName] = useState(false);
-    const userOptions = users!.map(user => ({value: user.cid, label: user.firstName + ' ' + user.lastName}))
+    const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName}))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
@@ -49,9 +50,10 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
                 });
             }
             // If validation passes, create the client and reload the page
-            await db.createUser(clientState);
+            await db.createClient(clientState);
+            setClients(await db.getClients());
             setShowModal(false);
-            window.location.reload();
+
         }
     }
 
@@ -86,7 +88,7 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, users}
                     setClientState={setClientState} 
                     useCompanyName={useCompanyName} 
                     setUseCompanyName={setUseCompanyName} 
-                    userOptions={userOptions}
+                    clientOptions={clientOptions}
                     viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="danger" variant="outline" onClick={() => setShowModal(false)}>Discard</CButton>

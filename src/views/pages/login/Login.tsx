@@ -43,10 +43,10 @@ const handleLogin = async (e: React.FormEvent) => {
                     setErrorMessage('Invalid email address.');
                     break;
                 case 'auth/user-disabled':
-                    setErrorMessage('User account is disabled.');
+                    setErrorMessage('Client account is disabled.');
                     break;
                 case 'auth/user-not-found':
-                    setErrorMessage('User not found.');
+                    setErrorMessage('Client not found.');
                     break;
                 case 'auth/wrong-password':
                     setErrorMessage('Incorrect password.');

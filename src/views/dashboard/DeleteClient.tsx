@@ -2,28 +2,29 @@ import { CButton, CFormInput, CInputGroup, CInputGroupText, CModal, CModalBody, 
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
-import { DatabaseService, User } from "src/db/database";
+import { DatabaseService, Client } from "src/db/database";
 
 interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
-        user?: User;
+        client?: Client;
+        setClients: (clients: Client[]) => void;
 }
 
-export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal, user}) => {
+export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client, setClients}) => {
     const service = new DatabaseService();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [doNamesMatch, setDoNamesMatch] = useState(false);
 
     useEffect(() => {
-        setDoNamesMatch(firstName === user?.firstName && lastName === user?.lastName);
-    }, [firstName, lastName, user]);
+        setDoNamesMatch(firstName === client?.firstName && lastName === client?.lastName);
+    }, [firstName, lastName, client]);
     
     const deleteClient = async () => {
-        await service.deleteUser(user?.cid)
+        await service.deleteClient(client?.cid)
+        setClients(await service.getClients());
         setShowModal(false);
-        window.location.reload();
     }
 
     return (
@@ -40,7 +41,7 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
                 </CModalTitle>
             </CModalHeader>
             <CModalBody className="px-5">
-                You are about to delete the client {user?.firstName} {user?.lastName}. THIS ACTION IS IRREVERSIBLE. To delete this client, type their first and last name below:
+                You are about to delete the client {client?.firstName} {client?.lastName}. THIS ACTION IS IRREVERSIBLE. To delete this client, type their first and last name below:
                 <div className="py-3">
                     <CInputGroup>
                         <CInputGroupText>Client's First Name</CInputGroupText>

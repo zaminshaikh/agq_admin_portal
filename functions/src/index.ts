@@ -67,13 +67,13 @@ function getActivityMessage(activity: Activity): string {
     let message: string;
     switch (activity.type) {
         case 'withdrawal':
-            message = `New Withdrawal: ${activity.fund} Fund has withdrawn $${activity.amount} from your account. View the Activity section for more details.`;
+            message = `New Withdrawal: ${activity.fund} Fund finished processing the withdrawal of $${activity.amount} from ${activity.recipient}'s account. View the Activity section for more details.`;
             break;
         case 'profit':
-            message = `New Profit: ${activity.fund} Fund has posted the latest returns from ${activity.recipient}'s investment. View the Activity section for more details.`;
+            message = `New Profit: ${activity.fund} has posted the latest returns for ${activity.recipient}. View the Activity section for more details.`;
             break;
         case 'deposit':
-            message = `New Deposit: ${activity.fund} Fund has deposited $${activity.amount} into your account. View the Activity section for more details.`;
+            message = `New Deposit: ${activity.fund} has finished processing the deposit of $${activity.amount} into ${activity.recipient}'s accoount. View the Activity section for more details.`;
             break;
         case 'manual-entry':
             message = `New Manual Entry: ${activity.fund} Fund has made a manual entry of $${activity.amount} into your account. View the Activity section for more details.`;
@@ -248,12 +248,12 @@ const addUidToConnectedUsers = async (connectedUsers: string[], uid: string, use
 
         if (connectedUserSnapshot.exists) {
             const connectedUserData = connectedUserSnapshot.data() as admin.firestore.DocumentData;
-            const uidAccessGranted: string[] = connectedUserData.uidAccessGranted || [];
+            const uidGrantedAccess: string[] = connectedUserData.uidGrantedAccess || [];
 
-            if (!uidAccessGranted.includes(uid)) {
-                uidAccessGranted.push(uid);
-                await connectedUserRef.update({ uidAccessGranted });
-                console.log(`User ${uid} has been added to uidAccessGranted of connected user ${connectedUser}`);
+            if (!uidGrantedAccess.includes(uid)) {
+                uidGrantedAccess.push(uid);
+                await connectedUserRef.update({ uidGrantedAccess });
+                console.log(`User ${uid} has been added to uidGrantedAccess of connected user ${connectedUser}`);
             }
         } else {
             console.log(`Connected user document ${connectedUser} does not exist`);
@@ -265,7 +265,7 @@ const addUidToConnectedUsers = async (connectedUsers: string[], uid: string, use
 
 
 /**
- * Checks if a document exists in the 'users' collection in Firestore based on a given document ID.
+ * Checks if a document exists in the users collection in Firestore based on a given document ID.
  * 
  * This function is callable, meaning it's designed to be invoked directly from a client application.
  * It requires the client to provide a 'cid' (Client ID) which represents the document ID whose existence is to be verified.
@@ -287,8 +287,8 @@ exports.checkDocumentExists = functions.https.onCall(async (data, context): Prom
     }
   
     try {
-      // Attempt to fetch the document by ID from the 'users' collection.
-      const docSnapshot = await admin.firestore().collection('users').doc(cid).get();
+      // Attempt to fetch the document by ID from the users collection.
+      const docSnapshot = await admin.firestore().collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION).doc(cid).get();
         
       // Return the existence status of the document as a boolean.
       return { exists: docSnapshot.exists };
@@ -300,10 +300,10 @@ exports.checkDocumentExists = functions.https.onCall(async (data, context): Prom
 });
 
 /**
- * Checks if a document in the 'users' collection is linked to a user.
+ * Checks if a document in the users collection is linked to a user.
  * 
  * This function expects a document ID ('cid') and checks if the corresponding document
- * in the Firestore 'users' collection has a non-empty 'uid' field, indicating a link to a user.
+ * in the Firestore users collection has a non-empty 'uid' field, indicating a link to a user.
  *
  * @param {Object} data - The data payload from the client, expected to contain the 'cid'.
  * @param {Object} context - The context of the function call, providing environment and authentication details.
@@ -311,29 +311,68 @@ exports.checkDocumentExists = functions.https.onCall(async (data, context): Prom
  * @throws {functions.https.HttpsError} - Throws an 'invalid-argument' error if the 'cid' is not provided.
  * @throws {functions.https.HttpsError} - Throws an 'unknown' error for any unexpected issues during execution.
  */
-exports.checkDocumentLinked = functions.https.onCall(async (data, context): Promise<object> => {
-    // Validate input: ensure 'cid' is provided
-    const cid = data.cid;
-    if (!cid) {
-      throw new functions.https.HttpsError('invalid-argument', 'The function must be called with one argument "cid".');
-    }
-  
+exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
     try {
-      // Fetch the document from the 'users' collection using the provided 'cid'
-      const docSnapshot = await admin.firestore().collection('users').doc(cid).get();
-
+      let cid = data.cid;
+      console.log('Received data:', data);
+  
+      // Validate input: ensure 'cid' is provided
+      if (cid === undefined || cid === null) {
+        console.error('No cid provided.');
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'The function must be called with one argument "cid".'
+        );
+      }
+  
+      // Convert cid to string and trim whitespace
+      cid = String(cid).trim();
+      console.log('Processed cid:', cid);
+  
+      if (cid.length === 0) {
+        console.error('Empty cid after trimming.');
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'The "cid" cannot be an empty string.'
+        );
+      }
+  
+      // Fetch the document from the users collection using the provided 'cid'
+      const docSnapshot = await admin
+        .firestore()
+        .collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION)
+        .doc(cid)
+        .get();
+  
+      console.log('Fetched document snapshot:', docSnapshot.exists);
+  
       // Check if the document exists and the 'uid' field is non-empty
       const docData = docSnapshot.data();
-      const isLinked = docSnapshot.exists && docData && docData.uid && docData.uid !== '' && docData.uid !== null;
-
-      // Return the link status
+      console.log('Document data:', docData);
+  
+      const uid = docData?.uid;
+      console.log('User ID:', uid);
+  
+      const isLinked = !!(
+        docSnapshot.exists &&
+        uid &&
+        uid !== '' &&
+        uid !== null
+      );
+  
+      console.log(`isLinked: ${isLinked}, type: ${typeof isLinked}`);
+  
+      // Return the link status as a boolean
       return { isLinked };
     } catch (error) {
-      // Log and throw an 'unknown' error for any unexpected issues
       console.error('Error checking document link status:', error);
-      throw new functions.https.HttpsError('unknown', 'Failed to check document link status', error);
+      throw new functions.https.HttpsError(
+        'unknown',
+        'Failed to check document link status',
+        error
+      );
     }
-});
+  });
 
 exports.calculateYTD = functions.https.onCall(async (data, context): Promise<object> => {
     const cid = data.cid;

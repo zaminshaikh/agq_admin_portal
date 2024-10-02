@@ -5,17 +5,18 @@ import config from '../../config.json'
 import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { formatDate } from 'src/utils/utilities.ts'
 
 const functions = getFunctions();
 
 /**
- * User interface representing a client in the Firestore database.
+ * Client interface representing a client in the Firestore database.
  *  
- * .cid - The document ID of the user (the Client ID)
+ * .cid - The document ID of the client (the Client ID)
  * 
- * .uid - The user's UID, or the empty string if they have not signed up
+ * .uid - The client's UID, or the empty string if they have not signed up
  */
-export interface User {
+export interface Client {
     [key: string]: any;
     cid: string;
     uid: string;
@@ -65,7 +66,7 @@ export interface Activity {
     amount: number;
     fund: string;
     recipient: string;
-    time: Date | Timestamp;
+    time: Date;
     formattedTime?: string;
     type: string;
     isDividend?: boolean;
@@ -88,7 +89,7 @@ export interface GraphPoint {
     amount: number | null;
 }
 
-export const emptyUser: User = {
+export const emptyClient: Client = {
     firstName: '',
     lastName: '',
     companyName: '',
@@ -175,25 +176,25 @@ export const formatCurrency = (amount: number): string => {
 export class DatabaseService {
 
     private db: Firestore = getFirestore(app);
-    private usersCollection: CollectionReference<DocumentData, DocumentData>;
+    private clientsCollection: CollectionReference<DocumentData, DocumentData>;
     private cidArray: string[];
 
     constructor() {
-        this.usersCollection = collection(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION);
+        this.clientsCollection = collection(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION);
         this.cidArray = [];
         this.initCIDArray();
     }
 
     /**
-     * Asynchronously initializes the `cidArray` property with all the Client IDs from the 'testUsers' collection in Firestore.
+     * Asynchronously initializes the `cidArray` property with all the Client IDs from the 'testClients' collection in Firestore.
      *
      * This function performs the following steps:
-     * 1. It fetches all documents from the 'testUsers' collection in Firestore.
+     * 1. It fetches all documents from the 'testClients' collection in Firestore.
      * 2. It iterates over each document in the query snapshot and adds the document ID to the `cidArray`.
      * 3. It logs the `cidArray` to the console.
      */
     async initCIDArray() {
-        const querySnapshot = await getDocs(this.usersCollection);
+        const querySnapshot = await getDocs(this.clientsCollection);
         for (const doc of querySnapshot.docs) {
             this.cidArray.push(doc.id);
         }
@@ -236,31 +237,31 @@ export class DatabaseService {
     }
 
     /**
-     * Fetches all users from the 'testUsers' collection in Firestore.
-     * For each user, it also fetches their total assets from the 'assets' subcollection.
+     * Fetches all clients from the 'testClients' collection in Firestore.
+     * For each client, it also fetches their total assets from the 'assets' subcollection.
      * 
-     * @returns An array of user objects, each with the following properties:
-     * - cid: The document ID of the user (the Client ID).
-     * - firstname: The user's first name.
-     * - lastname: The user's last name.
-     * - company: The user's company.
-     * - email: The user's email, or a default message if not set.
-     * - uid: The user's UID, or the empty string if they have not signed up
-     * - connectedUsers: The user's connected users.
-     * - totalAssets: The user's total assets.
-     * - formattedAssets: The user's total assets, formatted as a currency string.
+     * @returns An array of client objects, each with the following properties:
+     * - cid: The document ID of the client (the Client ID).
+     * - firstname: The client's first name.
+     * - lastname: The client's last name.
+     * - company: The client's company.
+     * - email: The client's email, or a default message if not set.
+     * - uid: The client's UID, or the empty string if they have not signed up
+     * - connectedUsers: The client's connected clients.
+     * - totalAssets: The client's total assets.
+     * - formattedAssets: The client's total assets, formatted as a currency string.
      */
-    getUsers = async () => {
-        // Fetch all documents from the users collection
-        const querySnapshot = await getDocs(this.usersCollection);
+    getClients = async () => {
+        // Fetch all documents from the clients collection
+        const querySnapshot = await getDocs(this.clientsCollection);
 
-        // Initialize an empty array to hold the user objects
-        const users: User[] = [];
+        // Initialize an empty array to hold the client objects
+        const clients: Client[] = [];
 
-        // Use Promise.all to fetch all users concurrently
-        const userPromises = querySnapshot.docs.map(async (userSnapshot) => {
-            // Get a reference to the 'assets' subcollection for this user
-            const assetsSubcollection = collection(this.usersCollection, userSnapshot.id, config.ASSETS_SUBCOLLECTION);
+        // Use Promise.all to fetch all clients concurrently
+        const clientPromises = querySnapshot.docs.map(async (clientSnapshot) => {
+            // Get a reference to the 'assets' subcollection for this client
+            const assetsSubcollection = collection(this.clientsCollection, clientSnapshot.id, config.ASSETS_SUBCOLLECTION);
 
             // References to each doc in assets subcollection
             const generalAssetsDoc = doc(assetsSubcollection, config.ASSETS_GENERAL_DOC_ID);
@@ -274,33 +275,33 @@ export class DatabaseService {
                 getDoc(ak1AssetsDoc),
             ]);
 
-            // Process the snapshots to create the user object
-            return this.getUserFromSnapshot(userSnapshot, generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot);
+            // Process the snapshots to create the client object
+            return this.getClientFromSnapshot(clientSnapshot, generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot);
         });
 
-        // Wait for all user processing promises to resolve
-        const processedUsers = await Promise.all(userPromises);
+        // Wait for all client processing promises to resolve
+        const processedClients = await Promise.all(clientPromises);
 
-        // Filter out any null values in case some users couldn't be created
-        users.push(...processedUsers.filter(user => user !== null));
+        // Filter out any null values in case some clients couldn't be created
+        clients.push(...processedClients.filter(client => client !== null));
 
-        // Return the array of user objects
-        return users;
+        // Return the array of client objects
+        return clients;
     };
 
-    getUserFromSnapshot = (
-        userSnapshot: DocumentSnapshot,
+    getClientFromSnapshot = (
+        clientSnapshot: DocumentSnapshot,
         generalAssetsSnapshot: DocumentSnapshot,
         agqAssetsSnapshot: DocumentSnapshot,
-        ak1AssetsSnapshot: DocumentSnapshot): User | null => {
-        if (userSnapshot.exists()) {
-            const data = userSnapshot.data();
+        ak1AssetsSnapshot: DocumentSnapshot): Client | null => {
+        if (clientSnapshot.exists()) {
+            const data = clientSnapshot.data();
             const generalAssetsData = generalAssetsSnapshot.data();
             const agqAssetsData = agqAssetsSnapshot.data();
             const ak1AssetsData = ak1AssetsSnapshot.data();
 
-            const user: User = {
-                cid: userSnapshot.id,
+            const client: Client = {
+                cid: clientSnapshot.id,
                 uid: data?.uid ?? '',
                 firstName: data?.name?.first ?? '',
                 lastName: data?.name?.last ?? '',
@@ -308,8 +309,8 @@ export class DatabaseService {
                 address: data?.address ?? '',
                 dob: data?.dob?.toDate() ?? null,
                 initEmail: data?.initEmail ?? data?.email ?? '',
-                appEmail: data?.appEmail ?? data?.email ?? 'User has not logged in yet',
-                connectedUsers: data?.connectedUsers ?? [],
+                appEmail: data?.appEmail ?? data?.email ?? 'Client has not logged in yet',
+                connectedUsers: data?.connectedUsers?? [],
                 totalAssets: generalAssetsData ? generalAssetsData.total : 0,
                 ytd: generalAssetsData ? generalAssetsData.ytd : 0,
                 totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
@@ -339,17 +340,17 @@ export class DatabaseService {
                 },
             };
 
-            return user;
+            return client;
         } else {
             return null;
         }
     };
 
-    getUser = async (cid: string) => {
-        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
-        const userSnapshot = await getDoc(userRef);
-        // Get a reference to the 'assets' subcollection for this user
-        const assetsSubcollection = collection(this.usersCollection, cid, config.ASSETS_SUBCOLLECTION)
+    getClient = async (cid: string) => {
+        const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        const clientSnapshot = await getDoc(clientRef);
+        // Get a reference to the 'assets' subcollection for this client
+        const assetsSubcollection = collection(this.clientsCollection, cid, config.ASSETS_SUBCOLLECTION)
 
         // References to each doc in assets subcollection, one for each fund and a general overview doc
         const generalAssetsDoc = doc(assetsSubcollection, config.ASSETS_GENERAL_DOC_ID)
@@ -361,15 +362,15 @@ export class DatabaseService {
         const agqAssetsSnapshot = await getDoc(agqAssetsDoc)
         const ak1AssetsSnapshot = await getDoc(ak1AssetsDoc)
 
-        return this.getUserFromSnapshot(userSnapshot, generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot);
+        return this.getClientFromSnapshot(clientSnapshot, generalAssetsSnapshot, agqAssetsSnapshot, ak1AssetsSnapshot);
     }
 
     /**
-     * Asynchronously creates a new user in the Firestore database.
+     * Asynchronously creates a new client in the Firestore database.
      *
-     * @param newUser - The user object to be created. It should be of type `User`.
+     * @param newClient - The client object to be created. It should be of type `Client`.
      * 
-     * The `User` object should have the following properties:
+     * The `Client` object should have the following properties:
      * - firstName: string
      * - lastName: string
      * - companyName: string
@@ -380,108 +381,117 @@ export class DatabaseService {
      *   - ak1: object
      *
      * This function performs the following steps:
-     * 1. It creates a new `DocumentData` object from the `newUser` object, with a `name` property that is an object containing `first`, `last`, and `company` properties.
-     * 2. It deletes the `firstName`, `lastName`, `companyName`, `email`, `cid`, and `assets` properties from the `newUserDocData` object.
-     * 3. It generates a new document ID by hashing the user's first and last name.
-     * 4. It creates a new document in the Firestore database with the new ID and the `newUserDocData` object.
-     * 5. It creates `agqDoc` and `ak1Doc` objects from the `agq` and `ak1` properties of the `assets` property of the `newUser` object. Each object has a `fund` property and a `total` property, which is the sum of all the values in the object.
+     * 1. It creates a new `DocumentData` object from the `newClient` object, with a `name` property that is an object containing `first`, `last`, and `company` properties.
+     * 2. It deletes the `firstName`, `lastName`, `companyName`, `email`, `cid`, and `assets` properties from the `newClientDocData` object.
+     * 3. It generates a new document ID by hashing the client's first and last name.
+     * 4. It creates a new document in the Firestore database with the new ID and the `newClientDocData` object.
+     * 5. It creates `agqDoc` and `ak1Doc` objects from the `agq` and `ak1` properties of the `assets` property of the `newClient` object. Each object has a `fund` property and a `total` property, which is the sum of all the values in the object.
      * 6. It creates a `general` object with a `total` property that is the sum of the `total` properties of the `agqDoc` and `ak1Doc` objects.
-     * 7. It creates a new collection in the Firestore database under the new user document.
+     * 7. It creates a new collection in the Firestore database under the new client document.
      * 8. It creates new documents in the new collection with the `agqDoc`, `ak1Doc`, and `general` objects.
      * 9. It logs the `agqDoc` and `ak1Doc` objects to the console.
      *
-     * @returns {Promise<void>} Returns a Promise that resolves when the user and associated documents have been created in the Firestore database.
+     * @returns {Promise<void>} Returns a Promise that resolves when the client and associated documents have been created in the Firestore database.
      */
-    createUser = async (newUser: User) => {
+    createClient = async (newClient: Client) => {
 
         // Using the passed email, first name, and initial email to create a unique 8 digit CID using our hash function
-        const newUserDocId = await this.hash(newUser.firstName + '-' + newUser.lastName + '-' + newUser.initEmail);
+        const newClientDocId = await this.hash(newClient.firstName + '-' + newClient.lastName + '-' + newClient.initEmail);
 
-        newUser = {...newUser, cid: newUserDocId};
-        // Since the CID is unique, this will create a unique user in the database
-        await this.setUser(newUser);
+        newClient = {...newClient, cid: newClientDocId};
+        // Since the CID is unique, this will create a unique client in the database
+        await this.setClient(newClient);
     }
 
     /**
-     * Asynchronously sets the user doc in the Firestore database for the given CID
+     * Asynchronously sets the client doc in the Firestore database for the given CID
      * 
-     * @param user 
+     * @param client 
      * @param cid 
      * 
      */
-    setUser = async (user: User) => {
-        // Create a new DocumentData object from the newUser object, with a name property that is an object containing first, last, and company properties.
-        const newUserDocData: DocumentData = {
-            ...user,
+    setClient = async (client: Client) => {
+        // Create a new DocumentData object from the newClient object, with a name property that is an object containing first, last, and company properties.
+        const newClientDocData: DocumentData = {
+            ...client,
             name: {
-                first: user.firstName.trimEnd(),
-                last: user.lastName.trimEnd(),
-                company: user.companyName.trimEnd(),
+                first: client.firstName.trimEnd(),
+                last: client.lastName.trimEnd(),
+                company: client.companyName.trimEnd(),
             },
         };
 
-        // Delete these unused properties from the newUserDocData object
+        // Delete these unused properties from the newClientDocData object
         ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints', 'ytd', 'totalYTD'].forEach(key => {
-                delete newUserDocData[key];
+                delete newClientDocData[key];
         });
 
+        console.log('newClientDocData:', newClientDocData);
+
         // Create a reference with the CID.
-        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, user.cid);
+        const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
 
         // Updates/Creates the document with the CID
-        await setDoc(userRef, newUserDocData);
+        await setDoc(clientRef, newClientDocData);
         
-        // Update/Create the assets subcollection for user
-        await this.setAssets(user); 
+        // Update/Create the assets subcollection for client
+        await this.setAssets(client); 
 
-        // Update/Create a activity subcollection for user
-        const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION)
+        // Update/Create a activity subcollection for client
+        const activityCollectionRef = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION)
 
-        const graphCollectionRef = collection(userRef, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID, config.GRAPH_POINTS_SUBCOLLECTION)
+        const graphCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID, config.GRAPH_POINTS_SUBCOLLECTION)
 
         // If no activities exist, we leave the collection undefined
-        if (user.activities !== undefined) {
+        if (client.activities !== undefined) {
+            
             // Add all the activities to the subcollection
-            const promise = user.activities.map((activity) => addDoc(activityCollectionRef, activity));
+            const promise = client.activities.map((activity) => {
+                const activityWithParentId = {
+                    ...activity,
+                    parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION
+                };
+                addDoc(activityCollectionRef, activityWithParentId)
+            });
             // Use Promise.all to add all activities concurrently
             await Promise.all(promise);
         }
             
-        if (user.graphPoints !== undefined) {
+        if (client.graphPoints !== undefined) {
             // Add all the graph points to the subcollection
-            const promise = user.graphPoints.map((graphPoint) => addDoc(graphCollectionRef, graphPoint));
+            const promise = client.graphPoints.map((graphPoint) => addDoc(graphCollectionRef, graphPoint));
             // Use Promise.all to add all graph points concurrently
             await Promise.all(promise);
         }
     }
 
-    async setAssets(user: User) {
-        // Create a reference to the assets subcollection for this user
-        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, user.cid);
+    async setAssets(client: Client) {
+        // Create a reference to the assets subcollection for this client
+        const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
 
-         // Create the asset documents from user
+         // Create the asset documents from client
          let agqDoc = {
-            ...user.assets.agq,
+            ...client.assets.agq,
             fund: 'AGQ',
             // Calculate sum of the subfields of the fund (personal, company, trad, roth etc.)
-            total: Object.values(user.assets.agq).reduce((sum, value) => sum + value, 0), 
+            total: Object.values(client.assets.agq).reduce((sum, value) => sum + value, 0), 
         }
 
         let ak1Doc = {
-            ...user.assets.ak1,
+            ...client.assets.ak1,
             fund: 'AK1',
-            total: Object.values(user.assets.ak1).reduce((sum, value) => sum + value, 0),
+            total: Object.values(client.assets.ak1).reduce((sum, value) => sum + value, 0),
         }
 
         let general = {
-            ytd: user.ytd ?? 0, 
-            totalYTD: user.totalYTD ?? 0,
+            ytd: client.ytd ?? 0, 
+            totalYTD: client.totalYTD ?? 0,
             total: agqDoc.total + ak1Doc.total
         }
 
-        // Create a reference to the assets subcollection for user
+        // Create a reference to the assets subcollection for client
         // If none exists, it will create one
-        const assetCollectionRef = collection(userRef, config.ASSETS_SUBCOLLECTION)
+        const assetCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION)
         
         // Create references to the documents in the subcollection
         const agqRef = doc(assetCollectionRef, config.ASSETS_AGQ_DOC_ID)
@@ -495,35 +505,37 @@ export class DatabaseService {
     }
 
     /**
-     * Asynchronously deletes a user from the Firestore database.
+     * Asynchronously deletes a client from the Firestore database.
      *
-     * @param cid - The Client ID of the user to be deleted.
+     * @param cid - The Client ID of the client to be deleted.
      *
-     * @returns {Promise<void>} Returns a Promise that resolves when the user has been deleted from the Firestore database.
+     * @returns {Promise<void>} Returns a Promise that resolves when the client has been deleted from the Firestore database.
      */
-    deleteUser = async (cid: string | undefined) => {
+    deleteClient = async (cid: string | undefined) => {
         if (cid === undefined || cid === null ||cid === '' ) { console.log('no value'); return }
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
         await deleteDoc(clientRef);
     }
 
-    unlinkUser = async (cid: string) => {
+    unlinkClient = async (cid: string) => {
 
     }
 
     /**
-     * Updates the given user in the Firestore database.
+     * Updates the given client in the Firestore database.
      * 
-     * @param updatedUser 
+     * @param updatedClient 
      *
      */
-    updateUser = async (updatedUser: User) => {
-        await this.setUser(updatedUser);
+    updateClient = async (updatedClient: Client) => {
+        await this.setClient(updatedClient);
     }
 
     getActivities = async () => {
-        // Fetch all activities from all users' 'activities' subcollections using collectionGroup
-        const querySnapshot = await getDocs(collectionGroup(this.db, 'activities'));
+        // Fetch all activities from all clients' 'activities' subcollections using collectionGroup
+        const activitiesCollectionGroup = collectionGroup(this.db, config.ACTIVITIES_SUBCOLLECTION);
+        const q = query(activitiesCollectionGroup, where('parentCollection', '==', config.FIRESTORE_ACTIVE_USERS_COLLECTION));
+        const querySnapshot = await getDocs(q);
 
         // Map the query snapshot to an array of Activity with formatted time
         const activities: Activity[] = querySnapshot.docs.map((doc) => {
@@ -535,7 +547,7 @@ export class DatabaseService {
             let formattedTime = '';
             const time = data.time instanceof Timestamp ? data.time.toDate() : data.time;
             if (time instanceof Date) {
-                formattedTime = this.formatDate(time);
+                formattedTime = formatDate(time);
             }
 
             return {
@@ -549,29 +561,26 @@ export class DatabaseService {
         return activities;
     }
 
-    // Utility function for formatting Date
-    formatDate = (date: Date): string => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        const seconds = date.getSeconds().toString().padStart(2, '0');
-        return `${year}/${month}/${day} at ${hours}:${minutes}:${seconds} EST`;
-    }
-
     createActivity = async (activity: Activity, cid: string) => {
-        // Create a reference to the user document
-        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
-        // Create a reference to the activities subcollection for the user
-        const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION);
+        // Create a reference to the client document
+        const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        // Create a reference to the activities subcollection for the client
+        const activityCollectionRef = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION);
+        
+        // Add the parentCollectionId field to the activity
+        const activityWithParentId = {
+            ...activity,
+            parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION
+        };
+
         // Add the activity to the subcollection
-        await addDoc(activityCollectionRef, activity);
+        await addDoc(activityCollectionRef, activityWithParentId);
+
 
         // // If the activity requires a notification, create a notification for the recipient
         // if (activity.sendNotif === true) {
-        //     // Create a reference to the notifications subcollection for the user
-        //     const notificationsCollectionRef = collection(userRef, config.NOTIFICATIONS_SUBCOLLECTION);
+        //     // Create a reference to the notifications subcollection for the client
+        //     const notificationsCollectionRef = collection(clientRef, config.NOTIFICATIONS_SUBCOLLECTION);
         //     // Create a function to generate the notification message
         //     function getActivityMessage(activity: Activity): string {
         //         let message: string;
@@ -612,10 +621,10 @@ export class DatabaseService {
     }
 
     setActivity = async (activity: Activity, {activityDocId}: {activityDocId?: string}, cid: string) => {
-        // Create a reference to the user document
-        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
-        // Create a reference to the activities subcollection for the user
-        const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION);
+        // Create a reference to the client document
+        const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        // Create a reference to the activities subcollection for the client
+        const activityCollectionRef = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION);
         // Create a reference to the activity document
         const activityRef = doc(activityCollectionRef, activityDocId);
         // Set the activity document with new data
@@ -625,10 +634,10 @@ export class DatabaseService {
     deleteActivity = async (activity: Activity) => {
         const cid = activity.parentDocId!;
         const activityDocID = activity.id!;
-        // Create a reference to the user document
+        // Create a reference to the client document
         try {
-            const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
-            const activityCollectionRef = collection(userRef, config.ACTIVITIES_SUBCOLLECTION);
+            const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+            const activityCollectionRef = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION);
             const activityRef = doc(activityCollectionRef, activityDocID);
             await deleteDoc(activityRef);
         } catch (error) {
@@ -639,8 +648,8 @@ export class DatabaseService {
 
     async deleteNotification(activity: Activity,) {
         const cid = activity.parentDocId!;
-        const userRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
-        const notificationsCollectionRef = collection(userRef, config.NOTIFICATIONS_SUBCOLLECTION);
+        const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+        const notificationsCollectionRef = collection(clientRef, config.NOTIFICATIONS_SUBCOLLECTION);
         const querySnapshot = await getDocs(query(notificationsCollectionRef, where('activityId', '==', activity.id)));
         
         if (!querySnapshot.empty) {
