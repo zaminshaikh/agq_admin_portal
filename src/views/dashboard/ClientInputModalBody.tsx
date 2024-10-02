@@ -25,15 +25,17 @@ interface ClientInputProps {
 // Handles the file input from the client
 const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
 
-    const getActivityType = (type: string | undefined) => {
+    const getActivityType = (type: string | undefined, amount: number) => {
         if (!type) return "none";
         switch (type) {
             case "withdrawal":
-                return "profit";
+                if (amount > 15000) return "withdrawal";
+                else return "profit";
             case "deposit":
-                return "deposit";
+                if (amount > 15000) return "deposit";
+                else return "profit";
             default:
-                return "other";
+                return "profit";
         }
     }
 
@@ -99,7 +101,7 @@ const exceptions = ["LLC", "Inc", "Ltd"];
                     recipient: recipient,
                     time: parsedDate,
                     formattedTime: formatDate(parsedDate),
-                    type: getActivityType(row["Type"]),
+                    type: getActivityType(row["Type"], Math.abs(parseFloat(row["Amount (Unscaled)"]))),
                 };
     
                 // Add the activity to the activities array
