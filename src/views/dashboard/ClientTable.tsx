@@ -105,10 +105,10 @@ const ClientsTable = () => {
     return (
         <CContainer>
             {showImportClientsModal && <ImportClients showModal={showImportClientsModal} setShowModal={setShowImportClientsModal} clients={clients}/>}
-            {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} activeClient={currentClient}/>}
+            {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} setClients={setClients} activeClient={currentClient}/>}
             {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} clients={clients} currentClient={currentClient ?? emptyClient}/>}
-            {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} client={currentClient}/>}
-            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients}/>} 
+            {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} client={currentClient} setClients={setClients}/>}
+            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients} setClients={setClients}/>} 
             <div className="d-grid gap-2 py-3">
                 <CButton color='secondary' onClick={() => setShowImportClientsModal(true)}>Import Clients</CButton>
             </div> 

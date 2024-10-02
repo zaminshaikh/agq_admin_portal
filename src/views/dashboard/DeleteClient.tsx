@@ -8,9 +8,10 @@ interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
         client?: Client;
+        setClients: (clients: Client[]) => void;
 }
 
-export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client}) => {
+export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client, setClients}) => {
     const service = new DatabaseService();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -22,8 +23,8 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
     
     const deleteClient = async () => {
         await service.deleteClient(client?.cid)
+        setClients(await service.getClients());
         setShowModal(false);
-        window.location.reload();
     }
 
     return (

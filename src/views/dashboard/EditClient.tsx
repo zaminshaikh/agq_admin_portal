@@ -23,7 +23,8 @@ interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
         clients?: Client[];
-        activeClient: Client;
+        setClients: (clients: Client[]) => void;
+        activeClient?: Client;
         onSubmit?: (updatedClient: Client) => void;
         reload?: boolean;
 }
@@ -44,9 +45,9 @@ const handleEditClient = async (clientState: Client, override: boolean, setClien
 
 // TODO: Perform validation on address and email
 // Initial modal to create new client
-export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients: clients, activeClient: activeClient, onSubmit=handleEditClient, reload=true}) => {
+export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients: clients, setClients, activeClient: activeClient, onSubmit=handleEditClient, reload=true}) => {
     // Initialize the client state
-    const initialClientState: Client = {...activeClient,};
+    const initialClientState: Client = {...activeClient ?? emptyClient};
     const [clientState, setClientState] = useState<Client>(initialClientState);
 
     const [showErrorModal, setShowErrorModal] = useState(false);
@@ -91,15 +92,14 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
                     viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
-                    <CButton color="primary" onClick={() => {
+                    <CButton color="primary" onClick={async () => {
                         if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields) && !override) {
                             setShowErrorModal(true);
                         } else {
                             onSubmit(clientState, override, setClientState);
+                            const db = new DatabaseService();
+                            setClients(await db.getClients());
                             setShowModal(false);
-                            if (reload) {
-                                window.location.reload();
-                            }
                         }
                         }}>Update</CButton>
                 </CModalFooter>
