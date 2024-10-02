@@ -63,11 +63,17 @@ const exceptions = ["LLC", "Inc", "Ltd"];
     
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName.trimEnd() + ' ' + clientState.lastName.trimEnd();
-
-                console.log(name.toLowerCase().includes(clientFullName.toLowerCase()));
+                
+                console.log('\n')
+                console.log(name.toLowerCase() + '!');
+                console.log(clientState.companyName.toLowerCase() + '!');
+                console.log(!name.toLowerCase().includes(clientFullName.toLowerCase()));
                 console.log(!name.toLowerCase().includes(clientState.companyName.toLowerCase()))
     
-                if (!name.toLowerCase().includes(clientFullName.toLowerCase()) || (clientState.companyName == '' && !name.toLowerCase().includes(clientState.companyName.toLowerCase()))) return;
+                if (!name.toLowerCase().includes(clientFullName.toLowerCase()) 
+                    && (clientState.companyName === '' || !name.toLowerCase().includes(clientState.companyName.toLowerCase()))) {
+                    return;
+                }
                 else if (clientState.companyName != '' && name.toLowerCase().includes(clientState.companyName.toLowerCase())) { name = clientState.companyName } 
                 else if (name.toLowerCase().includes(clientFullName.toLowerCase())) {
                     name = clientFullName;
