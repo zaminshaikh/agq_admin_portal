@@ -67,13 +67,13 @@ function getActivityMessage(activity: Activity): string {
     let message: string;
     switch (activity.type) {
         case 'withdrawal':
-            message = `New Withdrawal: ${activity.fund} Fund has withdrawn $${activity.amount} from your account. View the Activity section for more details.`;
+            message = `New Withdrawal: ${activity.fund} Fund finished processing the withdrawal of $${activity.amount} from ${activity.recipient}'s account. View the Activity section for more details.`;
             break;
         case 'profit':
-            message = `New Profit: ${activity.fund} Fund has posted the latest returns from ${activity.recipient}'s investment. View the Activity section for more details.`;
+            message = `New Profit: ${activity.fund} has posted the latest returns for ${activity.recipient}. View the Activity section for more details.`;
             break;
         case 'deposit':
-            message = `New Deposit: ${activity.fund} Fund has deposited $${activity.amount} into your account. View the Activity section for more details.`;
+            message = `New Deposit: ${activity.fund} has finished processing the deposit of $${activity.amount} into ${activity.recipient}'s accoount. View the Activity section for more details.`;
             break;
         case 'manual-entry':
             message = `New Manual Entry: ${activity.fund} Fund has made a manual entry of $${activity.amount} into your account. View the Activity section for more details.`;
