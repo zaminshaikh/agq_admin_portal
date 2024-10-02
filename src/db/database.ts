@@ -426,6 +426,8 @@ export class DatabaseService {
                 delete newClientDocData[key];
         });
 
+        console.log('newClientDocData:', newClientDocData);
+
         // Create a reference with the CID.
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
 
@@ -442,8 +444,15 @@ export class DatabaseService {
 
         // If no activities exist, we leave the collection undefined
         if (client.activities !== undefined) {
+            
             // Add all the activities to the subcollection
-            const promise = client.activities.map((activity) => addDoc(activityCollectionRef, activity));
+            const promise = client.activities.map((activity) => {
+                const activityWithParentId = {
+                    ...activity,
+                    parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION
+                };
+                addDoc(activityCollectionRef, activityWithParentId)
+            });
             // Use Promise.all to add all activities concurrently
             await Promise.all(promise);
         }
