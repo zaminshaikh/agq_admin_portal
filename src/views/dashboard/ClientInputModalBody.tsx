@@ -25,25 +25,27 @@ interface ClientInputProps {
 // Handles the file input from the client
 const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
 
-    const getActivityType = (type: string | undefined) => {
+    const getActivityType = (type: string | undefined, amount: number) => {
         if (!type) return "none";
         switch (type) {
             case "withdrawal":
-                return "profit";
+                if (amount > 15000) return "withdrawal";
+                else return "profit";
             case "deposit":
-                return "deposit";
+                if (amount > 15000) return "deposit";
+                else return "profit";
             default:
-                return "other";
+                return "profit";
         }
     }
 
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // List of exceptions to preserve original casing
-    const exceptions = ["LLC", "Inc", "Ltd"];
+// List of exceptions to preserve original casing
+const exceptions = ["LLC", "Inc", "Ltd"];
 
-    // Parse the CSV file
+// Parse the CSV file
     Papa.parse(file, {
         header: true,
         complete: (results) => {
@@ -55,6 +57,7 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                 if (Object.values(row).every(x => (x === null || x === ''))) return;
     
                 // Remove the fund type after the dash and convert the name to title case
+                
                 let [recipientName, fundInfo] = row["Security Name"].split('-').map((s: string) => s.trim());
                 let name = toTitleCase(recipientName.trimEnd(), exceptions);
     
@@ -77,15 +80,28 @@ const handleActivitiesFileChange = (event: React.ChangeEvent<HTMLInputElement>, 
                 // Parse the date string correctly
                 const parsedDate = parseDateWithTwoDigitYear(dateString);
                 if (parsedDate === null) return;
+
+                            // Check for specific keywords in the Security Name and set the recipient accordingly
+                let recipient = '';
+                const securityNameLower = row["Security Name"].toLowerCase();
+                if (securityNameLower.includes('roth')) {
+                    recipient = 'ROTH IRA';
+                } else if (securityNameLower.includes('sep')) {
+                    recipient = 'SEP IRA';
+                } else if (securityNameLower.includes('ira')) {
+                    recipient = 'IRA';
+                } else {
+                    recipient = name; // Default to the parsed name if no specific keyword is found
+                }
     
                 // Create an activity from each row of the CSV
                 const activity: Activity = {
                     fund: fund,
                     amount: Math.abs(parseFloat(row["Amount (Unscaled)"])),
-                    recipient: name,
+                    recipient: recipient,
                     time: parsedDate,
                     formattedTime: formatDate(parsedDate),
-                    type: getActivityType(row["Type"]),
+                    type: getActivityType(row["Type"], Math.abs(parseFloat(row["Amount (Unscaled)"]))),
                 };
     
                 // Add the activity to the activities array

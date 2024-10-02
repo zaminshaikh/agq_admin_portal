@@ -1,5 +1,5 @@
 import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow } from "@coreui/react-pro";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 import { Client, DatabaseService, emptyClient } from "src/db/database";
 import Papa from "papaparse";
@@ -120,6 +120,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
     };
 
     const handleSaveClient = (updatedClient: Client) => {
+        
         const updatedClients = [...clientStates];
         if (editClientIndex !== null) {
             updatedClients[editClientIndex] = updatedClient;
@@ -144,6 +145,25 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
             window.location.reload();
         });
     }
+
+    const handleAddClient = (index: number) => {
+        const client = clientStates[index];
+        const db = new DatabaseService();
+        db.createClient(client)
+            .then(() => {
+                // Remove client from clientStates
+                const updatedClients = clientStates.filter((_, i) => i !== index);
+                setClientStates(updatedClients);
+            })
+            .catch((error) => {
+                console.error("Error adding client:", error);
+                // Optionally, display an error message to the user
+            });
+    };
+    
+    useEffect(() => {
+        console.log(clientStates);
+    }, [clientStates]);
 
     return (
         <div>
@@ -177,8 +197,9 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                                     <CTableDataCell>{client.firstName}</CTableDataCell>
                                     <CTableDataCell>{client.lastName}</CTableDataCell>
                                     <CTableDataCell>
-                                        <CButton className="me-5" color="warning"  variant='outline' onClick={() => handleEditClient(index)}>Edit Client</CButton>
-                                        <CButton color="danger"  variant='outline' onClick={() => handleRemoveClient(index)}>Remove</CButton>
+                                        <CButton className="me-3" color="warning"  variant='outline' onClick={() => handleEditClient(index)}>Edit Client</CButton>
+                                        <CButton className="me-3"color="danger"  variant='outline' onClick={() => handleRemoveClient(index)}>Remove</CButton>
+                                        <CButton color="success" variant='outline' onClick={() => handleAddClient(index)}>Add</CButton>
                                     </CTableDataCell>
                                 </CTableRow>
                             ))}
@@ -196,6 +217,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                     showModal={editClientIndex !== null}
                     setShowModal={() => setEditClientIndex(null)}
                     clients={clients}
+                    setClients={() => {}}
                     activeClient={clientStates[editClientIndex]}
                     onSubmit={handleSaveClient}
                     reload={false}
