@@ -201,6 +201,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                     showModal={editClientIndex !== null}
                     setShowModal={() => setEditClientIndex(null)}
                     clients={clients}
+                    setClients={() => {}}
                     activeClient={clientStates[editClientIndex]}
                     onSubmit={handleSaveClient}
                     reload={false}

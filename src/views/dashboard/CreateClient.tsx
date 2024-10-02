@@ -20,13 +20,14 @@ interface ShowModalProps {
         showModal: boolean;
         setShowModal: (show: boolean) => void;
         clients?: Client[];
+        setClients: (clients: Client[]) => void;
 }
 // Initialize the client state
 const initialClientState: Client = emptyClient
 
 // TODO: Perform validation on address and email
 // Initial modal to create new client
-const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients}) => {
+const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, setClients}) => {
     const db = new DatabaseService();
     const [clientState, setClientState] = useState<Client>(initialClientState);
 
@@ -50,8 +51,9 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
             }
             // If validation passes, create the client and reload the page
             await db.createClient(clientState);
+            setClients(await db.getClients());
             setShowModal(false);
-            window.location.reload();
+
         }
     }
 
