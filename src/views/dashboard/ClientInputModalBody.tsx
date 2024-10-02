@@ -63,9 +63,13 @@ const exceptions = ["LLC", "Inc", "Ltd"];
     
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName.trimEnd() + ' ' + clientState.lastName.trimEnd();
+
+                console.log(name.toLowerCase().includes(clientFullName.toLowerCase()));
+                console.log(!name.toLowerCase().includes(clientState.companyName.toLowerCase()))
     
-                if (!name.toLowerCase().includes(clientFullName.toLowerCase()) && name.toLowerCase().includes(clientState.companyName.toLowerCase())) return;
-                else if (name.toLowerCase().includes(clientState.companyName.toLowerCase())) { name = clientState.companyName } else {
+                if (!name.toLowerCase().includes(clientFullName.toLowerCase()) || (clientState.companyName == '' && !name.toLowerCase().includes(clientState.companyName.toLowerCase()))) return;
+                else if (clientState.companyName != '' && name.toLowerCase().includes(clientState.companyName.toLowerCase())) { name = clientState.companyName } 
+                else if (name.toLowerCase().includes(clientFullName.toLowerCase())) {
                     name = clientFullName;
                 }
     
@@ -86,7 +90,8 @@ const exceptions = ["LLC", "Inc", "Ltd"];
                             // Check for specific keywords in the Security Name and set the recipient accordingly
                 let recipient = '';
                 const securityNameLower = row["Security Name"].toLowerCase();
-                if (securityNameLower.includes(' roth ')) {
+                console.log(securityNameLower);
+                if (securityNameLower.includes('roth')) {
                     recipient = 'ROTH IRA';
                 } else if (securityNameLower.includes(' sep ')) {
                     recipient = 'SEP IRA';
