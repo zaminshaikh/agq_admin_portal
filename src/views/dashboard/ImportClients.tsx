@@ -208,7 +208,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 </CModalBody>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
-                    <CButton color="primary" onClick={() => handleImportClients()}>Import</CButton>
+                    <CButton color="primary" onClick={() => handleImportClients()}>Import All</CButton>
                 </CModalFooter>
             </CModal>
 

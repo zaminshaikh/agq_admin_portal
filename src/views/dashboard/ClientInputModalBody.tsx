@@ -84,14 +84,20 @@ const exceptions = ["LLC", "Inc", "Ltd"];
                             // Check for specific keywords in the Security Name and set the recipient accordingly
                 let recipient = '';
                 const securityNameLower = row["Security Name"].toLowerCase();
-                if (securityNameLower.includes('roth')) {
+                if (securityNameLower.includes(' roth ')) {
                     recipient = 'ROTH IRA';
-                } else if (securityNameLower.includes('sep')) {
+                } else if (securityNameLower.includes(' sep ')) {
                     recipient = 'SEP IRA';
-                } else if (securityNameLower.includes('ira')) {
+                } else if (securityNameLower.includes(' ira ')) {
                     recipient = 'IRA';
                 } else {
                     recipient = name; // Default to the parsed name if no specific keyword is found
+                }
+
+                if (securityNameLower.includes('agq')) {
+                    fund = 'AGQ';
+                } else if (securityNameLower.includes('ak1')) {
+                    fund = 'AK1';
                 }
     
                 // Create an activity from each row of the CSV
@@ -449,6 +455,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 <CTableHead >
                 <CTableRow>
                     <CTableHeaderCell>Index</CTableHeaderCell>
+                    <CTableHeaderCell>Fund</CTableHeaderCell>
                     <CTableHeaderCell>Type</CTableHeaderCell>
                     <CTableHeaderCell>Recipient</CTableHeaderCell>
                     <CTableHeaderCell>Time</CTableHeaderCell>
@@ -465,7 +472,18 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     {isEditing ? (
                         // Editable fields when in edit mode
                         <>
-                        <CTableDataCell>
+                        <CTableDataCell style={{ width: '120px'}} >
+                            <CFormSelect 
+                                value={editedActivity?.fund || ''}
+                                onChange={(e) => setEditedActivity({ ...editedActivity, fund: e.target.value.toLowerCase() })
+                                }
+                                options={[
+                                    { label: 'AK1', value: 'AK1' },
+                                    { label: 'AGQ', value: 'AGQ' },
+                                ]}
+                            />
+                        </CTableDataCell>
+                        <CTableDataCell  style={{ width: '125px'}} >
                             <CFormSelect 
                                 value={editedActivity?.type || ''}
                                 onChange={(e) => setEditedActivity({ ...editedActivity, type: e.target.value.toLowerCase() })
@@ -485,7 +503,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             }
                             />
                         </CTableDataCell>
-                        <CTableDataCell>
+                        <CTableDataCell className="d-flex gap-2">
                             <CFormInput
                             type="date"
                             value={
@@ -503,7 +521,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             }}
                             />
                         </CTableDataCell>
-                        <CTableDataCell>
+                        <CTableDataCell >
                         <CFormInput
                             type="number"
                             value={editedActivity?.amount || ''}
@@ -551,6 +569,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     ) : (
                         // Static fields when not in edit mode
                         <>
+                        <CTableDataCell>{activity.fund}</CTableDataCell>
                         <CTableDataCell>{toTitleCase(activity.type)}</CTableDataCell>
                         <CTableDataCell>{activity.recipient}</CTableDataCell>
                         <CTableDataCell>{activity.formattedTime}</CTableDataCell>
