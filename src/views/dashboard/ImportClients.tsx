@@ -1,5 +1,5 @@
 import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow } from "@coreui/react-pro";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 import { Client, DatabaseService, emptyClient } from "src/db/database";
 import Papa from "papaparse";
@@ -120,6 +120,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
     };
 
     const handleSaveClient = (updatedClient: Client) => {
+        
         const updatedClients = [...clientStates];
         if (editClientIndex !== null) {
             updatedClients[editClientIndex] = updatedClient;
@@ -144,6 +145,10 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
             window.location.reload();
         });
     }
+    
+    useEffect(() => {
+        console.log(clientStates);
+    }, [clientStates]);
 
     return (
         <div>
