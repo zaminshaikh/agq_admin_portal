@@ -145,6 +145,21 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
             window.location.reload();
         });
     }
+
+    const handleAddClient = (index: number) => {
+        const client = clientStates[index];
+        const db = new DatabaseService();
+        db.createClient(client)
+            .then(() => {
+                // Remove client from clientStates
+                const updatedClients = clientStates.filter((_, i) => i !== index);
+                setClientStates(updatedClients);
+            })
+            .catch((error) => {
+                console.error("Error adding client:", error);
+                // Optionally, display an error message to the user
+            });
+    };
     
     useEffect(() => {
         console.log(clientStates);
@@ -182,8 +197,9 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                                     <CTableDataCell>{client.firstName}</CTableDataCell>
                                     <CTableDataCell>{client.lastName}</CTableDataCell>
                                     <CTableDataCell>
-                                        <CButton className="me-5" color="warning"  variant='outline' onClick={() => handleEditClient(index)}>Edit Client</CButton>
-                                        <CButton color="danger"  variant='outline' onClick={() => handleRemoveClient(index)}>Remove</CButton>
+                                        <CButton className="me-3" color="warning"  variant='outline' onClick={() => handleEditClient(index)}>Edit Client</CButton>
+                                        <CButton className="me-3"color="danger"  variant='outline' onClick={() => handleRemoveClient(index)}>Remove</CButton>
+                                        <CButton color="success" variant='outline' onClick={() => handleAddClient(index)}>Add</CButton>
                                     </CTableDataCell>
                                 </CTableRow>
                             ))}
