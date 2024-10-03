@@ -178,7 +178,7 @@ const ClientsTable = () => {
                                     <CButton size="sm" color="warning" className="ml-1" variant="outline"
                                     onClick={() => {
                                         const db = new DatabaseService();
-                                        db.unlinkClient(item.cid);
+                                        db.unlinkClient(item as Client);
                                     }}>
                                         Unlink Client 
                                     </CButton>
