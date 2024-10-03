@@ -6,8 +6,10 @@ import { DisplayClient } from './DisplayClient';
 import { DeleteClient } from './DeleteClient';
 import { EditClient } from './EditClient';
 import ImportClients from './ImportClients';
+import { UnlinkClient } from './UnlinkClient';
 
 const ClientsTable = () => {
+    const [showUnlinkClientModal, setShowUnlinkClientModal] = useState(false);
     const [showImportClientsModal, setShowImportClientsModal] = useState(false);
     const [showCreateNewClientModal, setShowCreateNewClientModal] = useState(false);
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
@@ -104,6 +106,7 @@ const ClientsTable = () => {
     
     return (
         <CContainer>
+            {showUnlinkClientModal && <UnlinkClient showModal={showUnlinkClientModal} setShowModal={setShowUnlinkClientModal} client={currentClient} setClients={setClients}/>}
             {showImportClientsModal && <ImportClients showModal={showImportClientsModal} setShowModal={setShowImportClientsModal} clients={clients}/>}
             {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} setClients={setClients} activeClient={currentClient}/>}
             {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} clients={clients} currentClient={currentClient ?? emptyClient}/>}
@@ -157,6 +160,24 @@ const ClientsTable = () => {
                         <CCardBody className="p-3">
                             <CRow>
                                 <CCol className="text-center">
+                                    <CButton size="sm" color="danger" className="ml-1" variant="outline" 
+                                        onClick={() => {
+                                            setShowDeleteClientModal(true);
+                                            setCurrentClient(clients.find(client => client.cid === item.cid))
+                                        }}>
+                                        Delete Client
+                                    </CButton>
+                                </CCol>
+                                <CCol className="text-center">
+                                    <CButton size="sm" color="warning" className="ml-1" variant="outline"
+                                    onClick={() => {
+                                        setShowUnlinkClientModal(true);
+                                        setCurrentClient(clients.find(client => client.cid === item.cid))
+                                    }}>
+                                        Unlink Client 
+                                    </CButton>
+                                </CCol>
+                                <CCol className="text-center">
                                     <CButton size="sm" color="info" className='ml-1' variant="outline" 
                                         onClick={() => {
                                             setShowDisplayDetailsModal(true)
@@ -172,24 +193,6 @@ const ClientsTable = () => {
                                         setCurrentClient(clients.find(client => client.cid === item.cid))
                                     }}>
                                         Edit Client 
-                                    </CButton>
-                                </CCol>
-                                <CCol className="text-center">
-                                    <CButton size="sm" color="warning" className="ml-1" variant="outline"
-                                    onClick={() => {
-                                        const db = new DatabaseService();
-                                        db.unlinkClient(item as Client);
-                                    }}>
-                                        Unlink Client 
-                                    </CButton>
-                                </CCol>
-                                <CCol className="text-center">
-                                    <CButton size="sm" color="danger" className="ml-1" variant="outline" 
-                                        onClick={() => {
-                                            setShowDeleteClientModal(true);
-                                            setCurrentClient(clients.find(client => client.cid === item.cid))
-                                        }}>
-                                        Delete Client
                                     </CButton>
                                 </CCol>
                             </CRow>
