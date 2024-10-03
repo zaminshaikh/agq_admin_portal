@@ -517,8 +517,18 @@ export class DatabaseService {
         await deleteDoc(clientRef);
     }
 
-    unlinkClient = async (cid: string) => {
-
+    async unlinkClient(client: Client): Promise<void> {
+        const unlinkUser = httpsCallable<{ cid: string, uid: string }, { success: boolean }>(functions, 'unlinkUser');
+        try {
+            const result = await unlinkUser({ cid: client.cid, uid: client.uid });
+            console.log('Unlink user success:', result.data.success);
+            if (!result.data.success) {
+                throw new Error('Failed to unlink user.');
+            }
+        } catch (error) {
+            console.error('Error unlinking user:', error);
+            throw new Error('Failed to unlink user.');
+        }
     }
 
     /**

@@ -33,13 +33,18 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
             alignment="center"
             visible={showModal} 
             backdrop="static" 
-            size="xl" 
+            size="lg" 
             onClose={() => setShowModal(false)}>
-            <CModalHeader>
-                <CModalTitle>
-                    <FontAwesomeIcon className="pr-5" icon={faExclamationTriangle} color="red" />  WARNING
-                </CModalTitle>
-            </CModalHeader>
+        <CModalHeader>
+            <CModalTitle>
+            <FontAwesomeIcon
+                className="pr-2"
+                icon={faExclamationTriangle}
+                color="red"
+            />{" "}
+            WARNING
+            </CModalTitle>
+        </CModalHeader>
             <CModalBody className="px-5">
                 You are about to delete the client {client?.firstName} {client?.lastName}. THIS ACTION IS IRREVERSIBLE. To delete this client, type their first and last name below:
                 <div className="py-3">
