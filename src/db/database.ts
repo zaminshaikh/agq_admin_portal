@@ -518,9 +518,9 @@ export class DatabaseService {
     }
 
     async unlinkClient(client: Client): Promise<void> {
-        const unlinkUser = httpsCallable<{ cid: string, uid: string }, { success: boolean }>(functions, 'unlinkUser');
+        const unlinkUser = httpsCallable<{ cid: string, uid: string, usersCollectionID: string}, { success: boolean }>(functions, 'unlinkUser');
         try {
-            const result = await unlinkUser({ cid: client.cid, uid: client.uid });
+            const result = await unlinkUser({ cid: client.cid, uid: client.uid, usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION });
             console.log('Unlink user success:', result.data.success);
             if (!result.data.success) {
                 throw new Error('Failed to unlink user.');
@@ -674,9 +674,9 @@ export class DatabaseService {
     }
 
     async getYTD(cid: string): Promise<number> {
-        const calculateYTD = httpsCallable<{cid: string}, {ytd: number}>(functions, 'calculateYTD');
+        const calculateYTD = httpsCallable<{cid: string, usersCollectionID: string}, {ytd: number}>(functions, 'calculateYTD');
         try {
-            const result = await calculateYTD({ cid });
+            const result = await calculateYTD({ cid: cid, usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION });
             console.log('YTD Total:', result.data.ytd);
             return result.data.ytd;
         } catch (error) {
@@ -686,9 +686,9 @@ export class DatabaseService {
     }
 
     async getTotalYTD(cid: string): Promise<number> {
-        const calculateYTD = httpsCallable<{cid: string}, {ytdTotal: number}>(functions, 'calculateTotalYTD');
+        const calculateYTD = httpsCallable<{cid: string, usersCollectionID: string}, {ytdTotal: number}>(functions, 'calculateTotalYTD');
         try {
-            const result = await calculateYTD({ cid });
+            const result = await calculateYTD({ cid: cid, usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION });
             console.log('YTD Total:', result.data.ytdTotal);
             return result.data.ytdTotal;
         } catch (error) {

@@ -169,7 +169,7 @@ const ClientsTable = () => {
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
-                                    <CButton size="sm" color="warning" className="ml-1" variant="outline"
+                                    <CButton size="sm" color="primary" className="ml-1" variant="outline"
                                     onClick={() => {
                                         setShowUnlinkClientModal(true);
                                         setCurrentClient(clients.find(client => client.cid === item.cid))
