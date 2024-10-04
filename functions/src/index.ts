@@ -53,11 +53,8 @@ interface Activity {
 }
 
 // Define both activity paths
-const activityPathTestUsers = `/testUsers/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
-const activityPathUsers = `/users/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
-
-export const handleActivityTestUsers = functions.firestore.document(activityPathTestUsers).onCreate(handleNewActivity);
-export const handleActivityUsers = functions.firestore.document(activityPathUsers).onCreate(handleNewActivity);
+const activityPath = `/{userCollection}/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
+export const handleActivity = functions.firestore.document(activityPath).onCreate(handleNewActivity);
 
 /**
  * Generates a custom message based on the type of activity.
@@ -167,7 +164,6 @@ async function sendNotif(title: string, body: string, userRef: FirebaseFirestore
 async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot, context: functions.EventContext): Promise<string[] | null> {
     const activity = snapshot.data() as Activity;
     const { userId, activityId, userCollection} = context.params;
-    
 
     if (activity.sendNotif !== true) {
         return null; // Exit if no notification is required
