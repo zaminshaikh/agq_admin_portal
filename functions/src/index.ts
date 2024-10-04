@@ -2,9 +2,12 @@ import * as functions from "firebase-functions/v1";
 import config from "../../config.json";
 import {Timestamp} from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
+import { user } from "firebase-functions/v1/auth";
 
 admin.initializeApp();
 const messaging = admin.messaging();
+
+const activeUsersCollectionId = 'users';
 
 /**
  * Defines the structure for notification objects.
@@ -52,7 +55,7 @@ interface Activity {
     sendNotif?: boolean;
 }
 
-const activityPath = `/${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
+const activityPath = `/${activeUsersCollectionId}/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
 
 /**
  * Generates a custom message based on the type of activity.
@@ -95,8 +98,8 @@ function getActivityMessage(activity: Activity): string {
  * @param activityId - The unique ID of the activity, used for tracking.
  * @return A promise that resolves with notification details including title, body, and user reference.
  */
-async function createNotif(activity: Activity, cid: string, activityId: string): Promise<{ title: string; body: string; userRef: FirebaseFirestore.DocumentReference; }> {
-    const userRef = admin.firestore().doc(`${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}`);
+async function createNotif(activity: Activity, cid: string, activityId: string, usersCollectionID: string): Promise<{ title: string; body: string; userRef: FirebaseFirestore.DocumentReference; }> {
+    const userRef = admin.firestore().doc(`${usersCollectionID}/${cid}`);
     const notificationsCollectionRef = userRef.collection(config.NOTIFICATIONS_SUBCOLLECTION);
     const message = getActivityMessage(activity);
     const [title, body] = message.split(': ', 2);
@@ -159,23 +162,27 @@ async function sendNotif(title: string, body: string, userRef: FirebaseFirestore
  * @param context - The context of the event, including path parameters.
  * @return A promise resolved with the result of the notification send operation, or null if no notification is sent.
  */
-export const handleActivity = functions.firestore.document(activityPath).onCreate(async (snapshot, context): Promise<string[] | null> => {
+export const handleActivityUsers = functions.firestore.document(activityPath).onCreate(handleNewActivity);
+    
+   
+async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot, context: functions.EventContext): Promise<string[] | null> {
     const activity = snapshot.data() as Activity;
-    const {userId, activityId} = context.params;
+    const { userId, activityId, userCollection} = context.params;
+    
 
     if (activity.sendNotif !== true) {
         return null; // Exit if no notification is required
     }
 
     try {
-        const {title, body, userRef} = await createNotif(activity, userId, activityId);
+        const {title, body, userRef} = await createNotif(activity, userId, activityId, userCollection);
         const result = sendNotif(title, body, userRef);
         return result;
     } catch (error) {
         console.error('Error handling activity:', error);
         throw new functions.https.HttpsError('unknown', 'Failed to handle activity', error);
     }
-});
+};
 
 /**
  * Callable function to link a new user's document in Firestore with their authentication UID.
@@ -193,9 +200,9 @@ export const linkNewUser = functions.https.onCall(async (data, context): Promise
       throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
     }
   
-    const { email, cid, uid } = data;
+    const { email, cid, uid, usersCollectionID } = data;
   
-    const usersCollection = admin.firestore().collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION);
+    const usersCollection = admin.firestore().collection(usersCollectionID);
     const userRef = usersCollection.doc(cid);
     const userSnapshot = await userRef.get();
   
@@ -279,6 +286,7 @@ const addUidToConnectedUsers = async (connectedUsers: string[], uid: string, use
 exports.checkDocumentExists = functions.https.onCall(async (data, context): Promise<object> => {
     // Extract 'cid' from the data payload; it is expected to be the Firestore document ID.
     const cid = data.cid;
+    const usersCollectionID = data.usersCollectionID;
 
     // Check if 'cid' is provided, if not, throw an 'invalid-argument' error.
     if (!cid) {
@@ -287,7 +295,7 @@ exports.checkDocumentExists = functions.https.onCall(async (data, context): Prom
   
     try {
       // Attempt to fetch the document by ID from the users collection.
-      const docSnapshot = await admin.firestore().collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION).doc(cid).get();
+      const docSnapshot = await admin.firestore().collection(usersCollectionID).doc(cid).get();
         
       // Return the existence status of the document as a boolean.
       return { exists: docSnapshot.exists };
@@ -313,6 +321,7 @@ exports.checkDocumentExists = functions.https.onCall(async (data, context): Prom
 exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
     try {
       let cid = data.cid;
+      let usersCollectionID = data.usersCollectionID;
       console.log('Received data:', data);
   
       // Validate input: ensure 'cid' is provided
@@ -321,6 +330,14 @@ exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError(
           'invalid-argument',
           'The function must be called with one argument "cid".'
+        );
+      }
+
+      if (usersCollectionID === undefined || usersCollectionID === null) {
+        console.error('No usersCollectionID provided.');
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'The function must be called with one argument "usersCollectionID".'
         );
       }
   
@@ -339,7 +356,7 @@ exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
       // Fetch the document from the users collection using the provided 'cid'
       const docSnapshot = await admin
         .firestore()
-        .collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION)
+        .collection(usersCollectionID)
         .doc(cid)
         .get();
   
@@ -375,15 +392,19 @@ exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
 
 exports.calculateYTD = functions.https.onCall(async (data, context): Promise<object> => {
     const cid = data.cid;
+    const usersCollectionID = data.usersCollectionID;
     if (!cid) {
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "cid".');
+    }
+    if (!usersCollectionID) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "usersCollectionID".');
     }
     try {
         const currentYear = new Date().getFullYear();
         const startOfYear = new Date(currentYear, 0, 1);
         const endOfYear = new Date(currentYear, 11, 31);
 
-        const activitiesRef = admin.firestore().collection(`/${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}/${config.ACTIVITIES_SUBCOLLECTION}`);
+        const activitiesRef = admin.firestore().collection(`/${usersCollectionID}/${cid}/${config.ACTIVITIES_SUBCOLLECTION}`);
         const snapshot = await activitiesRef
             .where("fund", "==", "AGQ")
             .where("type", "in", ["profit", "income"])
@@ -408,6 +429,7 @@ exports.calculateYTD = functions.https.onCall(async (data, context): Promise<obj
 
 exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promise<object> => {
     const cid = data.cid;
+    const usersCollectionID = data.usersCollectionID;
     if (!cid) {
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "cid".');
     }
@@ -419,7 +441,7 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
 
         // Function to calculate YTD for a single user
         const calculateYTDForUser = async (userCid: string): Promise<number> => {
-            const activitiesRef = admin.firestore().collection(`/${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
+            const activitiesRef = admin.firestore().collection(`/${usersCollectionID}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
             const snapshot = await activitiesRef
                 .where("fund", "==", "AGQ")
                 .where("type", "in", ["profit", "income"])
@@ -453,7 +475,7 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
                 totalYTD += await calculateYTDForUser(currentUserCid);
 
                 // Get the user document to retrieve connectedUsers
-                const userDoc = await admin.firestore().collection(`${config.FIRESTORE_ACTIVE_USERS_COLLECTION}`).doc(currentUserCid).get();
+                const userDoc = await admin.firestore().collection(`${usersCollectionID}`).doc(currentUserCid).get();
                 const userData = userDoc.data();
 
                 // Add connected users to the queue if they exist
@@ -486,33 +508,19 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
  */
 exports.unlinkUser = functions.https.onCall(async (data, context) => {
   // Destructure 'uid' and 'cid' from the incoming data
-  const { uid, cid } = data;
+  const { uid, cid, usersCollectionID } = data;
 
   // Input validation: Ensure both 'uid' and 'cid' are provided
-  if (!uid || !cid) {
+  if (!uid || !cid || !usersCollectionID) {
     throw new functions.https.HttpsError(
       'invalid-argument',
-      'The function must be called with both "uid" and "cid" arguments.'
+      'The function must be called with both "uid", "cid", and "usersCollectionID" arguments.'
     );
   }
-
-  // Optional: Authentication Check
-  // Uncomment the following lines if you want to restrict access to authenticated users
-  /*
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'The function must be called while authenticated.'
-    );
-  }
-
-  // Optional: Authorization Logic
-  // Add any additional checks to ensure the caller has permission to unlink the user
-  */
 
   try {
     // Reference to the specific user document in 'testUsers' collection
-    const userRef = admin.firestore().collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION).doc(cid);
+    const userRef = admin.firestore().collection(usersCollectionID).doc(cid);
 
     // Fetch the user document to verify existence
     const userDoc = await userRef.get();
