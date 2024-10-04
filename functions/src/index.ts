@@ -2,12 +2,9 @@ import * as functions from "firebase-functions/v1";
 import config from "../../config.json";
 import {Timestamp} from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
-import { user } from "firebase-functions/v1/auth";
 
 admin.initializeApp();
 const messaging = admin.messaging();
-
-const activeUsersCollectionId = 'users';
 
 /**
  * Defines the structure for notification objects.
@@ -184,7 +181,7 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
         console.error('Error handling activity:', error);
         throw new functions.https.HttpsError('unknown', 'Failed to handle activity', error);
     }
-};
+}
 
 /**
  * Callable function to link a new user's document in Firestore with their authentication UID.
@@ -337,7 +334,7 @@ exports.checkDocumentExists = functions.https.onCall(async (data, context): Prom
 exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
     try {
       let cid = data.cid;
-      let usersCollectionID = data.usersCollectionID;
+      const usersCollectionID = data.usersCollectionID;
       console.log('Received data:', data);
   
       // Validate input: ensure 'cid' is provided
