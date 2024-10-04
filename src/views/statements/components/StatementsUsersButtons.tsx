@@ -23,7 +23,7 @@ const StatementsUsersButtons = () => {
             const db = new DatabaseService();
             
             // Fetch users from the database
-            let users = await db.getUsers();
+            let users = await db.getClients();
             
             // If users are fetched successfully, update the state
             if (users !== null) {
