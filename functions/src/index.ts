@@ -55,7 +55,12 @@ interface Activity {
     sendNotif?: boolean;
 }
 
-const activityPath = `/${activeUsersCollectionId}/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
+// Define both activity paths
+const activityPathTestUsers = `/testUsers/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
+const activityPathUsers = `/users/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
+
+export const handleActivityTestUsers = functions.firestore.document(activityPathTestUsers).onCreate(handleNewActivity);
+export const handleActivityUsers = functions.firestore.document(activityPathUsers).onCreate(handleNewActivity);
 
 /**
  * Generates a custom message based on the type of activity.
@@ -162,9 +167,6 @@ async function sendNotif(title: string, body: string, userRef: FirebaseFirestore
  * @param context - The context of the event, including path parameters.
  * @return A promise resolved with the result of the notification send operation, or null if no notification is sent.
  */
-export const handleActivityUsers = functions.firestore.document(activityPath).onCreate(handleNewActivity);
-    
-   
 async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot, context: functions.EventContext): Promise<string[] | null> {
     const activity = snapshot.data() as Activity;
     const { userId, activityId, userCollection} = context.params;
@@ -201,6 +203,16 @@ export const linkNewUser = functions.https.onCall(async (data, context): Promise
     }
   
     const { email, cid, uid, usersCollectionID } = data;
+
+    if (!email) {
+      throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "email".');
+    } else if (!cid) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "cid".');
+    } else if (!uid) { 
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "uid".');
+    } else if (!usersCollectionID) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "usersCollectionID".');
+    }
   
     const usersCollection = admin.firestore().collection(usersCollectionID);
     const userRef = usersCollection.doc(cid);
@@ -291,6 +303,10 @@ exports.checkDocumentExists = functions.https.onCall(async (data, context): Prom
     // Check if 'cid' is provided, if not, throw an 'invalid-argument' error.
     if (!cid) {
       throw new functions.https.HttpsError('invalid-argument', 'The function must be called with one argument "cid".');
+    }
+
+    if (!usersCollectionID) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with one argument "usersCollectionID".');
     }
   
     try {
@@ -432,6 +448,10 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
     const usersCollectionID = data.usersCollectionID;
     if (!cid) {
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "cid".');
+    }
+
+    if (!usersCollectionID) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "usersCollectionID".');
     }
 
     try {
