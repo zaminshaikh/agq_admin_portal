@@ -29,6 +29,7 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
             fund: activityState.fund,
             isDividend: false,
             isAmortization: true,
+            amortizationCreated: true,
         }
         
         const withdrawal: Activity = {
@@ -40,7 +41,7 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
             fund: activityState.fund,
             isDividend: false,
             isAmortization: true,
-
+            amortizationCreated: true,
         }
 
         let promises = [];

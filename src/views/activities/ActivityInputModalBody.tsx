@@ -264,14 +264,14 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             </CInputGroup>}
 
             {clientState && (((activityState.isDividend 
-                || (activityState.isAmortization 
-                    && !activityState.amortizationCreated)) 
+                || activityState.isAmortization) 
                 && activityState.type === 'profit') 
                 || activityState.type === 'manual-entry' 
                 || activityState.type === 'deposit' 
-                || (activityState.type === 'withdrawal' 
-                    && !activityState.amortizationCreated)) 
-                && activityState.fund && 
+                || (activityState.type === 'withdrawal')) 
+                && activityState.fund 
+                && !activityState.amortizationCreated
+                && 
                 <EditAssetsSection 
                     clientState={clientState} 
                     setClientState={setClientState} 
