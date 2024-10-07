@@ -61,8 +61,6 @@ export interface Client {
 }
 
 export interface Activity {
-    principalPaid?: number | undefined
-    isAmortization?: boolean
     id?: string;
     parentDocId?: string;
     amount: number;
@@ -73,6 +71,10 @@ export interface Activity {
     type: string;
     isDividend?: boolean;
     sendNotif?: boolean;
+    amortizationCreated?: boolean;
+    isAmortization?: boolean
+    principalPaid?: number | undefined
+    profitPaid?: number | undefined
 }
 
 export interface Notification {

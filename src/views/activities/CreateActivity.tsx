@@ -29,6 +29,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     const clientOptions = clients!
         .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: selectedClient === client.cid }))
         .sort((a, b) => a.label.localeCompare(b.label));
+        
     const handleCreateActivity = async () => {
         if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
             setShowErrorModal(true);
@@ -43,10 +44,46 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                 console.error("Invalid client state");
                 return;
             }
-            // Create activity with client cid
-            await db.createActivity(activityState, clientState.cid);
-            if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
-                await db.setAssets(clientState);
+
+            if (activityState.isAmortization === true && !activityState.amortizationCreated) {
+                
+                const profit: Activity = {
+                    type: 'profit',
+                    amount: activityState.amount - (activityState.principalPaid ?? 0),
+                    time: activityState.time,
+                    recipient: activityState.recipient,
+                    fund: activityState.fund,
+                    principalPaid: activityState.principalPaid,
+                    profitPaid: activityState.amount - (activityState.principalPaid ?? 0),
+                    isDividend: false,
+                    isAmortization: true,
+                    amortizationCreated: true,
+                }
+                
+                const withdrawal: Activity = {
+                    type: 'withdrawal',
+                    amount: activityState.principalPaid ?? 0,
+                    time: activityState.time,
+                    recipient: activityState.recipient,
+                    fund: activityState.fund,
+                    principalPaid: activityState.principalPaid,
+                    profitPaid: activityState.amount - (activityState.principalPaid ?? 0),
+                    isDividend: false,
+                    isAmortization: true,
+                    amortizationCreated: true,
+                }
+                let promises = [];
+                promises.push(db.createActivity(profit, clientState.cid));
+                promises.push(db.createActivity(withdrawal, clientState.cid));
+                promises.push(db.setAssets(clientState));
+
+                await Promise.all(promises);
+            } else {
+                // Create activity with client cid
+                await db.createActivity(activityState, clientState.cid);
+                if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
+                    await db.setAssets(clientState);
+                }
             }
             setShowModal(false);
             const activities = await db.getActivities(); // Get the new updated activities

@@ -106,7 +106,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     label="Dividend Payment" 
                     id="formSwitchCheckDisabled" 
                     disabled={activityState.type !== 'profit'} 
-                    checked={activityState.type == 'profit' && activityState.isDividend} 
+                    checked={activityState.isDividend} 
                     onChange={(e) => {
                         setActivityState({...activityState, isDividend: e.currentTarget.checked })
                     }}
@@ -116,10 +116,10 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     className="py-2"  
                     label="Amortization Payment" 
                     id="formSwitchCheckDisabled" 
-                    disabled={activityState.type !== 'profit'} 
-                    checked={activityState.type == 'profit' && activityState.isAmortization} 
+                    disabled={activityState.type !== 'profit' || activityState.amortizationCreated} 
+                    checked={activityState.isAmortization} 
                     onChange={(e) => {
-                        setActivityState({...activityState, isAmortization: e.currentTarget.checked })
+                        setActivityState({...activityState, isAmortization: e.currentTarget.checked, amortizationCreated: false })
                     }}
                 />
             </CInputGroup>
@@ -212,10 +212,25 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                 onChange={(e) => {
                     const value = e.target.value;
                     if (/^\d*\.?\d{0,2}$/.test(value)) {
-                        const newState = {
-                            ...activityState,
-                            amount: parseFloat(value)
-                        }; 
+                        let newState;
+                        if (activityState.isAmortization && activityState.amortizationCreated && activityState.type === 'withdrawal') {
+                            newState = {
+                                ...activityState,
+                                amount: parseFloat(value),
+                                principalPaid: parseFloat(value)
+                            }; 
+                        } else if (activityState.isAmortization && activityState.amortizationCreated && activityState.type === 'profit') {
+                            newState = {
+                                ...activityState,
+                                amount: parseFloat(value),
+                                profitPaid: parseFloat(value)
+                            };
+                        } else {
+                            newState = {
+                                ...activityState,
+                                amount: parseFloat(value)
+                            }; 
+                        }
                         setActivityState(newState);
                     }
                 }}
@@ -235,12 +250,14 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                 <CInputGroupText>Principal Paid</CInputGroupText>
                 <CInputGroupText>$</CInputGroupText>
                 <CFormInput id='amount' type="number" step="1000" value={activityState.principalPaid}
+                disabled={activityState.amortizationCreated}
                 onChange={(e) => {
                     const value = e.target.value;
                     if (/^\d*\.?\d{0,2}$/.test(value)) {
                         const newState = {
                             ...activityState,
-                            principalPaid: parseFloat(value)
+                            principalPaid: parseFloat(value),
+                            profitPaid: activityState.amount - parseFloat(value)
                         }; 
                         setActivityState(newState);
                     }
@@ -250,14 +267,15 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     if (value === '' || isNaN(parseFloat(value))) {
                         const newState = {
                             ...activityState,
-                            principalPaid: 0 
+                            principalPaid: 0,
+                            profitPaid: activityState.amount
                         };
                         setActivityState(newState);
                     } 
                 }}/>
                 <CInputGroupText>Profit Paid</CInputGroupText>
                 <CInputGroupText>$</CInputGroupText>
-                <CFormInput id='amount' type="number" step="1000" value={activityState.amount - (activityState.principalPaid ?? 0)} disabled />
+                <CFormInput id='amount' type="number" step="1000" value={activityState.profitPaid} disabled />
             </CInputGroup>}
 
             {clientState && (((activityState.isDividend || activityState.isAmortization) && activityState.type === 'profit') || activityState.type === 'manual-entry' || activityState.type === 'deposit' || activityState.type === 'withdrawal') && activityState.fund && 

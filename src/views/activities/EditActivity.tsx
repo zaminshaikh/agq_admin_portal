@@ -18,7 +18,7 @@ interface EditActivityProps {
 const handleEditActivity = async (activityState: Activity, clientState: Client) => {
     const db = new DatabaseService();
 
-    if (activityState.isAmortization === true) {
+    if (activityState.isAmortization === true && !activityState.amortizationCreated) {
         
         const profit: Activity = {
             type: 'profit',
@@ -28,6 +28,7 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
             recipient: activityState.recipient,
             fund: activityState.fund,
             isDividend: false,
+            isAmortization: true,
         }
         
         const withdrawal: Activity = {
@@ -38,11 +39,15 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
             recipient: activityState.recipient,
             fund: activityState.fund,
             isDividend: false,
+            isAmortization: true,
+
         }
+
         let promises = [];
         promises.push(db.createActivity(profit, clientState.cid));
         promises.push(db.createActivity(withdrawal, clientState.cid));
         promises.push(db.deleteActivity(activityState));
+        promises.push(db.setAssets(clientState));
 
         await Promise.all(promises);
         return
@@ -68,14 +73,6 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     const clientOptions = clients!
         .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: activity?.parentDocId === client.cid }))
         .sort((a, b) => a.label.localeCompare(b.label));;
-    
-    // TODO: THIS DOES NOT WORK UNTIL NON USER CAN BE A RECIPIENT   
-    // if (clientOptions.find(option => option.value === activity?.recipient) === undefined ) {
-    //     const nonClientOption = {value: activity?.recipient as string, label: activity?.recipient as string, selected: true};   
-    //     clientOptions.push(nonClientOption);
-    // }
-
-
 
     useEffect(() => {
         const createActivityIfOverride = async () => {
