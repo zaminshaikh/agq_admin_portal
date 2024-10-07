@@ -1,11 +1,7 @@
-# CoreUI PRO React Admin Template (TypeScript)
-
-CoreUI is meant to be the UX game changer. Pure & transparent code is devoid of redundant components, so the app is light enough to offer ultimate user experience. This means mobile devices also, where the navigation is just as easy and intuitive as on a desktop or laptop. The CoreUI Layout API lets you customize your project for almost any device – be it Mobile, Web or WebApp – CoreUI covers them all!
-
+# Team Shaikh Admin Portal
+ 
 ## Table of Contents
 
-* [Versions](#versions)
-* [Quick Start](#quick-start)
 * [Installation](#installation)
 * [Basic usage](#basic-usage)
 * [What's included](#whats-included)
@@ -14,18 +10,6 @@ CoreUI is meant to be the UX game changer. Pure & transparent code is devoid of 
 * [Creators](#creators)
 * [Community](#community)
 * [Copyright and License](#copyright-and-license)
-
-## Versions
-
-* [CoreUI Pro Angular Admin Template](https://coreui.io/product/angular-dashboard-template/)
-* [CoreUI Pro Bootstrap Admin Template](https://coreui.io/product/bootstrap-dashboard-template/)
-* [CoreUI Pro React Admin Template](https://coreui.io/product/react-dashboard-template/)
-* [CoreUI Pro Vue Admin Template](https://coreui.io/product/vue-dashboard-template/)
-
-## Quick Start
-
-- [Download the latest release](https://github.com/coreui/coreui-pro-react-admin-template-typescript/archive/refs/heads/main.zip)
-- Clone the repo: `git clone https://github.com/coreui/coreui-pro-react-admin-template-typescript.git`
 
 ### Installation
 
