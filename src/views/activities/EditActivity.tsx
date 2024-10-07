@@ -21,7 +21,7 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
     if (activityState.isAmortization === true && !activityState.amortizationCreated) {
 
         const activity = {
-            parentDocId: activityState.parentDocId,
+            parentDocId: activityState.parentDocId ?? clientState.cid ?? '',
             time: activityState.time,
             recipient: activityState.recipient,
             fund: activityState.fund,

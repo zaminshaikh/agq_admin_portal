@@ -48,7 +48,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
             if (activityState.isAmortization === true && !activityState.amortizationCreated) {
                 
                 const activity = {
-                    parentDocId: activityState.parentDocId,
+                    parentDocId: clientState.cid ?? '',
                     time: activityState.time,
                     recipient: activityState.recipient,
                     fund: activityState.fund,
