@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { act, useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
 import { DatabaseService, Activity, emptyActivity, Client, emptyClient } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
@@ -17,6 +17,36 @@ interface EditActivityProps {
 
 const handleEditActivity = async (activityState: Activity, clientState: Client) => {
     const db = new DatabaseService();
+
+    if (activityState.isAmortization === true) {
+        
+        const profit: Activity = {
+            type: 'profit',
+            amount: activityState.amount - (activityState.principalPaid ?? 0),
+            parentDocId: activityState.parentDocId,
+            time: activityState.time,
+            recipient: activityState.recipient,
+            fund: activityState.fund,
+            isDividend: false,
+        }
+        
+        const withdrawal: Activity = {
+            type: 'withdrawal',
+            amount: activityState.principalPaid ?? 0,
+            parentDocId: activityState.parentDocId,
+            time: activityState.time,
+            recipient: activityState.recipient,
+            fund: activityState.fund,
+            isDividend: false,
+        }
+        let promises = [];
+        promises.push(db.createActivity(profit, clientState.cid));
+        promises.push(db.createActivity(withdrawal, clientState.cid));
+        promises.push(db.deleteActivity(activityState));
+
+        await Promise.all(promises);
+        return
+    }
     
     // Create activity with client cid
     await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);

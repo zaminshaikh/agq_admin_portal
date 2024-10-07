@@ -257,7 +257,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                 }}/>
                 <CInputGroupText>Profit Paid</CInputGroupText>
                 <CInputGroupText>$</CInputGroupText>
-                <CFormInput id='amount' type="number" step="1000" value={activityState.amount - activityState.principalPaid} disabled />
+                <CFormInput id='amount' type="number" step="1000" value={activityState.amount - (activityState.principalPaid ?? 0)} disabled />
             </CInputGroup>}
 
             {clientState && (((activityState.isDividend || activityState.isAmortization) && activityState.type === 'profit') || activityState.type === 'manual-entry' || activityState.type === 'deposit' || activityState.type === 'withdrawal') && activityState.fund && 
@@ -266,7 +266,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     setClientState={setClientState} 
                     useCompanyName={clientState.companyName !== null} 
                     activeFund={activityState.fund}
-                    incrementAmount={activityState.amount}/>}
+                    incrementAmount={activityState.isAmortization? activityState.principalPaid : activityState.amount}/>}
             
         </CModalBody>
     )
