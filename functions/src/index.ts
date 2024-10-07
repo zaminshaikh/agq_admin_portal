@@ -572,3 +572,4 @@ exports.unlinkUser = functions.https.onCall(async (data, context) => {
     );
   }
 });
+
