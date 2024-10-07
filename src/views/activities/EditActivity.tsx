@@ -19,29 +19,28 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
     const db = new DatabaseService();
 
     if (activityState.isAmortization === true && !activityState.amortizationCreated) {
-        
-        const profit: Activity = {
-            type: 'profit',
-            amount: activityState.amount - (activityState.principalPaid ?? 0),
+
+        const activity = {
             parentDocId: activityState.parentDocId,
             time: activityState.time,
             recipient: activityState.recipient,
             fund: activityState.fund,
-            isDividend: false,
+            sendNotif: activityState.sendNotif,
+            isDividend: activityState.isDividend,
             isAmortization: true,
             amortizationCreated: true,
         }
         
+        const profit: Activity = {
+            ...activity,
+            type: 'profit',
+            amount: activityState.amount - (activityState.principalPaid ?? 0),
+        }
+
         const withdrawal: Activity = {
+            ...activity,
             type: 'withdrawal',
             amount: activityState.principalPaid ?? 0,
-            parentDocId: activityState.parentDocId,
-            time: activityState.time,
-            recipient: activityState.recipient,
-            fund: activityState.fund,
-            isDividend: false,
-            isAmortization: true,
-            amortizationCreated: true,
         }
 
         let promises = [];

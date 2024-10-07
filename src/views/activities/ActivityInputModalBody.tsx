@@ -6,7 +6,7 @@ import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { time } from "console";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, setDoc } from 'firebase/firestore';
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 
 interface ActivityInputProps {
@@ -122,6 +122,15 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                         setActivityState({...activityState, isAmortization: e.currentTarget.checked, amortizationCreated: false })
                     }}
                 />
+                <div className="px-3"/>
+                <CFormSwitch 
+                    className="py-2"  
+                    label="Send Notification" 
+                    id="formSwitchCheckDisabled"
+                    checked={activityState.sendNotif} 
+                    onChange={(e) => {
+                        setActivityState({...activityState, sendNotif: e.currentTarget.checked,})
+                    }}/>
             </CInputGroup>
             <CContainer className="py-3 px-3">
                 <CRow>
