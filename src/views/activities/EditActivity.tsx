@@ -63,17 +63,17 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
 
 const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, selectedClient, setAllActivities, setFilteredActivities, onSubmit=handleEditActivity}) => {
     const db = new DatabaseService();
-
+    
     const [activityState, setActivityState] = useState<Activity>(activity ?? emptyActivity);
     const [clientState, setClientState] = useState<Client | null>(emptyClient);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
-
+    
     const clientOptions = clients!
-        .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: activity?.parentDocId === client.cid }))
-        .sort((a, b) => a.label.localeCompare(b.label));;
-
+    .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: activity?.parentDocId === client.cid }))
+    .sort((a, b) => a.label.localeCompare(b.label));;
+    
     useEffect(() => {
         const createActivityIfOverride = async () => {
             if (override) {
@@ -81,20 +81,20 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                     setShowErrorModal(true);
                     return;
                 }
-
+                
                 if (override) {
                     setActivityState({
                         ...activityState,
                         time: new Date(),
                     });
                 }
-
+                
                 if (!clientState) {
                     console.error("Invalid client state");
                     return;
                 }
                 
-                handleEditActivity(activityState, clientState);
+                await handleEditActivity(activityState, clientState);
                 
                 setShowModal(false);
                 const activities = await db.getActivities(); // Get the new updated activities
@@ -109,20 +109,21 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
         };
         createActivityIfOverride();
     }, [override]);
-
+    
     useEffect(() => {
         const fetchClient = async () => {
             try {
                 const client = await db.getClient(activityState.parentDocId ?? '');
                 setClientState(client);
-
+                
             } catch (error) {
                 console.error('Failed to fetch client:', error);
             }
         };
         fetchClient();
     }, []);
-
+    
+    console.log('Activity state changed:', activityState);
     return (
         <>
             {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
@@ -163,7 +164,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                             return;
                         }
                         
-                        onSubmit(activityState, clientState);
+                        await onSubmit(activityState, clientState);
                         
                         setShowModal(false);
                         const activities = await db.getActivities(); // Get the new updated activities
