@@ -212,25 +212,10 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                 onChange={(e) => {
                     const value = e.target.value;
                     if (/^\d*\.?\d{0,2}$/.test(value)) {
-                        let newState;
-                        if (activityState.isAmortization && activityState.amortizationCreated && activityState.type === 'withdrawal') {
-                            newState = {
-                                ...activityState,
-                                amount: parseFloat(value),
-                                principalPaid: parseFloat(value)
-                            }; 
-                        } else if (activityState.isAmortization && activityState.amortizationCreated && activityState.type === 'profit') {
-                            newState = {
-                                ...activityState,
-                                amount: parseFloat(value),
-                                profitPaid: parseFloat(value)
-                            };
-                        } else {
-                            newState = {
-                                ...activityState,
-                                amount: parseFloat(value)
-                            }; 
-                        }
+                        const newState = {
+                            ...activityState,
+                            amount: parseFloat(value)
+                        }; 
                         setActivityState(newState);
                     }
                 }}
@@ -246,7 +231,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                 }}/>
             </CInputGroup>
 
-            {clientState && activityState.isAmortization && <CInputGroup className="mb-3 py-3 px-3">
+            {clientState && activityState.isAmortization && !activityState.amortizationCreated && <CInputGroup className="mb-3 py-3 px-3">
                 <CInputGroupText>Principal Paid</CInputGroupText>
                 <CInputGroupText>$</CInputGroupText>
                 <CFormInput id='amount' type="number" step="1000" value={activityState.principalPaid}
@@ -278,7 +263,15 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                 <CFormInput id='amount' type="number" step="1000" value={activityState.profitPaid} disabled />
             </CInputGroup>}
 
-            {clientState && (((activityState.isDividend || activityState.isAmortization) && activityState.type === 'profit') || activityState.type === 'manual-entry' || activityState.type === 'deposit' || activityState.type === 'withdrawal') && activityState.fund && 
+            {clientState && (((activityState.isDividend 
+                || (activityState.isAmortization 
+                    && !activityState.amortizationCreated)) 
+                && activityState.type === 'profit') 
+                || activityState.type === 'manual-entry' 
+                || activityState.type === 'deposit' 
+                || (activityState.type === 'withdrawal' 
+                    && !activityState.amortizationCreated)) 
+                && activityState.fund && 
                 <EditAssetsSection 
                     clientState={clientState} 
                     setClientState={setClientState} 
