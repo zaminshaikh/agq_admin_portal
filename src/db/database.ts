@@ -61,6 +61,8 @@ export interface Client {
 }
 
 export interface Activity {
+    principalPaid: number
+    isAmortization: boolean
     id?: string;
     parentDocId?: string;
     amount: number;
@@ -149,6 +151,8 @@ export const emptyActivity: Activity = {
     type: 'profit',
     isDividend: false,
     sendNotif: true,
+    principalPaid: undefined,
+    isAmortization: false
 };
 
 /**

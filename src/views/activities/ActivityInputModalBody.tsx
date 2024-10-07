@@ -111,6 +111,17 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                         setActivityState({...activityState, isDividend: e.currentTarget.checked })
                     }}
                 />
+                <div className="px-3"/>
+                <CFormSwitch 
+                    className="py-2"  
+                    label="Amortization Payment" 
+                    id="formSwitchCheckDisabled" 
+                    disabled={activityState.type !== 'profit'} 
+                    checked={activityState.type == 'profit' && activityState.isAmortization} 
+                    onChange={(e) => {
+                        setActivityState({...activityState, isAmortization: e.currentTarget.checked })
+                    }}
+                />
             </CInputGroup>
             <CContainer className="py-3 px-3">
                 <CRow>
@@ -219,7 +230,37 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     } 
                 }}/>
             </CInputGroup>
-            {clientState && ((activityState.isDividend && activityState.type === 'profit') || activityState.type === 'manual-entry' || activityState.type === 'deposit' || activityState.type === 'withdrawal') && activityState.fund && 
+
+            {clientState && activityState.isAmortization && <CInputGroup className="mb-3 py-3 px-3">
+                <CInputGroupText>Principal Paid</CInputGroupText>
+                <CInputGroupText>$</CInputGroupText>
+                <CFormInput id='amount' type="number" step="1000" value={activityState.principalPaid}
+                onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*\.?\d{0,2}$/.test(value)) {
+                        const newState = {
+                            ...activityState,
+                            principalPaid: parseFloat(value)
+                        }; 
+                        setActivityState(newState);
+                    }
+                }}
+                onBlur={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || isNaN(parseFloat(value))) {
+                        const newState = {
+                            ...activityState,
+                            principalPaid: 0 
+                        };
+                        setActivityState(newState);
+                    } 
+                }}/>
+                <CInputGroupText>Profit Paid</CInputGroupText>
+                <CInputGroupText>$</CInputGroupText>
+                <CFormInput id='amount' type="number" step="1000" value={activityState.amount - activityState.principalPaid} disabled />
+            </CInputGroup>}
+
+            {clientState && (((activityState.isDividend || activityState.isAmortization) && activityState.type === 'profit') || activityState.type === 'manual-entry' || activityState.type === 'deposit' || activityState.type === 'withdrawal') && activityState.fund && 
                 <EditAssetsSection 
                     clientState={clientState} 
                     setClientState={setClientState} 
@@ -231,4 +272,3 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     )
 
 }
-    
