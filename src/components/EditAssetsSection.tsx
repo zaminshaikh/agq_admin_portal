@@ -218,7 +218,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   };
 
   return (
-    <CContainer className="py-3">
+    <CContainer className="py-3 pb-5">
       <CRow>
         {fundsConfig.map((fund: FundConfig) => (
           <CCol key={fund.key}>
