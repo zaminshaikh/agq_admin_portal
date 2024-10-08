@@ -9,6 +9,49 @@ import { formatDate } from 'src/utils/utilities.ts'
 
 const functions = getFunctions();
 
+// fundsConfig.ts
+export interface AssetConfig {
+  id: string;
+  title: string;
+  type: string;
+}
+
+export interface FundConfig { 
+  key: string;
+  displayName: string;
+  assets: AssetConfig[];
+}
+
+export const initialFundsConfig: FundConfig[] = [
+  {
+    key: "agq",
+    displayName: "AGQ Fund Assets",
+    assets: [
+      { id: "agq-personal", title: "Personal", type: "personal" },
+      { id: "agq-company", title: "Company", type: "company" },
+      { id: "agq-ira", title: "IRA", type: "trad" },
+      { id: "agq-roth-ira", title: "Roth IRA", type: "roth" },
+      { id: "agq-sep-ira", title: "SEP IRA", type: "sep" },
+      { id: "agq-nuview-cash-ira", title: "NuView Cash IRA", type: "nuviewTrad" },
+      { id: "agq-nuview-cash-roth-ira", title: "NuView Cash Roth IRA", type: "nuviewRoth" },
+    ],
+  },
+  {
+    key: "ak1",
+    displayName: "AK1 Fund Assets",
+    assets: [
+      { id: "ak1-personal", title: "Personal", type: "personal" },
+      { id: "ak1-company", title: "Company", type: "company" },
+      { id: "ak1-ira", title: "IRA", type: "trad" },
+      { id: "ak1-roth-ira", title: "Roth IRA", type: "roth" },
+      { id: "ak1-sep-ira", title: "SEP IRA", type: "sep" },
+      { id: "ak1-nuview-cash-ira", title: "NuView Cash IRA", type: "nuviewTrad" },
+      { id: "ak1-nuview-cash-roth-ira", title: "NuView Cash Roth IRA", type: "nuviewRoth" },
+    ],
+  },
+  // Add more funds as needed
+]
+
 /**
  * Client interface representing a client in the Firestore database.
  *  
@@ -16,48 +59,32 @@ const functions = getFunctions();
  * 
  * .uid - The client's UID, or the empty string if they have not signed up
  */
+// Client.ts
 export interface Client {
-    [key: string]: any;
-    cid: string;
-    uid: string;
-    firstName: string;
-    lastName: string;
-    companyName: string;
-    address: string;
-    dob: Date | null;
-    phoneNumber: string;
-    appEmail: string;
-    initEmail: string;
-    firstDepositDate: Date | null;
-    beneficiaries: string[];
-    connectedUsers: string[];
-    totalAssets: number,
-    ytd: number,
-    totalYTD: number
-    _selected?: boolean;
-    activities?: Activity[];
-    graphPoints?: GraphPoint[];
-    assets: {
-        [key: string]: any;
-        agq: {
-        personal: number;
-        company: number;
-        trad: number;
-        roth: number;
-        sep: number;
-        nuviewTrad: number;
-        nuviewRoth: number;
-        };
-        ak1: {
-        personal: number;
-        company: number;
-        trad: number;
-        roth: number;
-        sep: number;
-        nuviewTrad: number;
-        nuviewRoth: number;
-        };
+  cid: string;
+  uid: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  address: string;
+  dob: Date | null;
+  phoneNumber: string;
+  appEmail: string;
+  initEmail: string;
+  firstDepositDate: Date | null;
+  beneficiaries: string[];
+  connectedUsers: string[];
+  totalAssets: number;
+  ytd: number;
+  totalYTD: number;
+  _selected?: boolean;
+  activities?: Activity[];
+  graphPoints?: GraphPoint[];
+  assets: {
+    [fundKey: string]: {
+      [assetType: string]: number;
     };
+  };
 }
 
 export interface Activity {
