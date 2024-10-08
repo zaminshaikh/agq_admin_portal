@@ -22,11 +22,11 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
 
         const activity = {
             parentDocId: activityState.parentDocId ?? clientState.cid ?? '',
-            time: activityState.time,
-            recipient: activityState.recipient,
-            fund: activityState.fund,
-            sendNotif: activityState.sendNotif,
-            isDividend: activityState.isDividend,
+            time: activityState.time ?? new Date(),
+            recipient: activityState.recipient ?? '',
+            fund: activityState.fund ?? '',
+            sendNotif: activityState.sendNotif ?? false,
+            isDividend: activityState.isDividend ?? false,
             isAmortization: true,
             amortizationCreated: true,
         }
