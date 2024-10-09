@@ -1,13 +1,10 @@
-import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro"
+import { CButton, CModal, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro"
 import { useEffect, useState } from "react";
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 // import { IMaskMixin } from 'react-imask'
 import React from "react";
 import { DatabaseService, Client, emptyClient } from '../../db/database.ts'
 import { ClientInputModalBody, ValidateClient } from './ClientInputModalBody.tsx'
 import { FormValidationErrorModal } from '../../components/ErrorModal';
-import { handleActivity } from '../../../functions/src/index';
 
 // const CFormInputWithMask = React.forwardRef<HTMLInputElement, any>((props, ref) => (
 //     <CFormInput
@@ -101,8 +98,9 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
                         } else {
                             onSubmit(clientState, override, setClientState);
                             const db = new DatabaseService();
-                            setClients(await db.getClients());
                             setShowModal(false);
+                            const updatedClients = await db.getClients()
+                            setClients(updatedClients);
                         }
                         }}>Update</CButton>
                 </CModalFooter>

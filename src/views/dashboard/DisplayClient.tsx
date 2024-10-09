@@ -1,7 +1,5 @@
-import { CCol, CContainer, CFormCheck, CFormInput, CInputGroup, CInputGroupText, CModal, CModalBody, CModalHeader, CModalTitle, CMultiSelect, CRow } from "@coreui/react-pro"
+import { CModal, CModalHeader, CModalTitle } from "@coreui/react-pro"
 import { Client } from "src/db/database";
-import config from '../../../config.json'
-import { formatCurrency } from '../../db/database';
 import { ClientInputModalBody } from "./ClientInputModalBody";
 
 

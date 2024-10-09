@@ -455,8 +455,6 @@ export class DatabaseService {
                 delete newClientDocData[key];
         });
 
-        console.log('newClientDocData:', newClientDocData);
-
         // Create a reference with the CID.
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
 

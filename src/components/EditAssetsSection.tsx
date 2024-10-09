@@ -83,14 +83,19 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       );
 
       // Create additional AssetConfig entries for new asset types
-      const additionalAssets = additionalAssetTypes.map((assetType) => ({
-        id: `${fund.key}-${assetType}`,
-        title: assetType
-          .replace(/-/g, " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase()), // Convert to title case
-        type: assetType,
-        isEditable: true, // Dynamically added assets are editable
-      }));
+      const additionalAssets = additionalAssetTypes.map((assetType) => {
+        // Find the asset in existing fundsConfig to get its title
+        const existingAsset = fundsConfig
+          .find((f) => f.key === fund.key)
+          ?.assets.find((asset) => asset.type === assetType);
+
+        return {
+          id: `${fund.key}-${assetType}`,
+          title: existingAsset ? existingAsset.title : assetType.replace(/-/g, " "), // Use existing title if available
+          type: assetType,
+          isEditable: true, // Dynamically added assets are editable
+        };
+      });
 
       return {
         ...fund,
@@ -98,7 +103,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       };
     });
     setFundsConfig(updatedFundsConfig);
-  }, [clientState.assets]);
+  }, [clientState.assets, fundsConfig]); // Added fundsConfig to dependencies to avoid stale closures
 
   // Function to handle opening the modal
   const openAddAssetModal = (fundKey: string) => {
@@ -159,7 +164,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     // Create the new asset configuration
     const newAsset: AssetConfig = {
       id: newAssetId,
-      title: assetTitleTrimmed,
+      title: assetTitleTrimmed, // Use the title as entered
       type: newAssetType,
       isEditable: true, // Mark as editable
     };
@@ -256,8 +261,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     }
 
     // Generate a new type based on the edited title
-    const sanitizedTitle = assetTitleTrimmed.toLowerCase().replace(/\s+/g, "-");
-    const newAssetType = sanitizedTitle;
+    const newAssetType = assetTitleTrimmed.toLowerCase().replace(/\s+/g, "-");
 
     // Check for duplicate asset titles within the same fund
     const fund = fundsConfig.find((f) => f.key === fundKey);
