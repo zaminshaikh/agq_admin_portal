@@ -65,6 +65,9 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
         editClientIfOverride();
     }, [override]);
 
+    useEffect(() => { console.log(clientState?.assets)}, [clientState])
+
+
     return (
         
         <div>

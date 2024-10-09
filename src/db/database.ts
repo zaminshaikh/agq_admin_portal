@@ -14,9 +14,10 @@ export interface AssetConfig {
   id: string;
   title: string;
   type: string;
+  isEditable: boolean;
 }
 
-export interface FundConfig { 
+export interface FundConfig {
   key: string;
   displayName: string;
   assets: AssetConfig[];
@@ -27,30 +28,30 @@ export const initialFundsConfig: FundConfig[] = [
     key: "agq",
     displayName: "AGQ Fund Assets",
     assets: [
-      { id: "agq-personal", title: "Personal", type: "personal" },
-      { id: "agq-company", title: "Company", type: "company" },
-      { id: "agq-ira", title: "IRA", type: "trad" },
-      { id: "agq-roth-ira", title: "Roth IRA", type: "roth" },
-      { id: "agq-sep-ira", title: "SEP IRA", type: "sep" },
-      { id: "agq-nuview-cash-ira", title: "NuView Cash IRA", type: "nuviewTrad" },
-      { id: "agq-nuview-cash-roth-ira", title: "NuView Cash Roth IRA", type: "nuviewRoth" },
+      { id: "agq-personal", title: "Personal", type: "personal", isEditable: false },
+      { id: "agq-company", title: "Company", type: "company", isEditable: false },
+      { id: "agq-ira", title: "IRA", type: "trad", isEditable: false },
+      { id: "agq-roth-ira", title: "Roth IRA", type: "roth", isEditable: false },
+      { id: "agq-sep-ira", title: "SEP IRA", type: "sep", isEditable: false },
+      { id: "agq-nuview-cash-ira", title: "NuView Cash IRA", type: "nuviewTrad", isEditable: false },
+      { id: "agq-nuview-cash-roth-ira", title: "NuView Cash Roth IRA", type: "nuviewRoth", isEditable: false },
     ],
   },
   {
     key: "ak1",
     displayName: "AK1 Fund Assets",
     assets: [
-      { id: "ak1-personal", title: "Personal", type: "personal" },
-      { id: "ak1-company", title: "Company", type: "company" },
-      { id: "ak1-ira", title: "IRA", type: "trad" },
-      { id: "ak1-roth-ira", title: "Roth IRA", type: "roth" },
-      { id: "ak1-sep-ira", title: "SEP IRA", type: "sep" },
-      { id: "ak1-nuview-cash-ira", title: "NuView Cash IRA", type: "nuviewTrad" },
-      { id: "ak1-nuview-cash-roth-ira", title: "NuView Cash Roth IRA", type: "nuviewRoth" },
+      { id: "ak1-personal", title: "Personal", type: "personal", isEditable: false },
+      { id: "ak1-company", title: "Company", type: "company", isEditable: false },
+      { id: "ak1-ira", title: "IRA", type: "trad", isEditable: false },
+      { id: "ak1-roth-ira", title: "Roth IRA", type: "roth", isEditable: false },
+      { id: "ak1-sep-ira", title: "SEP IRA", type: "sep", isEditable: false },
+      { id: "ak1-nuview-cash-ira", title: "NuView Cash IRA", type: "nuviewTrad", isEditable: false },
+      { id: "ak1-nuview-cash-roth-ira", title: "NuView Cash Roth IRA", type: "nuviewRoth", isEditable: false },
     ],
   },
   // Add more funds as needed
-]
+];
 
 /**
  * Client interface representing a client in the Firestore database.
@@ -325,57 +326,53 @@ export class DatabaseService {
         clientSnapshot: DocumentSnapshot,
         generalAssetsSnapshot: DocumentSnapshot,
         agqAssetsSnapshot: DocumentSnapshot,
-        ak1AssetsSnapshot: DocumentSnapshot): Client | null => {
-        if (clientSnapshot.exists()) {
-            const data = clientSnapshot.data();
-            const generalAssetsData = generalAssetsSnapshot.data();
-            const agqAssetsData = agqAssetsSnapshot.data();
-            const ak1AssetsData = ak1AssetsSnapshot.data();
-
-            const client: Client = {
-                cid: clientSnapshot.id,
-                uid: data?.uid ?? '',
-                firstName: data?.name?.first ?? '',
-                lastName: data?.name?.last ?? '',
-                companyName: data?.name?.company ?? '',
-                address: data?.address ?? '',
-                dob: data?.dob?.toDate() ?? null,
-                initEmail: data?.initEmail ?? data?.email ?? '',
-                appEmail: data?.appEmail ?? data?.email ?? 'Client has not logged in yet',
-                connectedUsers: data?.connectedUsers?? [],
-                totalAssets: generalAssetsData ? generalAssetsData.total : 0,
-                ytd: generalAssetsData ? generalAssetsData.ytd : 0,
-                totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
-                phoneNumber: data?.phoneNumber ?? '',
-                firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
-                beneficiaries: data?.beneficiaries ?? [],
-                _selected: false,
-                assets: {
-                    agq: {
-                        personal: agqAssetsData?.personal ?? 0,
-                        company: agqAssetsData?.company ?? 0,
-                        trad: agqAssetsData?.trad ?? 0,
-                        roth: agqAssetsData?.roth ?? 0,
-                        sep: agqAssetsData?.sep ?? 0,
-                        nuviewTrad: agqAssetsData?.nuviewTrad ?? 0,
-                        nuviewRoth: agqAssetsData?.nuviewRoth ?? 0,
-                    },
-                    ak1: {
-                        personal: ak1AssetsData?.personal ?? 0,
-                        company: ak1AssetsData?.company ?? 0,
-                        trad: ak1AssetsData?.trad ?? 0,
-                        roth: ak1AssetsData?.roth ?? 0,
-                        sep: ak1AssetsData?.sep ?? 0,
-                        nuviewTrad: ak1AssetsData?.nuviewTrad ?? 0,
-                        nuviewRoth: ak1AssetsData?.nuviewRoth ?? 0,
-                    },
-                },
-            };
-
-            return client;
-        } else {
+        ak1AssetsSnapshot: DocumentSnapshot
+    ): Client | null => {
+        if (!clientSnapshot.exists()) {
             return null;
         }
+
+        const data = clientSnapshot.data();
+        const generalAssetsData = generalAssetsSnapshot.data();
+        const agqAssetsData = agqAssetsSnapshot.data();
+        const ak1AssetsData = ak1AssetsSnapshot.data();
+
+        const parseAssetsData = (assetsData: any): { [assetType: string]: number } => {
+            const parsedAssets: { [assetType: string]: number } = {};
+            if (assetsData) {
+                // Iterate over all keys (asset types) in the assets data
+                Object.keys(assetsData).forEach(assetType => {
+                    parsedAssets[assetType] = assetsData[assetType] ?? 0;
+                });
+            }
+            return parsedAssets;
+        };
+
+        const client: Client = {
+            cid: clientSnapshot.id,
+            uid: data?.uid ?? '',
+            firstName: data?.name?.first ?? '',
+            lastName: data?.name?.last ?? '',
+            companyName: data?.name?.company ?? '',
+            address: data?.address ?? '',
+            dob: data?.dob?.toDate() ?? null,
+            initEmail: data?.initEmail ?? data?.email ?? '',
+            appEmail: data?.appEmail ?? data?.email ?? 'Client has not logged in yet',
+            connectedUsers: data?.connectedUsers ?? [],
+            totalAssets: generalAssetsData ? generalAssetsData.total : 0,
+            ytd: generalAssetsData ? generalAssetsData.ytd : 0,
+            totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
+            phoneNumber: data?.phoneNumber ?? '',
+            firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
+            beneficiaries: data?.beneficiaries ?? [],
+            _selected: false,
+            assets: {
+                agq: parseAssetsData(agqAssetsData), // Dynamically parse AGQ assets
+                ak1: parseAssetsData(ak1AssetsData), // Dynamically parse AK1 assets
+            },
+        };
+
+        return client;
     };
 
     getClient = async (cid: string) => {
@@ -506,13 +503,17 @@ export class DatabaseService {
             ...client.assets.agq,
             fund: 'AGQ',
             // Calculate sum of the subfields of the fund (personal, company, trad, roth etc.)
-            total: Object.values(client.assets.agq).reduce((sum, value) => sum + value, 0), 
+            total: Object.entries(client.assets.agq)
+            .filter(([key]) => key !== 'fund' && key !== 'total')
+            .reduce((sum, [key, value]) => sum + value, 0),
         }
 
         let ak1Doc = {
             ...client.assets.ak1,
             fund: 'AK1',
-            total: Object.values(client.assets.ak1).reduce((sum, value) => sum + value, 0),
+            total: Object.entries(client.assets.ak1)
+            .filter(([key]) => key !== 'fund' && key !== 'total')
+            .reduce((sum, [key, value]) => sum + value, 0),
         }
 
         let general = {

@@ -1,5 +1,5 @@
 // src/components/EditAssetsSection.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CContainer,
   CRow,
@@ -23,6 +23,20 @@ interface EditAssetsSectionProps {
   viewOnly?: boolean;
 }
 
+// Define keys to exclude (case-insensitive)
+const excludedAssetKeys = ["total", "fund"];
+
+// Define protected asset types (case-insensitive)
+const protectedAssetTypes = [
+  "personal",
+  "company",
+  "ira",
+  "roth ira",
+  "sep ira",
+  "nuview cash ira",
+  "nuview cash roth ira",
+];
+
 export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   clientState,
   setClientState,
@@ -38,6 +52,53 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentFundKey, setCurrentFundKey] = useState<string | null>(null);
   const [newAssetTitle, setNewAssetTitle] = useState<string>("");
+
+  // Function to parse assets data, excluding 'total' and 'fund'
+  const parseAssetsData = (assetsData: any): { [assetType: string]: number } => {
+    const parsedAssets: { [assetType: string]: number } = {};
+    if (assetsData) {
+      Object.keys(assetsData).forEach((assetType) => {
+        if (
+          !excludedAssetKeys.includes(assetType.toLowerCase()) &&
+          typeof assetsData[assetType] === "number"
+        ) {
+          parsedAssets[assetType] = assetsData[assetType] ?? 0;
+        }
+      });
+    }
+    return parsedAssets;
+  };
+
+  // Synchronize fundsConfig with clientState.assets on component mount or when clientState.assets changes
+  useEffect(() => {
+    const updatedFundsConfig = initialFundsConfig.map((fund) => {
+      const clientAssets = clientState.assets[fund.key] || {};
+      const existingAssetTypes = fund.assets.map((asset) => asset.type.toLowerCase());
+
+      // Identify additional asset types not present in initialFundsConfig, excluding 'total' and 'fund'
+      const additionalAssetTypes = Object.keys(clientAssets).filter(
+        (assetType) =>
+          !existingAssetTypes.includes(assetType.toLowerCase()) &&
+          !excludedAssetKeys.includes(assetType.toLowerCase())
+      );
+
+      // Create additional AssetConfig entries for new asset types
+      const additionalAssets = additionalAssetTypes.map((assetType) => ({
+        id: `${fund.key}-${assetType}`,
+        title: assetType
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase()), // Convert to title case
+        type: assetType,
+        isEditable: true, // Dynamically added assets are editable
+      }));
+
+      return {
+        ...fund,
+        assets: [...fund.assets, ...additionalAssets],
+      };
+    });
+    setFundsConfig(updatedFundsConfig);
+  }, [clientState.assets]);
 
   // Function to handle opening the modal
   const openAddAssetModal = (fundKey: string) => {
@@ -63,19 +124,23 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       return;
     }
 
+    // Prevent adding 'total', 'Total', 'fund', 'Fund'
+    if (excludedAssetKeys.includes(assetTitleTrimmed.toLowerCase())) {
+      alert("The asset name 'total' or 'fund' is reserved and cannot be used.");
+      return;
+    }
+
     // Generate a unique id for the new asset
-    // Example: agq-personal-2 or ak1-custom-field
-    const sanitizedTitle = assetTitleTrimmed.toLowerCase().replace(/\s+/g, "-"); // e.g., "Personal 2" -> "personal-2"
+    const sanitizedTitle = assetTitleTrimmed.toLowerCase().replace(/\s+/g, "-");
     const newAssetId = `${currentFundKey}-${sanitizedTitle}`;
+    const newAssetType = sanitizedTitle; // Use this as the dynamic key
 
-    // Determine asset type based on title or assign a generic type
-    // For simplicity, we'll use the sanitized title as the type
-    const newAssetType = sanitizedTitle; // e.g., "personal-2", "custom-field"
+    console.log("newAssetId", newAssetId);
+    console.log("newAssetType", newAssetType);
 
-    // Check if asset with the same id or title already exists
+    // Check for duplicates
     const fund = fundsConfig.find((f) => f.key === currentFundKey);
     if (fund) {
-      // Check for duplicate asset titles
       const duplicateTitle = fund.assets.some(
         (asset) => asset.title.toLowerCase() === assetTitleTrimmed.toLowerCase()
       );
@@ -84,7 +149,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
         return;
       }
 
-      // Check for duplicate asset IDs
       const duplicateId = fund.assets.some((asset) => asset.id === newAssetId);
       if (duplicateId) {
         alert("An asset with this identifier already exists.");
@@ -97,30 +161,33 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       id: newAssetId,
       title: assetTitleTrimmed,
       type: newAssetType,
+      isEditable: true, // Mark as editable
     };
 
-    // Update fundsConfig state
+    console.log("newAsset", newAsset);
+
+    // Update fundsConfig
     const updatedFundsConfig = fundsConfig.map((fund) =>
       fund.key === currentFundKey
         ? { ...fund, assets: [...fund.assets, newAsset] }
         : fund
     );
-
     setFundsConfig(updatedFundsConfig);
+    console.log("Updated fundsConfig", updatedFundsConfig);
 
-    // Initialize the new asset in clientState.assets using the provided convention
+    // Initialize the new asset in clientState.assets using the correct dynamic key
     const newState: Client = {
       ...clientState,
       assets: {
         ...clientState.assets,
         [currentFundKey]: {
           ...clientState.assets[currentFundKey],
-          [newAssetType]: 0, // Initialize to 0 or any default value
+          [newAssetType]: 0, // Correctly handle the dynamic key here
         },
       },
     };
-
     setClientState(newState);
+    console.log("Updated clientState.assets", newState.assets);
 
     // Close the modal
     closeAddAssetModal();
@@ -128,6 +195,15 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
 
   // Function to handle removing an asset
   const handleRemoveAsset = (fundKey: string, assetType: string) => {
+    // Prevent removing protected assets and excluded keys
+    if (
+      protectedAssetTypes.includes(assetType.toLowerCase()) ||
+      excludedAssetKeys.includes(assetType.toLowerCase())
+    ) {
+      alert("This asset cannot be removed.");
+      return;
+    }
+
     if (!window.confirm(`Are you sure you want to remove the asset "${assetType}"?`)) {
       return;
     }
@@ -138,23 +214,24 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
         ? { ...fund, assets: fund.assets.filter((asset) => asset.type !== assetType) }
         : fund
     );
-
     setFundsConfig(updatedFundsConfig);
 
-    // Remove from clientState.assets using the provided convention
+    // Remove from clientState.assets using the provided convention, excluding 'total' and 'fund'
     const newState: Client = {
       ...clientState,
       assets: {
         ...clientState.assets,
         [fundKey]: Object.keys(clientState.assets[fundKey]).reduce((acc, key) => {
-          if (key !== assetType) {
+          if (
+            key !== assetType &&
+            !excludedAssetKeys.includes(key.toLowerCase())
+          ) {
             acc[key] = clientState.assets[fundKey][key];
           }
           return acc;
         }, {} as { [assetType: string]: number }),
       },
     };
-
     setClientState(newState);
   };
 
@@ -163,6 +240,18 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     const assetTitleTrimmed = newAssetTitle.trim();
     if (assetTitleTrimmed === "") {
       alert("Asset name cannot be empty.");
+      return;
+    }
+
+    // Prevent renaming to 'total', 'Total', 'fund', 'Fund'
+    if (excludedAssetKeys.includes(assetTitleTrimmed.toLowerCase())) {
+      alert("The asset name 'total' or 'fund' is reserved and cannot be used.");
+      return;
+    }
+
+    // Prevent editing protected assets
+    if (protectedAssetTypes.includes(oldAssetType.toLowerCase())) {
+      alert("This asset cannot be edited.");
       return;
     }
 
@@ -195,10 +284,9 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
           }
         : fund
     );
-
     setFundsConfig(updatedFundsConfig);
 
-    // Update clientState.assets using the provided convention
+    // Update clientState.assets using the provided convention, excluding 'total' and 'fund'
     const oldAssetValue = clientState.assets[fundKey][oldAssetType];
     const newAssets = {
       ...clientState.assets[fundKey],
@@ -210,10 +298,16 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       ...clientState,
       assets: {
         ...clientState.assets,
-        [fundKey]: newAssets,
+        [fundKey]: Object.keys(newAssets).reduce((acc, key) => {
+          if (
+            !excludedAssetKeys.includes(key.toLowerCase())
+          ) { // Ensure 'total' and 'fund' remain unaffected
+            acc[key] = newAssets[key];
+          }
+          return acc;
+        }, {} as { [assetType: string]: number }),
       },
     };
-
     setClientState(newState);
   };
 
@@ -258,6 +352,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
                   incrementAmount={incrementAmount}
                   onRemove={handleRemoveAsset}
                   onEdit={handleEditAsset}
+                  isEditable={asset.isEditable ?? false} // Pass isEditable flag
                 />
               );
             })}
@@ -281,7 +376,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
             label="Asset Name"
             placeholder="Enter asset name (e.g., Personal 2, IRA 3, Custom Field)"
             value={newAssetTitle}
-            onChange={(e) => setNewAssetTitle(e.target.value)}
+            onChange={(e) => setNewAssetTitle(e.target.value.replace(/["']/g, ""))}
           />
         </CModalBody>
         <CModalFooter>

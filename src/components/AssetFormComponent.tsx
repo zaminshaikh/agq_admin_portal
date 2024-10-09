@@ -26,6 +26,7 @@ interface AssetFormComponentProps {
   incrementAmount: number;
   onRemove: (fundKey: string, assetType: string) => void;
   onEdit: (fundKey: string, oldAssetType: string, newAssetTitle: string) => void;
+  isEditable: boolean; // Indicates if the asset can be edited or deleted
 }
 
 export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
@@ -39,6 +40,7 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
   incrementAmount,
   onRemove,
   onEdit,
+  isEditable, // Destructure isEditable from props
 }) => {
   const assetValue = clientState.assets[fundKey]?.[assetType] ?? 0;
 
@@ -49,7 +51,7 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d*\.?\d{0,2}$/.test(value)) {
-      const parsedValue = parseFloat(value) || 0;
+      const parsedValue = parseFloat(value);
 
       // Create newState using the provided convention
       const newState: Client = {
@@ -130,49 +132,59 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
           onChange={handleChange}
           onBlur={handleBlur}
         />
+        {/* Conditionally render Edit and Remove buttons based on isEditable */}
+        {isEditable && (
+          <>
             {/* Optional: Wrap with CTooltip for tooltips */}
-            <CTooltip content={`Edit Asset Name`}>
+            <CTooltip content={`Edit Asset Name`} placement="top">
               <CButton
                 variant="outline"
                 className="ms-2 p-0 border-0"
                 onClick={openEditModal}
                 aria-label={`Edit ${title}`}
+                disabled={disabled} // Only disable based on the disabled prop
               >
                 <CIcon icon={cilPencil} size="lg" />
               </CButton>
             </CTooltip>
-            <CTooltip content={`Remove ${title} as an Asset`}>
+            <CTooltip content={`Remove ${title} as an Asset`} placement="top">
               <CButton
                 variant="ghost"
                 className="ms-2 p-0 border-0"
                 onClick={handleRemoveAsset}
                 aria-label={`Remove ${title}`}
+                disabled={disabled} // Only disable based on the disabled prop
               >
                 <CIcon icon={cilTrash} size="lg" />
               </CButton>
             </CTooltip>
+          </>
+        )}
       </CInputGroup>
 
       {/* Edit Asset Modal */}
-      <CModal visible={isEditModalOpen} onClose={closeEditModal} alignment="center">
-        <CModalHeader>Edit Asset</CModalHeader>
-        <CModalBody>
-          <CFormInput
-            label="Asset Name"
-            placeholder="Enter new asset name"
-            value={editedTitle}
-            onChange={(e) => setEditedTitle(e.target.value)}
-          />
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={closeEditModal}>
-            Cancel
-          </CButton>
-          <CButton color="primary" onClick={handleSaveEdit}>
-            Save
-          </CButton>
-        </CModalFooter>
-      </CModal>
+      {isEditable && (
+        <CModal visible={isEditModalOpen} onClose={closeEditModal} alignment="center">
+          <CModalHeader>Edit Asset</CModalHeader>
+          <CModalBody>
+            <CFormInput
+              label="Asset Name"
+              placeholder="Enter new asset name"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              disabled={disabled} // Disable input if disabled
+            />
+          </CModalBody>
+          <CModalFooter>
+            <CButton color="secondary" onClick={closeEditModal} disabled={disabled}>
+              Cancel
+            </CButton>
+            <CButton color="primary" onClick={handleSaveEdit} disabled={disabled}>
+              Save
+            </CButton>
+          </CModalFooter>
+        </CModal>
+      )}
     </>
   );
 };
