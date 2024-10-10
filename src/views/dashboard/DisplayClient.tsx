@@ -26,8 +26,6 @@ export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal
             <ClientInputModalBody 
                     clientState={currentClient} 
                     setClientState={(client: Client) => {}} 
-                    useCompanyName={currentClient.companyName ? true : false}
-                    setUseCompanyName={(useCompanyName: boolean) => {}} 
                     clientOptions={clientOptions}
                     viewOnly={true}/>
         </CModal>

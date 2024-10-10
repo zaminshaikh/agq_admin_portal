@@ -48,7 +48,6 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
     const [clientState, setClientState] = useState<Client>(initialClientState);
 
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [useCompanyName, setUseCompanyName] = useState(clientState.companyName ? true : false) ;
     const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (activeClient?.connectedUsers?.includes(client.cid))}))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
@@ -57,6 +56,10 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
         const editClientIfOverride = async () => {
             if (override) {
                 await onSubmit(clientState, override, setClientState);
+                const db = new DatabaseService();
+                setShowModal(false);
+                const updatedClients = await db.getClients()
+                setClients(updatedClients);
             }
         };
         editClientIfOverride();
@@ -85,15 +88,13 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
                 <ClientInputModalBody 
                     clientState={clientState} 
                     setClientState={setClientState} 
-                    useCompanyName={useCompanyName}
-                    setUseCompanyName={setUseCompanyName} 
                     clientOptions={clientOptions}
                     clients={clients}
                     viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
                     <CButton color="primary" onClick={async () => {
-                        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields) && !override) {
+                        if (!ValidateClient(clientState, setInvalidInputFields) && !override) {
                             setShowErrorModal(true);
                         } else {
                             onSubmit(clientState, override, setClientState);

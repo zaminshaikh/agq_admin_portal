@@ -1,7 +1,7 @@
 import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow } from "@coreui/react-pro";
 import { useEffect, useState } from "react";
 import React from "react";
-import { Client, DatabaseService, emptyClient } from "src/db/database";
+import { AssetDetails, Client, DatabaseService, emptyClient } from "src/db/database";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import EditClient from './EditClient';
@@ -72,7 +72,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
     };
 
     const createClientState = (row: any): Client => {
-        return {
+        const newState: Client = {
             ...emptyClient,
             firstName: row["CLIENT'S FIRST NAME"] || '',
             lastName: row["CLIENT'S LAST NAME"] || '',
@@ -87,13 +87,13 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 agq: {
                     personal: {
                         amount: parseFloat(row["PERSONAL"]) || 0,
-                        firstDepositDate: null,
+                        firstDepositDate: row["FIRST DEPOSIT DATE"] ? new Date(row["FIRST DEPOSIT DATE"]) : null,
                         displayTitle: 'Personal',
                     },
                     company: {
                         amount: parseFloat(row["COMPANY"]) || 0,
                         firstDepositDate: null,
-                        displayTitle: 'Company',
+                        displayTitle: row["COMPANY NAME"] || 'Company',
                     },
                     trad: {
                         amount: parseFloat(row["IRA"]) || 0,
@@ -124,7 +124,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 ak1: {
                     personal: {
                         amount: 0,
-                        firstDepositDate: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(),
+                        firstDepositDate: null,
                         displayTitle: 'Personal',
                     }
                 },
@@ -133,12 +133,21 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                 {
                     amount: row["FIRST DEPOSIT AMOUNT"], 
                     fund: 'AGQ', type: 'deposit', 
-                    time: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(), 
+                    time: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(),
                     recipient: row["CLIENT'S FIRST NAME"] + ' ' + row["CLIENT'S LAST NAME"],
                     formattedTime: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"])?.toLocaleDateString(),
                 },
             ]
         };
+    
+        return {
+            ...newState,
+            assets: {
+                agq: filterAssets(newState.assets.agq),
+                ak1: filterAssets(newState.assets.ak1),
+            }
+        };
+         
     };
 
     const handleEditClient = (index: number) => {
@@ -254,3 +263,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
 };
 
 export default ImportClients;
+
+function filterAssets(ak1: { [assetType: string]: AssetDetails; }): { [assetType: string]: AssetDetails; } {
+    throw new Error("Function not implemented.");
+}
