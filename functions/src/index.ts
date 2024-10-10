@@ -75,7 +75,7 @@ function getActivityMessage(activity: Activity): string {
             message = `New Profit: ${activity.fund} has posted the latest returns for ${activity.recipient}. View the Activity section for more details.`;
             break;
         case 'deposit':
-            message = `New Deposit: ${activity.fund} has finished processing the deposit of $${activity.amount} into ${activity.recipient}'s accoount. View the Activity section for more details.`;
+            message = `New Deposit: ${activity.fund} has finished processing the deposit of $${activity.amount} into ${activity.recipient}'s account. View the Activity section for more details.`;
             break;
         case 'manual-entry':
             message = `New Manual Entry: ${activity.fund} Fund has made a manual entry of $${activity.amount} into your account. View the Activity section for more details.`;
