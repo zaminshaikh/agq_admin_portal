@@ -17,7 +17,6 @@ import { AssetFormComponent } from "./AssetFormComponent";
 interface EditAssetsSectionProps {
   clientState: Client;
   setClientState: (clientState: Client) => void;
-  useCompanyName: boolean;
   activeFund?: string;
   incrementAmount?: number;
   viewOnly?: boolean;
@@ -40,7 +39,6 @@ const protectedAssetTypes = [
 export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   clientState,
   setClientState,
-  useCompanyName,
   activeFund,
   incrementAmount = 1000,
   viewOnly = false,
@@ -291,7 +289,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     <CContainer className="py-3 pb-5">
       {fundsConfig.map((fund: FundConfig) => (
         <div key={fund.key} className="mb-5">
-          <div className="mb-2">
+          <div className="mb-2 pb-3">
             <h5>{fund.displayName}</h5>
           </div>
           {fund.assets.map((asset: AssetConfig) => {
@@ -303,14 +301,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
                 if (fund.key.toUpperCase() !== activeFund.toUpperCase()) {
                   isDisabled = true;
                 }
-              }
-
-              // Specific condition for company asset
-              if (
-                asset.type === "company" &&
-                !(useCompanyName && activeFund?.toUpperCase() === fund.key.toUpperCase())
-              ) {
-                isDisabled = true;
               }
             }
 

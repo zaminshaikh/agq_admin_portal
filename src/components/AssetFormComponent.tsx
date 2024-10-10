@@ -152,7 +152,7 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
   return (
     <>
       {/* Asset Amount and Actions */}
-      <CInputGroup className="mb-3">
+      <CInputGroup className="mb-3 pb-3">
         <CInputGroupText style={{ width: "200px" }}>{asset.displayTitle}</CInputGroupText>
         <CInputGroupText>$</CInputGroupText>
         <CFormInput

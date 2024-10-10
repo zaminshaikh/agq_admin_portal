@@ -89,7 +89,6 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
                 <ClientInputModalBody 
                     clientState={clientState} 
                     setClientState={setClientState} 
-                    useCompanyName={useCompanyName} 
                     setUseCompanyName={setUseCompanyName} 
                     clientOptions={clientOptions}
                     viewOnly={false}/>

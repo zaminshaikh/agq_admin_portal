@@ -15,7 +15,6 @@ import EditActivity from '../activities/EditActivity.tsx';
 interface ClientInputProps {
     clientState: Client,
     setClientState: (clientState: Client) => void,
-    useCompanyName: boolean,
     setUseCompanyName: (useCompanyName: boolean) => void,
     clientOptions: (Option | OptionsGroup)[],
     clients?: Client[],
@@ -221,7 +220,6 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 
     setClientState,
-    useCompanyName,
     setUseCompanyName,
     clients,
     clientOptions,
@@ -272,24 +270,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     setClientState(newClientState);
                 }}
                 />
-            </CInputGroup>
-
-            <CInputGroup className="mb-3  py-3">
-                <CInputGroupText>
-                <CFormCheck type="checkbox" id="useCompanyName" checked={useCompanyName} onChange={(e) => setUseCompanyName(e.target.checked)} disabled={viewOnly}/>
-                </CInputGroupText>
-                <CInputGroupText>Company Name</CInputGroupText>
-                <CFormInput id="company-name" value={clientState.companyName} 
-                onChange={
-                (e) => {
-                    const newClientState = {
-                    ...clientState,
-                    companyName: e.target.value
-                    }
-                    setClientState(newClientState)
-                }
-                } 
-                disabled={viewOnly ? viewOnly : !useCompanyName}/>
             </CInputGroup>
 
             <CInputGroup className="mb-3  py-3">
@@ -454,7 +434,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 >Update Total YTD</CLoadingButton>
             </CInputGroup>
 
-            <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>
+            <EditAssetsSection clientState={clientState} setClientState={setClientState} viewOnly={viewOnly}/>
 
             <div className="mb-3 ">
                 <h5>Upload Previous Activities</h5>
