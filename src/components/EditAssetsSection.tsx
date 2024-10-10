@@ -289,60 +289,58 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
 
   return (
     <CContainer className="py-3 pb-5">
-      <CRow>
-        {fundsConfig.map((fund: FundConfig) => (
-          <CCol key={fund.key}>
-            <div className="mb-2">
-              <h5>{fund.displayName}</h5>
-            </div>
-            {fund.assets.map((asset: AssetConfig) => {
-              // Determine the disabled state based on props and asset type
-              let isDisabled = viewOnly;
+      {fundsConfig.map((fund: FundConfig) => (
+        <div key={fund.key} className="mb-5">
+          <div className="mb-2">
+            <h5>{fund.displayName}</h5>
+          </div>
+          {fund.assets.map((asset: AssetConfig) => {
+            // Determine the disabled state based on props and asset type
+            let isDisabled = viewOnly;
 
-              if (!isDisabled) {
-                if (activeFund !== undefined) {
-                  if (fund.key.toUpperCase() !== activeFund.toUpperCase()) {
-                    isDisabled = true;
-                  }
-                }
-
-                // Specific condition for company asset
-                if (
-                  asset.type === "company" &&
-                  !(useCompanyName && activeFund?.toUpperCase() === fund.key.toUpperCase())
-                ) {
+            if (!isDisabled) {
+              if (activeFund !== undefined) {
+                if (fund.key.toUpperCase() !== activeFund.toUpperCase()) {
                   isDisabled = true;
                 }
               }
 
-              return (
-                <AssetFormComponent
-                  key={asset.id}
-                  title={asset.title}
-                  id={asset.id}
-                  fundKey={fund.key}
-                  assetType={asset.type}
-                  clientState={clientState}
-                  setClientState={setClientState}
-                  disabled={isDisabled}
-                  incrementAmount={incrementAmount}
-                  onRemove={handleRemoveAsset}
-                  onEdit={handleEditAsset}
-                  isEditable={asset.isEditable ?? false} // Pass isEditable flag
-                />
-              );
-            })}
-            {/* Add Asset Button at the Bottom */}
-            {!viewOnly && (
-              <div className="mt-3">
-                <CButton color="primary" onClick={() => openAddAssetModal(fund.key)}>
-                  Add Asset
-                </CButton>
-              </div>
-            )}
-          </CCol>
-        ))}
-      </CRow>
+              // Specific condition for company asset
+              if (
+                asset.type === "company" &&
+                !(useCompanyName && activeFund?.toUpperCase() === fund.key.toUpperCase())
+              ) {
+                isDisabled = true;
+              }
+            }
+
+            return (
+              <AssetFormComponent
+                key={asset.id}
+                title={asset.title}
+                id={asset.id}
+                fundKey={fund.key}
+                assetType={asset.type}
+                clientState={clientState}
+                setClientState={setClientState}
+                disabled={isDisabled}
+                incrementAmount={incrementAmount}
+                onRemove={handleRemoveAsset}
+                onEdit={handleEditAsset}
+                isEditable={asset.isEditable ?? false} // Pass isEditable flag
+              />
+            );
+          })}
+          {/* Add Asset Button at the Bottom */}
+          {!viewOnly && (
+            <div className="mt-3">
+              <CButton color="primary" onClick={() => openAddAssetModal(fund.key)}>
+                Add Asset
+              </CButton>
+            </div>
+          )}
+        </div>
+      ))}
 
       {/* Add Asset Modal */}
       <CModal visible={isModalOpen} onClose={closeAddAssetModal} alignment="center">

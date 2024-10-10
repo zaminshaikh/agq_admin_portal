@@ -28,26 +28,12 @@ export const initialFundsConfig: FundConfig[] = [
     key: "agq",
     displayName: "AGQ Fund Assets",
     assets: [
-      { id: "agq-personal", title: "Personal", type: "personal", isEditable: false },
-      { id: "agq-company", title: "Company", type: "company", isEditable: false },
-      { id: "agq-ira", title: "IRA", type: "trad", isEditable: false },
-      { id: "agq-roth-ira", title: "Roth IRA", type: "roth", isEditable: false },
-      { id: "agq-sep-ira", title: "SEP IRA", type: "sep", isEditable: false },
-      { id: "agq-nuview-cash-ira", title: "NuView Cash IRA", type: "nuviewTrad", isEditable: false },
-      { id: "agq-nuview-cash-roth-ira", title: "NuView Cash Roth IRA", type: "nuviewRoth", isEditable: false },
     ],
   },
   {
     key: "ak1",
     displayName: "AK1 Fund Assets",
     assets: [
-      { id: "ak1-personal", title: "Personal", type: "personal", isEditable: false },
-      { id: "ak1-company", title: "Company", type: "company", isEditable: false },
-      { id: "ak1-ira", title: "IRA", type: "trad", isEditable: false },
-      { id: "ak1-roth-ira", title: "Roth IRA", type: "roth", isEditable: false },
-      { id: "ak1-sep-ira", title: "SEP IRA", type: "sep", isEditable: false },
-      { id: "ak1-nuview-cash-ira", title: "NuView Cash IRA", type: "nuviewTrad", isEditable: false },
-      { id: "ak1-nuview-cash-roth-ira", title: "NuView Cash Roth IRA", type: "nuviewRoth", isEditable: false },
     ],
   },
   // Add more funds as needed

@@ -10,7 +10,6 @@ import {
   CModalBody,
   CModalFooter,
   CTooltip,
-  CFormLabel,
 } from "@coreui/react-pro";
 import CIcon from "@coreui/icons-react";
 import { cilPencil, cilTrash } from "@coreui/icons";
@@ -97,6 +96,27 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
     }
   };
 
+  // Handle firstDepositDate change
+  const handleFirstDepositDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const dateValue = e.target.value ? new Date(e.target.value) : null;
+
+    // Update clientState
+    const newState: Client = {
+      ...clientState,
+      assets: {
+        ...clientState.assets,
+        [fundKey]: {
+          ...clientState.assets[fundKey],
+          [assetType]: {
+            ...asset,
+            firstDepositDate: dateValue,
+          },
+        },
+      },
+    };
+    setClientState(newState);
+  };
+
   // Function to handle opening the Edit Asset modal
   const openEditModal = () => {
     setEditedTitle(title);
@@ -131,7 +151,8 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
 
   return (
     <>
-      <CInputGroup className="mb-3 py-3">
+      {/* Asset Amount and Actions */}
+      <CInputGroup className="mb-3">
         <CInputGroupText style={{ width: "200px" }}>{asset.displayTitle}</CInputGroupText>
         <CInputGroupText>$</CInputGroupText>
         <CFormInput
@@ -142,6 +163,13 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
           value={asset.amount}
           onChange={handleAmountChange}
           onBlur={handleAmountBlur}
+        />
+        <CInputGroupText style={{ width: "200px" }}>First Deposit Date</CInputGroupText>
+        <CFormInput
+          type="date"
+          disabled={disabled}
+          value={asset.firstDepositDate ? asset.firstDepositDate.toISOString().substring(0, 10) : ""}
+          onChange={handleFirstDepositDateChange}
         />
         {/* Conditionally render Edit and Remove buttons based on isEditable */}
         {isEditable && (
