@@ -9,7 +9,8 @@ import {
   CModalHeader,
   CModalBody,
   CModalFooter,
-  CTooltip, // Optional: For tooltips
+  CTooltip,
+  CFormLabel,
 } from "@coreui/react-pro";
 import CIcon from "@coreui/icons-react";
 import { cilPencil, cilTrash } from "@coreui/icons";
@@ -40,27 +41,34 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
   incrementAmount,
   onRemove,
   onEdit,
-  isEditable, // Destructure isEditable from props
+  isEditable,
 }) => {
-  const assetValue = clientState.assets[fundKey]?.[assetType] ?? 0;
+  const asset = clientState.assets[fundKey]?.[assetType] ?? {
+    amount: 0,
+    firstDepositDate: null,
+    displayTitle: title,
+  };
 
   // State for managing Edit Asset modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState<string>(title);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d*\.?\d{0,2}$/.test(value)) {
       const parsedValue = parseFloat(value);
 
-      // Create newState using the provided convention
+      // Update clientState
       const newState: Client = {
         ...clientState,
         assets: {
           ...clientState.assets,
           [fundKey]: {
             ...clientState.assets[fundKey],
-            [assetType]: parsedValue,
+            [assetType]: {
+              ...asset,
+              amount: parsedValue,
+            },
           },
         },
       };
@@ -68,17 +76,20 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleAmountBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === "" || isNaN(parseFloat(value))) {
-      // Create newState using the provided convention
+      // Update clientState
       const newState: Client = {
         ...clientState,
         assets: {
           ...clientState.assets,
           [fundKey]: {
             ...clientState.assets[fundKey],
-            [assetType]: 0,
+            [assetType]: {
+              ...asset,
+              amount: 0,
+            },
           },
         },
       };
@@ -121,28 +132,27 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
   return (
     <>
       <CInputGroup className="mb-3 py-3">
-        <CInputGroupText style={{ width: "200px" }}>{title}</CInputGroupText>
+        <CInputGroupText style={{ width: "200px" }}>{asset.displayTitle}</CInputGroupText>
         <CInputGroupText>$</CInputGroupText>
         <CFormInput
           id={id}
           disabled={disabled}
           type="number"
           step={incrementAmount}
-          value={assetValue}
-          onChange={handleChange}
-          onBlur={handleBlur}
+          value={asset.amount}
+          onChange={handleAmountChange}
+          onBlur={handleAmountBlur}
         />
         {/* Conditionally render Edit and Remove buttons based on isEditable */}
         {isEditable && (
           <>
-            {/* Optional: Wrap with CTooltip for tooltips */}
             <CTooltip content={`Edit Asset Name`} placement="top">
               <CButton
                 variant="outline"
                 className="ms-2 p-0 border-0"
                 onClick={openEditModal}
                 aria-label={`Edit ${title}`}
-                disabled={disabled} // Only disable based on the disabled prop
+                disabled={disabled}
               >
                 <CIcon icon={cilPencil} size="lg" />
               </CButton>
@@ -153,7 +163,7 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
                 className="ms-2 p-0 border-0"
                 onClick={handleRemoveAsset}
                 aria-label={`Remove ${title}`}
-                disabled={disabled} // Only disable based on the disabled prop
+                disabled={disabled}
               >
                 <CIcon icon={cilTrash} size="lg" />
               </CButton>
@@ -172,7 +182,7 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
               placeholder="Enter new asset name"
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
-              disabled={disabled} // Disable input if disabled
+              disabled={disabled}
             />
           </CModalBody>
           <CModalFooter>

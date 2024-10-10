@@ -53,22 +53,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   const [currentFundKey, setCurrentFundKey] = useState<string | null>(null);
   const [newAssetTitle, setNewAssetTitle] = useState<string>("");
 
-  // Function to parse assets data, excluding 'total' and 'fund'
-  const parseAssetsData = (assetsData: any): { [assetType: string]: number } => {
-    const parsedAssets: { [assetType: string]: number } = {};
-    if (assetsData) {
-      Object.keys(assetsData).forEach((assetType) => {
-        if (
-          !excludedAssetKeys.includes(assetType.toLowerCase()) &&
-          typeof assetsData[assetType] === "number"
-        ) {
-          parsedAssets[assetType] = assetsData[assetType] ?? 0;
-        }
-      });
-    }
-    return parsedAssets;
-  };
-
   // Synchronize fundsConfig with clientState.assets on component mount or when clientState.assets changes
   useEffect(() => {
     const updatedFundsConfig = initialFundsConfig.map((fund) => {
@@ -84,14 +68,13 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
 
       // Create additional AssetConfig entries for new asset types
       const additionalAssets = additionalAssetTypes.map((assetType) => {
-        // Find the asset in existing fundsConfig to get its title
-        const existingAsset = fundsConfig
-          .find((f) => f.key === fund.key)
-          ?.assets.find((asset) => asset.type === assetType);
+        // Use displayTitle from clientAssets if available, else default to formatted assetType
+        const displayTitle =
+          clientAssets[assetType]?.displayTitle || assetType.replace(/-/g, " ");
 
         return {
           id: `${fund.key}-${assetType}`,
-          title: existingAsset ? existingAsset.title : assetType.replace(/-/g, " "), // Use existing title if available
+          title: displayTitle,
           type: assetType,
           isEditable: true, // Dynamically added assets are editable
         };
@@ -103,7 +86,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       };
     });
     setFundsConfig(updatedFundsConfig);
-  }, [clientState.assets, fundsConfig]); // Added fundsConfig to dependencies to avoid stale closures
+  }, [clientState.assets]);
 
   // Function to handle opening the modal
   const openAddAssetModal = (fundKey: string) => {
@@ -140,9 +123,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     const newAssetId = `${currentFundKey}-${sanitizedTitle}`;
     const newAssetType = sanitizedTitle; // Use this as the dynamic key
 
-    console.log("newAssetId", newAssetId);
-    console.log("newAssetType", newAssetType);
-
     // Check for duplicates
     const fund = fundsConfig.find((f) => f.key === currentFundKey);
     if (fund) {
@@ -169,8 +149,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       isEditable: true, // Mark as editable
     };
 
-    console.log("newAsset", newAsset);
-
     // Update fundsConfig
     const updatedFundsConfig = fundsConfig.map((fund) =>
       fund.key === currentFundKey
@@ -178,7 +156,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
         : fund
     );
     setFundsConfig(updatedFundsConfig);
-    console.log("Updated fundsConfig", updatedFundsConfig);
 
     // Initialize the new asset in clientState.assets using the correct dynamic key
     const newState: Client = {
@@ -187,12 +164,15 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
         ...clientState.assets,
         [currentFundKey]: {
           ...clientState.assets[currentFundKey],
-          [newAssetType]: 0, // Correctly handle the dynamic key here
+          [newAssetType]: {
+            amount: 0,
+            firstDepositDate: null,
+            displayTitle: assetTitleTrimmed,
+          },
         },
       },
     };
     setClientState(newState);
-    console.log("Updated clientState.assets", newState.assets);
 
     // Close the modal
     closeAddAssetModal();
@@ -221,20 +201,15 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     );
     setFundsConfig(updatedFundsConfig);
 
-    // Remove from clientState.assets using the provided convention, excluding 'total' and 'fund'
+    // Remove from clientState.assets
+    const newAssets = { ...clientState.assets[fundKey] };
+    delete newAssets[assetType];
+
     const newState: Client = {
       ...clientState,
       assets: {
         ...clientState.assets,
-        [fundKey]: Object.keys(clientState.assets[fundKey]).reduce((acc, key) => {
-          if (
-            key !== assetType &&
-            !excludedAssetKeys.includes(key.toLowerCase())
-          ) {
-            acc[key] = clientState.assets[fundKey][key];
-          }
-          return acc;
-        }, {} as { [assetType: string]: number }),
+        [fundKey]: newAssets,
       },
     };
     setClientState(newState);
@@ -267,7 +242,8 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     const fund = fundsConfig.find((f) => f.key === fundKey);
     if (fund) {
       const duplicateTitle = fund.assets.some(
-        (asset) => asset.type === newAssetType && asset.type !== oldAssetType
+        (asset) =>
+          asset.type.toLowerCase() === newAssetType && asset.type !== oldAssetType
       );
       if (duplicateTitle) {
         alert("An asset with this name already exists.");
@@ -290,11 +266,14 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     );
     setFundsConfig(updatedFundsConfig);
 
-    // Update clientState.assets using the provided convention, excluding 'total' and 'fund'
-    const oldAssetValue = clientState.assets[fundKey][oldAssetType];
+    // Update clientState.assets
+    const oldAsset = clientState.assets[fundKey][oldAssetType];
     const newAssets = {
       ...clientState.assets[fundKey],
-      [newAssetType]: oldAssetValue,
+      [newAssetType]: {
+        ...oldAsset,
+        displayTitle: assetTitleTrimmed,
+      },
     };
     delete newAssets[oldAssetType];
 
@@ -302,14 +281,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       ...clientState,
       assets: {
         ...clientState.assets,
-        [fundKey]: Object.keys(newAssets).reduce((acc, key) => {
-          if (
-            !excludedAssetKeys.includes(key.toLowerCase())
-          ) { // Ensure 'total' and 'fund' remain unaffected
-            acc[key] = newAssets[key];
-          }
-          return acc;
-        }, {} as { [assetType: string]: number }),
+        [fundKey]: newAssets,
       },
     };
     setClientState(newState);

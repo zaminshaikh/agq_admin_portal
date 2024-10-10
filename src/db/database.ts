@@ -60,32 +60,45 @@ export const initialFundsConfig: FundConfig[] = [
  * 
  * .uid - The client's UID, or the empty string if they have not signed up
  */
+// Client.ts// Client.ts
+export interface AssetDetails {
+    amount: number;
+    firstDepositDate: Date | null;
+    displayTitle: string;
+}
+
 // Client.ts
+export interface AssetDetails {
+    amount: number;
+    firstDepositDate: Date | null;
+    displayTitle: string;
+}
+
 export interface Client {
-  cid: string;
-  uid: string;
-  firstName: string;
-  lastName: string;
-  companyName: string;
-  address: string;
-  dob: Date | null;
-  phoneNumber: string;
-  appEmail: string;
-  initEmail: string;
-  firstDepositDate: Date | null;
-  beneficiaries: string[];
-  connectedUsers: string[];
-  totalAssets: number;
-  ytd: number;
-  totalYTD: number;
-  _selected?: boolean;
-  activities?: Activity[];
-  graphPoints?: GraphPoint[];
-  assets: {
-    [fundKey: string]: {
-      [assetType: string]: number;
+    cid: string;
+    uid: string;
+    firstName: string;
+    lastName: string;
+    companyName: string;
+    address: string;
+    dob: Date | null;
+    phoneNumber: string;
+    appEmail: string;
+    initEmail: string;
+    firstDepositDate: Date | null;
+    beneficiaries: string[];
+    connectedUsers: string[];
+    totalAssets: number;
+    ytd: number;
+    totalYTD: number;
+    _selected?: boolean;
+    activities?: Activity[];
+    graphPoints?: GraphPoint[];
+    assets: {
+        [fundKey: string]: {
+            [assetType: string]: AssetDetails;
+        };
     };
-  };
 }
 
 export interface Activity {
@@ -140,22 +153,78 @@ export const emptyClient: Client = {
     totalYTD: 0,
     assets: {
         agq: {
-            personal: 0,
-            company: 0,
-            trad: 0,
-            roth: 0,
-            sep: 0,
-            nuviewTrad: 0,
-            nuviewRoth: 0,
+            personal: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Personal',
+            },
+            company: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Company',
+            },
+            trad: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'IRA',
+            },
+            roth: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Roth IRA',
+            },
+            sep: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'SEP IRA',
+            },
+            nuviewTrad: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'NuView Cash IRA',
+            },
+            nuviewRoth: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'NuView Cash Roth IRA',
+            },
         },
         ak1: {
-            personal: 0,
-            company: 0,
-            trad: 0,
-            roth: 0,
-            sep: 0,
-            nuviewTrad: 0,
-            nuviewRoth: 0,
+            personal: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Personal',
+            },
+            company: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Company',
+            },
+            trad: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'IRA',
+            },
+            roth: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Roth IRA',
+            },
+            sep: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'SEP IRA',
+            },
+            nuviewTrad: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'NuView Cash IRA',
+            },
+            nuviewRoth: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'NuView Cash Roth IRA',
+            },
         },
     },
 };
@@ -337,12 +406,18 @@ export class DatabaseService {
         const agqAssetsData = agqAssetsSnapshot.data();
         const ak1AssetsData = ak1AssetsSnapshot.data();
 
-        const parseAssetsData = (assetsData: any): { [assetType: string]: number } => {
-            const parsedAssets: { [assetType: string]: number } = {};
+        const parseAssetsData = (assetsData: any): { [assetType: string]: AssetDetails } => {
+            const parsedAssets: { [assetType: string]: AssetDetails } = {};
             if (assetsData) {
-                // Iterate over all keys (asset types) in the assets data
                 Object.keys(assetsData).forEach(assetType => {
-                    parsedAssets[assetType] = assetsData[assetType] ?? 0;
+                    if (assetType !== 'fund' && assetType !== 'total') {
+                        const asset = assetsData[assetType];
+                        parsedAssets[assetType] = {
+                            amount: asset.amount ?? 0,
+                            firstDepositDate: asset.firstDepositDate?.toDate?.() ?? null,
+                            displayTitle: asset.displayTitle ?? '',
+                        };
+                    }
                 });
             }
             return parsedAssets;
@@ -493,46 +568,44 @@ export class DatabaseService {
     }
 
     async setAssets(client: Client) {
-        // Create a reference to the assets subcollection for this client
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
+        const assetCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION);
 
-         // Create the asset documents from client
-         let agqDoc = {
-            ...client.assets.agq,
-            fund: 'AGQ',
-            // Calculate sum of the subfields of the fund (personal, company, trad, roth etc.)
-            total: Object.entries(client.assets.agq)
-            .filter(([key]) => key !== 'fund' && key !== 'total')
-            .reduce((sum, [key, value]) => sum + value, 0),
-        }
+        const agqAssets = client.assets.agq;
+        const ak1Assets = client.assets.ak1;
 
-        let ak1Doc = {
-            ...client.assets.ak1,
-            fund: 'AK1',
-            total: Object.entries(client.assets.ak1)
-            .filter(([key]) => key !== 'fund' && key !== 'total')
-            .reduce((sum, [key, value]) => sum + value, 0),
-        }
+        const prepareAssetDoc = (assets: { [assetType: string]: AssetDetails }, fundName: string) => {
+            let total = 0;
+            const assetDoc: any = { fund: fundName };
+            Object.keys(assets).forEach(assetType => {
+                const asset = assets[assetType];
+                assetDoc[assetType] = {
+                    amount: asset.amount,
+                    firstDepositDate: asset.firstDepositDate ? Timestamp.fromDate(asset.firstDepositDate) : null,
+                    displayTitle: asset.displayTitle,
+                };
+                total += asset.amount;
+            });
+            assetDoc.total = total;
+            return assetDoc;
+        };
 
-        let general = {
-            ytd: client.ytd ?? 0, 
+        const agqDoc = prepareAssetDoc(agqAssets, 'AGQ');
+        const ak1Doc = prepareAssetDoc(ak1Assets, 'AK1');
+
+        const general = {
+            ytd: client.ytd ?? 0,
             totalYTD: client.totalYTD ?? 0,
-            total: agqDoc.total + ak1Doc.total
-        }
+            total: agqDoc.total + ak1Doc.total,
+        };
 
-        // Create a reference to the assets subcollection for client
-        // If none exists, it will create one
-        const assetCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION)
-        
-        // Create references to the documents in the subcollection
-        const agqRef = doc(assetCollectionRef, config.ASSETS_AGQ_DOC_ID)
-        const ak1Ref = doc(assetCollectionRef, config.ASSETS_AK1_DOC_ID)
-        const genRef = doc(assetCollectionRef, config.ASSETS_GENERAL_DOC_ID)
+        const agqRef = doc(assetCollectionRef, config.ASSETS_AGQ_DOC_ID);
+        const ak1Ref = doc(assetCollectionRef, config.ASSETS_AK1_DOC_ID);
+        const genRef = doc(assetCollectionRef, config.ASSETS_GENERAL_DOC_ID);
 
-        // Set the documents in the subcollection
-        await setDoc(agqRef, agqDoc)
-        await setDoc(ak1Ref, ak1Doc)
-        await setDoc(genRef, general)
+        await setDoc(agqRef, agqDoc);
+        await setDoc(ak1Ref, ak1Doc);
+        await setDoc(genRef, general);
     }
 
     /**
