@@ -36,7 +36,6 @@ export const initialFundsConfig: FundConfig[] = [
     assets: [
     ],
   },
-  // Add more funds as needed
 ];
 
 /**
@@ -144,72 +143,12 @@ export const emptyClient: Client = {
                 firstDepositDate: null,
                 displayTitle: 'Personal',
             },
-            company: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'Company',
-            },
-            trad: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'IRA',
-            },
-            roth: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'Roth IRA',
-            },
-            sep: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'SEP IRA',
-            },
-            nuviewTrad: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'NuView Cash IRA',
-            },
-            nuviewRoth: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'NuView Cash Roth IRA',
-            },
         },
         ak1: {
             personal: {
                 amount: 0,
                 firstDepositDate: null,
                 displayTitle: 'Personal',
-            },
-            company: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'Company',
-            },
-            trad: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'IRA',
-            },
-            roth: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'Roth IRA',
-            },
-            sep: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'SEP IRA',
-            },
-            nuviewTrad: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'NuView Cash IRA',
-            },
-            nuviewRoth: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'NuView Cash Roth IRA',
             },
         },
     },

@@ -286,7 +286,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   };
 
   return (
-    <CContainer className="py-3 pb-5">
+    <CContainer className="py-3">
       {fundsConfig.map((fund: FundConfig) => (
         <div key={fund.key} className="mb-5">
           <div className="mb-2 pb-3">
