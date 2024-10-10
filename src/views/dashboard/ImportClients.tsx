@@ -85,22 +85,48 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
             beneficiaries: row["BENEFICIARY"] ? [row["BENEFICIARY"]] : [],
             assets: {
                 agq: {
-                    personal: parseFloat(row["PERSONAL"]) || 0,
-                    company: parseFloat(row["COMPANY"]) || 0,
-                    trad: parseFloat(row["IRA"]) || 0,
-                    roth: parseFloat(row["ROTH IRA"]) || 0,
-                    sep: parseFloat(row["SEP IRA"]) || 0,
-                    nuviewTrad: parseFloat(row["NUVIEW CASH IRA"]) || 0,
-                    nuviewRoth: parseFloat(row["NUVIEW CASH ROTH IRA"]) || 0,
+                    personal: {
+                        amount: parseFloat(row["PERSONAL"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'Personal',
+                    },
+                    company: {
+                        amount: parseFloat(row["COMPANY"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'Company',
+                    },
+                    trad: {
+                        amount: parseFloat(row["IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'IRA',
+                    },
+                    roth: {
+                        amount: parseFloat(row["ROTH IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'Roth IRA',
+                    },
+                    sep: {
+                        amount: parseFloat(row["SEP IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'SEP IRA',
+                    },
+                    nuviewTrad: {
+                        amount: parseFloat(row["NUVIEW CASH IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'NUVIEW CASH IRA',
+                    },
+                    nuviewRoth: {
+                        amount: parseFloat(row["NUVIEW CASH ROTH IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'NUVIEW CASH ROTH IRA',
+                    },
                 },
                 ak1: {
-                    personal: 0,
-                    company: 0,
-                    trad: 0,
-                    roth: 0,
-                    sep: 0,
-                    nuviewTrad: 0,
-                    nuviewRoth: 0,
+                    personal: {
+                        amount: 0,
+                        firstDepositDate: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(),
+                        displayTitle: 'Personal',
+                    }
                 },
             },
             activities: [

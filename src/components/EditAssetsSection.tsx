@@ -1,9 +1,7 @@
 // src/components/EditAssetsSection.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   CContainer,
-  CRow,
-  CCol,
   CButton,
   CModal,
   CModalHeader,
@@ -11,7 +9,7 @@ import {
   CModalFooter,
   CFormInput,
 } from "@coreui/react-pro";
-import { AssetConfig, Client, FundConfig, initialFundsConfig } from "../db/database";
+import { Client } from "../db/database";
 import { AssetFormComponent } from "./AssetFormComponent";
 
 interface EditAssetsSectionProps {
@@ -43,48 +41,10 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   incrementAmount = 1000,
   viewOnly = false,
 }) => {
-  // Initialize fundsConfig as state
-  const [fundsConfig, setFundsConfig] = useState<FundConfig[]>(initialFundsConfig);
-
   // State for managing the "Add Asset" modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentFundKey, setCurrentFundKey] = useState<string | null>(null);
   const [newAssetTitle, setNewAssetTitle] = useState<string>("");
-
-  // Synchronize fundsConfig with clientState.assets on component mount or when clientState.assets changes
-  useEffect(() => {
-    const updatedFundsConfig = initialFundsConfig.map((fund) => {
-      const clientAssets = clientState.assets[fund.key] || {};
-      const existingAssetTypes = fund.assets.map((asset) => asset.type.toLowerCase());
-
-      // Identify additional asset types not present in initialFundsConfig, excluding 'total' and 'fund'
-      const additionalAssetTypes = Object.keys(clientAssets).filter(
-        (assetType) =>
-          !existingAssetTypes.includes(assetType.toLowerCase()) &&
-          !excludedAssetKeys.includes(assetType.toLowerCase())
-      );
-
-      // Create additional AssetConfig entries for new asset types
-      const additionalAssets = additionalAssetTypes.map((assetType) => {
-        // Use displayTitle from clientAssets if available, else default to formatted assetType
-        const displayTitle =
-          clientAssets[assetType]?.displayTitle || assetType.replace(/-/g, " ");
-
-        return {
-          id: `${fund.key}-${assetType}`,
-          title: displayTitle,
-          type: assetType,
-          isEditable: true, // Dynamically added assets are editable
-        };
-      });
-
-      return {
-        ...fund,
-        assets: [...fund.assets, ...additionalAssets],
-      };
-    });
-    setFundsConfig(updatedFundsConfig);
-  }, [clientState.assets]);
 
   // Function to handle opening the modal
   const openAddAssetModal = (fundKey: string) => {
@@ -116,44 +76,19 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       return;
     }
 
-    // Generate a unique id for the new asset
+    // Generate a unique type for the new asset
     const sanitizedTitle = assetTitleTrimmed.toLowerCase().replace(/\s+/g, "-");
-    const newAssetId = `${currentFundKey}-${sanitizedTitle}`;
     const newAssetType = sanitizedTitle; // Use this as the dynamic key
 
     // Check for duplicates
-    const fund = fundsConfig.find((f) => f.key === currentFundKey);
-    if (fund) {
-      const duplicateTitle = fund.assets.some(
-        (asset) => asset.title.toLowerCase() === assetTitleTrimmed.toLowerCase()
-      );
-      if (duplicateTitle) {
-        alert("An asset with this name already exists.");
-        return;
-      }
-
-      const duplicateId = fund.assets.some((asset) => asset.id === newAssetId);
-      if (duplicateId) {
-        alert("An asset with this identifier already exists.");
-        return;
-      }
-    }
-
-    // Create the new asset configuration
-    const newAsset: AssetConfig = {
-      id: newAssetId,
-      title: assetTitleTrimmed, // Use the title as entered
-      type: newAssetType,
-      isEditable: true, // Mark as editable
-    };
-
-    // Update fundsConfig
-    const updatedFundsConfig = fundsConfig.map((fund) =>
-      fund.key === currentFundKey
-        ? { ...fund, assets: [...fund.assets, newAsset] }
-        : fund
+    const fundAssets = clientState.assets[currentFundKey] || {};
+    const duplicateTitle = Object.values(fundAssets).some(
+      (asset) => asset.displayTitle.toLowerCase() === assetTitleTrimmed.toLowerCase()
     );
-    setFundsConfig(updatedFundsConfig);
+    if (duplicateTitle) {
+      alert("An asset with this name already exists.");
+      return;
+    }
 
     // Initialize the new asset in clientState.assets using the correct dynamic key
     const newState: Client = {
@@ -161,7 +96,7 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       assets: {
         ...clientState.assets,
         [currentFundKey]: {
-          ...clientState.assets[currentFundKey],
+          ...fundAssets,
           [newAssetType]: {
             amount: 0,
             firstDepositDate: null,
@@ -191,23 +126,15 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
       return;
     }
 
-    // Remove from fundsConfig
-    const updatedFundsConfig = fundsConfig.map((fund) =>
-      fund.key === fundKey
-        ? { ...fund, assets: fund.assets.filter((asset) => asset.type !== assetType) }
-        : fund
-    );
-    setFundsConfig(updatedFundsConfig);
-
     // Remove from clientState.assets
-    const newAssets = { ...clientState.assets[fundKey] };
-    delete newAssets[assetType];
+    const fundAssets = { ...clientState.assets[fundKey] };
+    delete fundAssets[assetType];
 
     const newState: Client = {
       ...clientState,
       assets: {
         ...clientState.assets,
-        [fundKey]: newAssets,
+        [fundKey]: fundAssets,
       },
     };
     setClientState(newState);
@@ -237,37 +164,21 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     const newAssetType = assetTitleTrimmed.toLowerCase().replace(/\s+/g, "-");
 
     // Check for duplicate asset titles within the same fund
-    const fund = fundsConfig.find((f) => f.key === fundKey);
-    if (fund) {
-      const duplicateTitle = fund.assets.some(
-        (asset) =>
-          asset.type.toLowerCase() === newAssetType && asset.type !== oldAssetType
-      );
-      if (duplicateTitle) {
-        alert("An asset with this name already exists.");
-        return;
-      }
+    const fundAssets = clientState.assets[fundKey];
+    const duplicateTitle = Object.values(fundAssets).some(
+      (asset) =>
+        asset.displayTitle.toLowerCase() === assetTitleTrimmed.toLowerCase() &&
+        asset.displayTitle.toLowerCase() !== fundAssets[oldAssetType].displayTitle.toLowerCase()
+    );
+    if (duplicateTitle) {
+      alert("An asset with this name already exists.");
+      return;
     }
 
-    // Update fundsConfig
-    const updatedFundsConfig = fundsConfig.map((fund) =>
-      fund.key === fundKey
-        ? {
-            ...fund,
-            assets: fund.assets.map((asset) =>
-              asset.type === oldAssetType
-                ? { ...asset, title: assetTitleTrimmed, type: newAssetType }
-                : asset
-            ),
-          }
-        : fund
-    );
-    setFundsConfig(updatedFundsConfig);
-
     // Update clientState.assets
-    const oldAsset = clientState.assets[fundKey][oldAssetType];
+    const oldAsset = fundAssets[oldAssetType];
     const newAssets = {
-      ...clientState.assets[fundKey],
+      ...fundAssets,
       [newAssetType]: {
         ...oldAsset,
         displayTitle: assetTitleTrimmed,
@@ -287,18 +198,22 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
 
   return (
     <CContainer className="py-3">
-      {fundsConfig.map((fund: FundConfig) => (
-        <div key={fund.key} className="mb-5">
+      {Object.entries(clientState.assets).map(([fundKey, fundAssets]) => (
+        <div key={fundKey} className="mb-5">
           <div className="mb-2 pb-3">
-            <h5>{fund.displayName}</h5>
+            <h5>{fundKey.toUpperCase()} Fund Assets</h5>
           </div>
-          {fund.assets.map((asset: AssetConfig) => {
+          {Object.entries(fundAssets).map(([assetType, asset]) => {
+            if (excludedAssetKeys.includes(assetType.toLowerCase())) {
+              return null; // Skip excluded keys
+            }
+
             // Determine the disabled state based on props and asset type
             let isDisabled = viewOnly;
 
             if (!isDisabled) {
               if (activeFund !== undefined) {
-                if (fund.key.toUpperCase() !== activeFund.toUpperCase()) {
+                if (fundKey.toUpperCase() !== activeFund.toUpperCase()) {
                   isDisabled = true;
                 }
               }
@@ -306,25 +221,25 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
 
             return (
               <AssetFormComponent
-                key={asset.id}
-                title={asset.title}
-                id={asset.id}
-                fundKey={fund.key}
-                assetType={asset.type}
+                key={`${fundKey}-${assetType}`}
+                title={asset.displayTitle}
+                id={`${fundKey}-${assetType}`}
+                fundKey={fundKey}
+                assetType={assetType}
                 clientState={clientState}
                 setClientState={setClientState}
                 disabled={isDisabled}
                 incrementAmount={incrementAmount}
                 onRemove={handleRemoveAsset}
                 onEdit={handleEditAsset}
-                isEditable={asset.isEditable ?? false} // Pass isEditable flag
+                isEditable={true} // All assets are editable unless restricted
               />
             );
           })}
           {/* Add Asset Button at the Bottom */}
           {!viewOnly && (
             <div className="mt-3">
-              <CButton color="primary" onClick={() => openAddAssetModal(fund.key)}>
+              <CButton color="primary" onClick={() => openAddAssetModal(fundKey)}>
                 Add Asset
               </CButton>
             </div>

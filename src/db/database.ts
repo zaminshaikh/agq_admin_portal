@@ -9,34 +9,11 @@ import { formatDate } from 'src/utils/utilities.ts'
 
 const functions = getFunctions();
 
-// fundsConfig.ts
-export interface AssetConfig {
-  id: string;
-  title: string;
-  type: string;
-  isEditable: boolean;
+export interface AssetDetails {
+    amount: number;
+    firstDepositDate: Date | null;
+    displayTitle: string;
 }
-
-export interface FundConfig {
-  key: string;
-  displayName: string;
-  assets: AssetConfig[];
-}
-
-export const initialFundsConfig: FundConfig[] = [
-  {
-    key: "agq",
-    displayName: "AGQ Fund Assets",
-    assets: [
-    ],
-  },
-  {
-    key: "ak1",
-    displayName: "AK1 Fund Assets",
-    assets: [
-    ],
-  },
-];
 
 /**
  * Client interface representing a client in the Firestore database.
@@ -45,20 +22,6 @@ export const initialFundsConfig: FundConfig[] = [
  * 
  * .uid - The client's UID, or the empty string if they have not signed up
  */
-// Client.ts// Client.ts
-export interface AssetDetails {
-    amount: number;
-    firstDepositDate: Date | null;
-    displayTitle: string;
-}
-
-// Client.ts
-export interface AssetDetails {
-    amount: number;
-    firstDepositDate: Date | null;
-    displayTitle: string;
-}
-
 export interface Client {
     cid: string;
     uid: string;
