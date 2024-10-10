@@ -573,3 +573,24 @@ exports.unlinkUser = functions.https.onCall(async (data, context) => {
   }
 });
 
+exports.isUIDLinked = functions.https.onCall(async (data, context) => {
+    try {
+        const uid = data.uid;
+        const usersCollectionID = data.usersCollectionID;
+        if (!uid) {
+            throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "uid".');
+        }
+        if (!usersCollectionID) {
+            throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a valid "usersCollectionID".');
+        }
+
+        const userSnapshot = await admin.firestore().collection(usersCollectionID).where('uid', '==', uid).get();
+        const isLinked = !userSnapshot.empty;
+
+        return { isLinked };
+    } catch (error) {
+        console.error('Error checking UID link status:', error);
+        throw new functions.https.HttpsError('unknown', 'Failed to check UID link status', error);
+    }
+})
+
