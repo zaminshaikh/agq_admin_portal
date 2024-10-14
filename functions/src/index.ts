@@ -592,5 +592,5 @@ exports.isUIDLinked = functions.https.onCall(async (data, context) => {
         console.error('Error checking UID link status:', error);
         throw new functions.https.HttpsError('unknown', 'Failed to check UID link status', error);
     }
-})
+});
 
