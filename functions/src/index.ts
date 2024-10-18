@@ -165,7 +165,7 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
     const activity = snapshot.data() as Activity;
     const { userId, activityId, userCollection} = context.params;
 
-    if (activity.sendNotif !== true) {
+    if (activity.sendNotif !== true || userCollection === 'backup') {
         return null; // Exit if no notification is required
     }
 
