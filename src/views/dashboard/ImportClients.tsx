@@ -272,6 +272,8 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
 
 export default ImportClients;
 
-function filterAssets(ak1: { [assetType: string]: AssetDetails; }): { [assetType: string]: AssetDetails; } {
-    throw new Error("Function not implemented.");
+function filterAssets(assets: { [assetType: string]: AssetDetails; }): { [assetType: string]: AssetDetails; } {
+    return Object.fromEntries(
+        Object.entries(assets).filter(([key, value]) => value.amount !== 0)
+    );
 }
