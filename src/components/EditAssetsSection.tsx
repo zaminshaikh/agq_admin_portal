@@ -23,17 +23,6 @@ interface EditAssetsSectionProps {
 // Define keys to exclude (case-insensitive)
 const excludedAssetKeys = ["total", "fund"];
 
-// Define protected asset types (case-insensitive)
-const protectedAssetTypes = [
-  "personal",
-  "company",
-  "ira",
-  "roth ira",
-  "sep ira",
-  "nuview cash ira",
-  "nuview cash roth ira",
-];
-
 export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   clientState,
   setClientState,
@@ -115,7 +104,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
   const handleRemoveAsset = (fundKey: string, assetType: string) => {
     // Prevent removing protected assets and excluded keys
     if (
-      protectedAssetTypes.includes(assetType.toLowerCase()) ||
       excludedAssetKeys.includes(assetType.toLowerCase())
     ) {
       alert("This asset cannot be removed.");
@@ -151,12 +139,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     // Prevent renaming to 'total', 'Total', 'fund', 'Fund'
     if (excludedAssetKeys.includes(assetTitleTrimmed.toLowerCase())) {
       alert("The asset name 'total' or 'fund' is reserved and cannot be used.");
-      return;
-    }
-
-    // Prevent editing protected assets
-    if (protectedAssetTypes.includes(oldAssetType.toLowerCase())) {
-      alert("This asset cannot be edited.");
       return;
     }
 
