@@ -89,36 +89,43 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                         amount: parseFloat(row["PERSONAL"]) || 0,
                         firstDepositDate: row["FIRST DEPOSIT DATE"] ? new Date(row["FIRST DEPOSIT DATE"]) : null,
                         displayTitle: 'Personal',
+                        index: 0,
                     },
                     company: {
                         amount: parseFloat(row["COMPANY"]) || 0,
                         firstDepositDate: null,
                         displayTitle: row["COMPANY NAME"] || 'Company',
+                        index: 1,
                     },
                     trad: {
                         amount: parseFloat(row["IRA"]) || 0,
                         firstDepositDate: null,
                         displayTitle: 'IRA',
+                        index: 2,
                     },
                     roth: {
                         amount: parseFloat(row["ROTH IRA"]) || 0,
                         firstDepositDate: null,
                         displayTitle: 'Roth IRA',
+                        index: 3,
                     },
                     sep: {
                         amount: parseFloat(row["SEP IRA"]) || 0,
                         firstDepositDate: null,
                         displayTitle: 'SEP IRA',
+                        index: 4,
                     },
                     nuviewTrad: {
                         amount: parseFloat(row["NUVIEW CASH IRA"]) || 0,
                         firstDepositDate: null,
                         displayTitle: 'NUVIEW CASH IRA',
+                        index: 5,
                     },
                     nuviewRoth: {
                         amount: parseFloat(row["NUVIEW CASH ROTH IRA"]) || 0,
                         firstDepositDate: null,
                         displayTitle: 'NUVIEW CASH ROTH IRA',
+                        index: 6,
                     },
                 },
                 ak1: {
@@ -126,6 +133,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                         amount: 0,
                         firstDepositDate: null,
                         displayTitle: 'Personal',
+                        index: 0,
                     }
                 },
             },
