@@ -13,6 +13,7 @@ export interface AssetDetails {
     amount: number;
     firstDepositDate: Date | null;
     displayTitle: string;
+    index: number;
 }
 
 /**
@@ -105,6 +106,7 @@ export const emptyClient: Client = {
                 amount: 0,
                 firstDepositDate: null,
                 displayTitle: 'Personal',
+                index: 0,
             },
         },
         ak1: {
@@ -112,6 +114,7 @@ export const emptyClient: Client = {
                 amount: 0,
                 firstDepositDate: null,
                 displayTitle: 'Personal',
+                index: 0,
             },
         },
     },
@@ -304,6 +307,7 @@ export class DatabaseService {
                             amount: asset.amount ?? 0,
                             firstDepositDate: asset.firstDepositDate?.toDate?.() ?? null,
                             displayTitle: asset.displayTitle ?? '',
+                            index: asset.index ?? 0, // Include index
                         };
                     }
                 });
@@ -480,6 +484,7 @@ export class DatabaseService {
                     amount: asset.amount,
                     firstDepositDate: asset.firstDepositDate ? Timestamp.fromDate(asset.firstDepositDate) : null,
                     displayTitle: asset.displayTitle,
+                    index: asset.index,
                 };
                 total += asset.amount;
             });

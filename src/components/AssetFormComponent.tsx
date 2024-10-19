@@ -1,4 +1,5 @@
 // src/components/AssetFormComponent.tsx
+
 import React, { useState } from "react";
 import {
   CInputGroup,
@@ -12,7 +13,7 @@ import {
   CTooltip,
 } from "@coreui/react-pro";
 import CIcon from "@coreui/icons-react";
-import { cilPencil, cilTrash } from "@coreui/icons";
+import { cilPencil, cilTrash, cilArrowTop, cilArrowBottom } from "@coreui/icons";
 import { Client } from "../db/database";
 
 interface AssetFormComponentProps {
@@ -27,6 +28,10 @@ interface AssetFormComponentProps {
   onRemove: (fundKey: string, assetType: string) => void;
   onEdit: (fundKey: string, oldAssetType: string, newAssetTitle: string) => void;
   isEditable: boolean; // Indicates if the asset can be edited or deleted
+  onMoveUp: (fundKey: string, assetType: string) => void; // Function to move the asset up
+  onMoveDown: (fundKey: string, assetType: string) => void; // Function to move the asset down
+  isFirst: boolean; // Indicates if the asset is the first in the list
+  isLast: boolean; // Indicates if the asset is the last in the list
 }
 
 export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
@@ -41,11 +46,16 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
   onRemove,
   onEdit,
   isEditable,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
 }) => {
   const asset = clientState.assets[fundKey]?.[assetType] ?? {
     amount: 0,
     firstDepositDate: null,
     displayTitle: title,
+    index: 0,
   };
 
   // State for managing Edit Asset modal
@@ -171,7 +181,7 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
           value={asset.firstDepositDate ? asset.firstDepositDate.toISOString().substring(0, 10) : ""}
           onChange={handleFirstDepositDateChange}
         />
-        {/* Conditionally render Edit and Remove buttons based on isEditable */}
+        {/* Conditionally render Edit, Remove, Move Up, and Move Down buttons based on isEditable */}
         {isEditable && (
           <>
             <CTooltip content={`Edit Asset Name`} placement="top">
@@ -194,6 +204,30 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
                 disabled={disabled}
               >
                 <CIcon icon={cilTrash} size="lg" />
+              </CButton>
+            </CTooltip>
+            {/* Move Up Button */}
+            <CTooltip content="Move Up" placement="top">
+              <CButton
+                variant="outline"
+                className="ms-2 p-0 border-0"
+                onClick={() => onMoveUp(fundKey, assetType)}
+                aria-label={`Move ${title} Up`}
+                disabled={disabled || isFirst}
+              >
+                <CIcon icon={cilArrowTop} size="lg" />
+              </CButton>
+            </CTooltip>
+            {/* Move Down Button */}
+            <CTooltip content="Move Down" placement="top">
+              <CButton
+                variant="outline"
+                className="ms-2 p-0 border-0"
+                onClick={() => onMoveDown(fundKey, assetType)}
+                aria-label={`Move ${title} Down`}
+                disabled={disabled || isLast}
+              >
+                <CIcon icon={cilArrowBottom} size="lg" />
               </CButton>
             </CTooltip>
           </>
