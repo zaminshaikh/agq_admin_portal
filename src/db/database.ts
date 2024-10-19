@@ -9,6 +9,13 @@ import { formatDate } from 'src/utils/utilities.ts'
 
 const functions = getFunctions();
 
+export interface AssetDetails {
+    amount: number;
+    firstDepositDate: Date | null;
+    displayTitle: string;
+    index: number;
+}
+
 /**
  * Client interface representing a client in the Firestore database.
  *  
@@ -17,7 +24,6 @@ const functions = getFunctions();
  * .uid - The client's UID, or the empty string if they have not signed up
  */
 export interface Client {
-    [key: string]: any;
     cid: string;
     uid: string;
     firstName: string;
@@ -31,31 +37,15 @@ export interface Client {
     firstDepositDate: Date | null;
     beneficiaries: string[];
     connectedUsers: string[];
-    totalAssets: number,
-    ytd: number,
-    totalYTD: number
+    totalAssets: number;
+    ytd: number;
+    totalYTD: number;
     _selected?: boolean;
     activities?: Activity[];
     graphPoints?: GraphPoint[];
     assets: {
-        [key: string]: any;
-        agq: {
-        personal: number;
-        company: number;
-        trad: number;
-        roth: number;
-        sep: number;
-        nuviewTrad: number;
-        nuviewRoth: number;
-        };
-        ak1: {
-        personal: number;
-        company: number;
-        trad: number;
-        roth: number;
-        sep: number;
-        nuviewTrad: number;
-        nuviewRoth: number;
+        [fundKey: string]: {
+            [assetType: string]: AssetDetails;
         };
     };
 }
@@ -112,22 +102,20 @@ export const emptyClient: Client = {
     totalYTD: 0,
     assets: {
         agq: {
-            personal: 0,
-            company: 0,
-            trad: 0,
-            roth: 0,
-            sep: 0,
-            nuviewTrad: 0,
-            nuviewRoth: 0,
+            personal: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Personal',
+                index: 0,
+            },
         },
         ak1: {
-            personal: 0,
-            company: 0,
-            trad: 0,
-            roth: 0,
-            sep: 0,
-            nuviewTrad: 0,
-            nuviewRoth: 0,
+            personal: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Personal',
+                index: 0,
+            },
         },
     },
 };
@@ -298,57 +286,60 @@ export class DatabaseService {
         clientSnapshot: DocumentSnapshot,
         generalAssetsSnapshot: DocumentSnapshot,
         agqAssetsSnapshot: DocumentSnapshot,
-        ak1AssetsSnapshot: DocumentSnapshot): Client | null => {
-        if (clientSnapshot.exists()) {
-            const data = clientSnapshot.data();
-            const generalAssetsData = generalAssetsSnapshot.data();
-            const agqAssetsData = agqAssetsSnapshot.data();
-            const ak1AssetsData = ak1AssetsSnapshot.data();
-
-            const client: Client = {
-                cid: clientSnapshot.id,
-                uid: data?.uid ?? '',
-                firstName: data?.name?.first ?? '',
-                lastName: data?.name?.last ?? '',
-                companyName: data?.name?.company ?? '',
-                address: data?.address ?? '',
-                dob: data?.dob?.toDate() ?? null,
-                initEmail: data?.initEmail ?? data?.email ?? '',
-                appEmail: data?.appEmail ?? data?.email ?? 'Client has not logged in yet',
-                connectedUsers: data?.connectedUsers?? [],
-                totalAssets: generalAssetsData ? generalAssetsData.total : 0,
-                ytd: generalAssetsData ? generalAssetsData.ytd : 0,
-                totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
-                phoneNumber: data?.phoneNumber ?? '',
-                firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
-                beneficiaries: data?.beneficiaries ?? [],
-                _selected: false,
-                assets: {
-                    agq: {
-                        personal: agqAssetsData?.personal ?? 0,
-                        company: agqAssetsData?.company ?? 0,
-                        trad: agqAssetsData?.trad ?? 0,
-                        roth: agqAssetsData?.roth ?? 0,
-                        sep: agqAssetsData?.sep ?? 0,
-                        nuviewTrad: agqAssetsData?.nuviewTrad ?? 0,
-                        nuviewRoth: agqAssetsData?.nuviewRoth ?? 0,
-                    },
-                    ak1: {
-                        personal: ak1AssetsData?.personal ?? 0,
-                        company: ak1AssetsData?.company ?? 0,
-                        trad: ak1AssetsData?.trad ?? 0,
-                        roth: ak1AssetsData?.roth ?? 0,
-                        sep: ak1AssetsData?.sep ?? 0,
-                        nuviewTrad: ak1AssetsData?.nuviewTrad ?? 0,
-                        nuviewRoth: ak1AssetsData?.nuviewRoth ?? 0,
-                    },
-                },
-            };
-
-            return client;
-        } else {
+        ak1AssetsSnapshot: DocumentSnapshot
+    ): Client | null => {
+        if (!clientSnapshot.exists()) {
             return null;
         }
+
+        const data = clientSnapshot.data();
+        const generalAssetsData = generalAssetsSnapshot.data();
+        const agqAssetsData = agqAssetsSnapshot.data();
+        const ak1AssetsData = ak1AssetsSnapshot.data();
+
+        const parseAssetsData = (assetsData: any): { [assetType: string]: AssetDetails } => {
+            const parsedAssets: { [assetType: string]: AssetDetails } = {};
+            if (assetsData) {
+                Object.keys(assetsData).forEach(assetType => {
+                    if (assetType !== 'fund' && assetType !== 'total') {
+                        const asset = assetsData[assetType];
+                        parsedAssets[assetType] = {
+                            amount: asset.amount ?? 0,
+                            firstDepositDate: asset.firstDepositDate?.toDate?.() ?? null,
+                            displayTitle: asset.displayTitle ?? '',
+                            index: asset.index ?? 0, // Include index
+                        };
+                    }
+                });
+            }
+            return parsedAssets;
+        };
+
+        const client: Client = {
+            cid: clientSnapshot.id,
+            uid: data?.uid ?? '',
+            firstName: data?.name?.first ?? '',
+            lastName: data?.name?.last ?? '',
+            companyName: data?.name?.company ?? '',
+            address: data?.address ?? '',
+            dob: data?.dob?.toDate() ?? null,
+            initEmail: data?.initEmail ?? data?.email ?? '',
+            appEmail: data?.appEmail ?? data?.email ?? 'Client has not logged in yet',
+            connectedUsers: data?.connectedUsers ?? [],
+            totalAssets: generalAssetsData ? generalAssetsData.total : 0,
+            ytd: generalAssetsData ? generalAssetsData.ytd : 0,
+            totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
+            phoneNumber: data?.phoneNumber ?? '',
+            firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
+            beneficiaries: data?.beneficiaries ?? [],
+            _selected: false,
+            assets: {
+                agq: parseAssetsData(agqAssetsData), // Dynamically parse AGQ assets
+                ak1: parseAssetsData(ak1AssetsData), // Dynamically parse AK1 assets
+            },
+        };
+
+        return client;
     };
 
     getClient = async (cid: string) => {
@@ -431,8 +422,6 @@ export class DatabaseService {
                 delete newClientDocData[key];
         });
 
-        console.log('newClientDocData:', newClientDocData);
-
         // Create a reference with the CID.
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
 
@@ -470,43 +459,55 @@ export class DatabaseService {
         }
     }
 
+    // Filters out 0 values from a given fund
+    filterAssets = (assets: { [assetType: string ]: AssetDetails }) => {
+        return Object.fromEntries(
+            Object.entries(assets).filter(([key, value]) => value.amount !== 0)
+        );
+    }
+
+
     async setAssets(client: Client) {
-        // Create a reference to the assets subcollection for this client
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
+        const assetCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION);
 
-         // Create the asset documents from client
-         let agqDoc = {
-            ...client.assets.agq,
-            fund: 'AGQ',
-            // Calculate sum of the subfields of the fund (personal, company, trad, roth etc.)
-            total: Object.values(client.assets.agq).reduce((sum, value) => sum + value, 0), 
-        }
+        // Filter out assets with amount 0
+        const agqAssets = this.filterAssets(client.assets.agq);
+        const ak1Assets = this.filterAssets(client.assets.ak1);
 
-        let ak1Doc = {
-            ...client.assets.ak1,
-            fund: 'AK1',
-            total: Object.values(client.assets.ak1).reduce((sum, value) => sum + value, 0),
-        }
+        const prepareAssetDoc = (assets: { [assetType: string]: AssetDetails }, fundName: string) => {
+            let total = 0;
+            const assetDoc: any = { fund: fundName };
+            Object.keys(assets).forEach(assetType => {
+                const asset = assets[assetType];
+                assetDoc[assetType] = {
+                    amount: asset.amount,
+                    firstDepositDate: asset.firstDepositDate ? Timestamp.fromDate(asset.firstDepositDate) : null,
+                    displayTitle: asset.displayTitle,
+                    index: asset.index,
+                };
+                total += asset.amount;
+            });
+            assetDoc.total = total;
+            return assetDoc;
+        };
 
-        let general = {
-            ytd: client.ytd ?? 0, 
+        const agqDoc = prepareAssetDoc(agqAssets, 'AGQ');
+        const ak1Doc = prepareAssetDoc(ak1Assets, 'AK1');
+
+        const general = {
+            ytd: client.ytd ?? 0,
             totalYTD: client.totalYTD ?? 0,
-            total: agqDoc.total + ak1Doc.total
-        }
+            total: agqDoc.total + ak1Doc.total,
+        };
 
-        // Create a reference to the assets subcollection for client
-        // If none exists, it will create one
-        const assetCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION)
-        
-        // Create references to the documents in the subcollection
-        const agqRef = doc(assetCollectionRef, config.ASSETS_AGQ_DOC_ID)
-        const ak1Ref = doc(assetCollectionRef, config.ASSETS_AK1_DOC_ID)
-        const genRef = doc(assetCollectionRef, config.ASSETS_GENERAL_DOC_ID)
+        const agqRef = doc(assetCollectionRef, config.ASSETS_AGQ_DOC_ID);
+        const ak1Ref = doc(assetCollectionRef, config.ASSETS_AK1_DOC_ID);
+        const genRef = doc(assetCollectionRef, config.ASSETS_GENERAL_DOC_ID);
 
-        // Set the documents in the subcollection
-        await setDoc(agqRef, agqDoc)
-        await setDoc(ak1Ref, ak1Doc)
-        await setDoc(genRef, general)
+        await setDoc(agqRef, agqDoc);
+        await setDoc(ak1Ref, ak1Doc);
+        await setDoc(genRef, general);
     }
 
     /**
@@ -591,48 +592,6 @@ export class DatabaseService {
         // Add the activity to the subcollection
         await addDoc(activityCollectionRef, activityWithParentId);
 
-
-        // // If the activity requires a notification, create a notification for the recipient
-        // if (activity.sendNotif === true) {
-        //     // Create a reference to the notifications subcollection for the client
-        //     const notificationsCollectionRef = collection(clientRef, config.NOTIFICATIONS_SUBCOLLECTION);
-        //     // Create a function to generate the notification message
-        //     function getActivityMessage(activity: Activity): string {
-        //         let message: string;
-        //         switch (activity.type) {
-        //             case 'withdrawal':
-        //                 message = `New Withdrawal: ${activity.fund} Fund has withdrawn $${activity.amount} from your account. View the Activity section for more details.`;
-        //                 break;
-        //             case 'profit':
-        //                 message = `New Profit: ${activity.fund} Fund has posted the latest returns from ${activity.recipient}'s investment. View the Activity section for more details.`;
-        //                 break;
-        //             case 'deposit':
-        //                 message = `New Deposit: ${activity.fund} Fund has deposited $${activity.amount} into your account. View the Activity section for more details.`;
-        //                 break;
-        //             case 'manual-entry':
-        //                 message = `New Manual Entry: ${activity.fund} Fund has made a manual entry of $${activity.amount} into your account. View the Activity section for more details.`;
-        //                 break;
-        //             default:
-        //                 message = 'New Activity: A new activity has been created. View the Activity section for more details.';
-        //         };
-        //         return message;
-        //     }
-        //     const message = getActivityMessage(activity);
-        //     const [title, body] = message.split(': ', 2);
-        //     // Create a notification object
-        //     const notification: Notification = {
-        //         activityId: activityRef.id,
-        //         recipient: activity.recipient as string,
-        //         title: title,
-        //         body: body,
-        //         message: getActivityMessage(activity),
-        //         isRead: false,
-        //         type: 'activity',
-        //         time: activity.time,
-        //     };
-        //     // Add the notification to the subcollection
-        //     await addDoc(notificationsCollectionRef, notification);
-        // }
     }
 
     setActivity = async (activity: Activity, {activityDocId}: {activityDocId?: string}, cid: string) => {

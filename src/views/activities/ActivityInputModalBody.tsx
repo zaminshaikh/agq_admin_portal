@@ -284,7 +284,6 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                 <EditAssetsSection 
                     clientState={clientState} 
                     setClientState={setClientState} 
-                    useCompanyName={clientState.companyName !== null} 
                     activeFund={activityState.fund}
                     incrementAmount={activityState.isAmortization? activityState.principalPaid : activityState.amount}/>}
             

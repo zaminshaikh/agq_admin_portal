@@ -15,8 +15,6 @@ import EditActivity from '../activities/EditActivity.tsx';
 interface ClientInputProps {
     clientState: Client,
     setClientState: (clientState: Client) => void,
-    useCompanyName: boolean,
-    setUseCompanyName: (useCompanyName: boolean) => void,
     clientOptions: (Option | OptionsGroup)[],
     clients?: Client[],
     viewOnly: boolean,
@@ -211,8 +209,6 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
  * @param {ClientInputProps} props - The properties passed to the component.
  * @param {ClientState} props.clientState - The current state of the client.
  * @param {React.Dispatch<React.SetStateAction<ClientState>>} props.setClientState - Function to update the client state.
- * @param {boolean} props.useCompanyName - Flag indicating whether to use the company name.
- * @param {React.Dispatch<React.SetStateAction<boolean>>} props.setUseCompanyName - Function to update the useCompanyName flag.
  * @param {Array<Option>} props.clientOptions - Options for connected clients.
  * @param {boolean} props.viewOnly - Flag indicating whether the form is in view-only mode.
  * 
@@ -221,8 +217,6 @@ const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>,
 export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     clientState, 
     setClientState,
-    useCompanyName,
-    setUseCompanyName,
     clients,
     clientOptions,
     viewOnly,
@@ -272,24 +266,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     setClientState(newClientState);
                 }}
                 />
-            </CInputGroup>
-
-            <CInputGroup className="mb-3  py-3">
-                <CInputGroupText>
-                <CFormCheck type="checkbox" id="useCompanyName" checked={useCompanyName} onChange={(e) => setUseCompanyName(e.target.checked)} disabled={viewOnly}/>
-                </CInputGroupText>
-                <CInputGroupText>Company Name</CInputGroupText>
-                <CFormInput id="company-name" value={clientState.companyName} 
-                onChange={
-                (e) => {
-                    const newClientState = {
-                    ...clientState,
-                    companyName: e.target.value
-                    }
-                    setClientState(newClientState)
-                }
-                } 
-                disabled={viewOnly ? viewOnly : !useCompanyName}/>
             </CInputGroup>
 
             <CInputGroup className="mb-3  py-3">
@@ -454,7 +430,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 >Update Total YTD</CLoadingButton>
             </CInputGroup>
 
-            <EditAssetsSection clientState={clientState} setClientState={setClientState} useCompanyName={useCompanyName} viewOnly={viewOnly}/>
+            <EditAssetsSection clientState={clientState} setClientState={setClientState} viewOnly={viewOnly}/>
 
             <div className="mb-3 ">
                 <h5>Upload Previous Activities</h5>
@@ -625,14 +601,13 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     )
 } 
 
-export const ValidateClient = (clientState: Client, useCompanyName: boolean, setInvalidInputFields: (fields: string[]) => void) => {
+export const ValidateClient = (clientState: Client, setInvalidInputFields: (fields: string[]) => void) => {
     let validClient = true;
     let fields: string[] = [];
 
     const fieldValidations: { displayName: string, condition: boolean }[] = [
         { displayName: 'First Name', condition: clientState.firstName === '' },
         { displayName: 'Last Name', condition: clientState.lastName === '' },
-        { displayName: 'Company Name', condition: useCompanyName && clientState.companyName === '' },
         { displayName: 'Address', condition: clientState.address === '' },
         { displayName: 'DOB', condition: !clientState.dob || isNaN(clientState.dob.getTime()) },
         { displayName: 'Phone Number', condition: clientState.phoneNumber === '' },

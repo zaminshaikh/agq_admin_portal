@@ -1,7 +1,7 @@
 import { CButton, CFormInput, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow } from "@coreui/react-pro";
 import { useEffect, useState } from "react";
 import React from "react";
-import { Client, DatabaseService, emptyClient } from "src/db/database";
+import { AssetDetails, Client, DatabaseService, emptyClient } from "src/db/database";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import EditClient from './EditClient';
@@ -72,7 +72,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
     };
 
     const createClientState = (row: any): Client => {
-        return {
+        const newState: Client = {
             ...emptyClient,
             firstName: row["CLIENT'S FIRST NAME"] || '',
             lastName: row["CLIENT'S LAST NAME"] || '',
@@ -85,34 +85,77 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
             beneficiaries: row["BENEFICIARY"] ? [row["BENEFICIARY"]] : [],
             assets: {
                 agq: {
-                    personal: parseFloat(row["PERSONAL"]) || 0,
-                    company: parseFloat(row["COMPANY"]) || 0,
-                    trad: parseFloat(row["IRA"]) || 0,
-                    roth: parseFloat(row["ROTH IRA"]) || 0,
-                    sep: parseFloat(row["SEP IRA"]) || 0,
-                    nuviewTrad: parseFloat(row["NUVIEW CASH IRA"]) || 0,
-                    nuviewRoth: parseFloat(row["NUVIEW CASH ROTH IRA"]) || 0,
+                    personal: {
+                        amount: parseFloat(row["PERSONAL"]) || 0,
+                        firstDepositDate: row["FIRST DEPOSIT DATE"] ? new Date(row["FIRST DEPOSIT DATE"]) : null,
+                        displayTitle: 'Personal',
+                        index: 0,
+                    },
+                    company: {
+                        amount: parseFloat(row["COMPANY"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: row["COMPANY NAME"] || 'Company',
+                        index: 1,
+                    },
+                    trad: {
+                        amount: parseFloat(row["IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'IRA',
+                        index: 2,
+                    },
+                    roth: {
+                        amount: parseFloat(row["ROTH IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'Roth IRA',
+                        index: 3,
+                    },
+                    sep: {
+                        amount: parseFloat(row["SEP IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'SEP IRA',
+                        index: 4,
+                    },
+                    nuviewTrad: {
+                        amount: parseFloat(row["NUVIEW CASH IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'NUVIEW CASH IRA',
+                        index: 5,
+                    },
+                    nuviewRoth: {
+                        amount: parseFloat(row["NUVIEW CASH ROTH IRA"]) || 0,
+                        firstDepositDate: null,
+                        displayTitle: 'NUVIEW CASH ROTH IRA',
+                        index: 6,
+                    },
                 },
                 ak1: {
-                    personal: 0,
-                    company: 0,
-                    trad: 0,
-                    roth: 0,
-                    sep: 0,
-                    nuviewTrad: 0,
-                    nuviewRoth: 0,
+                    personal: {
+                        amount: 0,
+                        firstDepositDate: null,
+                        displayTitle: 'Personal',
+                        index: 0,
+                    }
                 },
             },
             activities: [
                 {
                     amount: row["FIRST DEPOSIT AMOUNT"], 
                     fund: 'AGQ', type: 'deposit', 
-                    time: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(), 
+                    time: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"]) ?? new Date(),
                     recipient: row["CLIENT'S FIRST NAME"] + ' ' + row["CLIENT'S LAST NAME"],
                     formattedTime: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"])?.toLocaleDateString(),
                 },
             ]
         };
+    
+        return {
+            ...newState,
+            assets: {
+                agq: filterAssets(newState.assets.agq),
+                ak1: filterAssets(newState.assets.ak1),
+            }
+        };
+         
     };
 
     const handleEditClient = (index: number) => {
@@ -228,3 +271,9 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
 };
 
 export default ImportClients;
+
+function filterAssets(assets: { [assetType: string]: AssetDetails; }): { [assetType: string]: AssetDetails; } {
+    return Object.fromEntries(
+        Object.entries(assets).filter(([key, value]) => value.amount !== 0)
+    );
+}

@@ -1,118 +1,357 @@
-import { CContainer, CRow, CCol, CInputGroup, CInputGroupText, CFormInput } from "@coreui/react-pro";
+// src/components/EditAssetsSection.tsx
+
+import React, { useEffect, useState } from "react";
+import {
+  CContainer,
+  CButton,
+  CModal,
+  CModalHeader,
+  CModalBody,
+  CModalFooter,
+  CFormInput,
+} from "@coreui/react-pro";
 import { Client } from "../db/database";
+import { AssetFormComponent } from "./AssetFormComponent";
+import { cilArrowTop, cilArrowBottom } from "@coreui/icons"; // Import icons for reordering
 
-const getAssetType = (id: string) => {
-    switch (id) {
-        case "agq-personal":
-        case "ak1-personal":
-            return "personal";
-        case "agq-company":
-        case "ak1-company":
-            return "company";
-        case "agq-ira":
-        case "ak1-ira":
-            return "trad";
-        case "agq-roth-ira":
-        case "ak1-roth-ira":
-            return "roth";
-        case "agq-sep-ira":
-        case "ak1-sep-ira":
-            return "sep";
-        case "agq-nuview-cash-ira":
-        case "ak1-nuview-cash-ira":
-            return "nuviewTrad";
-        case "agq-nuview-cash-roth-ira":
-        case "ak1-nuview-cash-roth-ira":
-            return "nuviewRoth";
-        default:
-            return "";
-    }
+interface EditAssetsSectionProps {
+  clientState: Client;
+  setClientState: (clientState: Client) => void;
+  activeFund?: string;
+  incrementAmount?: number;
+  viewOnly?: boolean;
 }
 
-export const EditAssetsSection: React.FC<{
-    clientState: Client, 
-    setClientState: (clientState: Client) => void, 
-    useCompanyName: boolean, 
-    activeFund?: string, 
-    incrementAmount?: number,
-    viewOnly?: boolean
-}> = ({
-    clientState, 
-    setClientState, 
-    useCompanyName, 
-    activeFund, 
-    incrementAmount = 1000, 
-    viewOnly = null
+// Define keys to exclude (case-insensitive)
+const excludedAssetKeys = ["total", "fund"];
+
+export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
+  clientState,
+  setClientState,
+  activeFund,
+  incrementAmount = 10000,
+  viewOnly = false,
 }) => {
-    return (    
-        <CContainer className="py-3">
-            <CRow>
-                <CCol>
-                    <h5>AGQ Fund Assets</h5>
-                    <AssetFormComponent title="Personal" id="agq-personal" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="Company" id="agq-company" fund="agq" disabled={viewOnly ?? (!(useCompanyName && activeFund == 'AGQ'))} clientState={clientState} setClientState={setClientState} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="IRA" id="agq-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="Roth IRA" id="agq-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="SEP IRA" id="agq-sep-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="NuView Cash IRA" id="agq-nuview-cash-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="NuView Cash Roth IRA" id="agq-nuview-cash-roth-ira" fund="agq" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AGQ' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                </CCol>
-                <CCol>
-                    <h5>AK1 Fund Assets</h5>
-                    <AssetFormComponent title="Personal" id="ak1-personal" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="Company" id="ak1-company" fund="ak1" disabled={viewOnly ?? (!(useCompanyName && activeFund == 'AK1'))} clientState={clientState} setClientState={setClientState} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="IRA" id="ak1-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="Roth IRA" id="ak1-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="SEP IRA" id="ak1-sep-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="NuView Cash IRA" id="ak1-nuview-cash-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                    <AssetFormComponent title="NuView Cash Roth IRA" id="ak1-nuview-cash-roth-ira" fund="ak1" clientState={clientState} setClientState={setClientState} disabled={viewOnly ?? (activeFund !== 'AK1' && activeFund !== undefined)} incrementAmount={incrementAmount} />
-                </CCol>
-            </CRow>
-        </CContainer>
-    );
-}
+  // State for managing the "Add Asset" modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentFundKey, setCurrentFundKey] = useState<string | null>(null);
+  const [newAssetTitle, setNewAssetTitle] = useState<string>("");
 
-export const AssetFormComponent: React.FC<{title: string, id: string, disabled?: boolean, fund: string, clientState: Client, setClientState: (clientState: Client) => void, incrementAmount: number}> = ({title, id, disabled, fund, clientState, setClientState, incrementAmount}) => {
-    return (
-        <CInputGroup className="mb-3 py-3">
-            <CInputGroupText style={{ width: "200px" }}>{title}</CInputGroupText>
-            <CInputGroupText>$</CInputGroupText>
-            <CFormInput id={id} disabled={disabled} type="number" step={incrementAmount} value={clientState["assets"][fund][getAssetType(id)]} 
-            onChange={(e) => {
-                const value = e.target.value;
-                if (/^\d*\.?\d{0,2}$/.test(value)) {
-                    // Update the client state with the new asset value
-                    const newState = {
-                        ...clientState,
-                        assets: {
-                            ...clientState.assets,
-                            [fund]: {
-                                ...clientState.assets[fund],
-                                [getAssetType(id)]: parseFloat(value)
-                            }
-                        }
-                    };
-                    // Update the client state
-                    setClientState(newState);
+  // Function to handle opening the modal
+  const openAddAssetModal = (fundKey: string) => {
+    setCurrentFundKey(fundKey);
+    setNewAssetTitle("");
+    setIsModalOpen(true);
+  };
+
+  // Function to handle closing the modal
+  const closeAddAssetModal = () => {
+    setIsModalOpen(false);
+    setCurrentFundKey(null);
+    setNewAssetTitle("");
+  };
+
+  // Function to handle adding a new asset
+  const handleAddAsset = () => {
+    if (!currentFundKey) return;
+
+    const assetTitleTrimmed = newAssetTitle.trim();
+    if (assetTitleTrimmed === "") {
+      alert("Asset name cannot be empty.");
+      return;
+    }
+
+    // Prevent adding 'total', 'Total', 'fund', 'Fund'
+    if (excludedAssetKeys.includes(assetTitleTrimmed.toLowerCase())) {
+      alert("The asset name 'total' or 'fund' is reserved and cannot be used.");
+      return;
+    }
+
+    // Generate a unique type for the new asset
+    const sanitizedTitle = assetTitleTrimmed.toLowerCase().replace(/\s+/g, "-");
+    const newAssetType = sanitizedTitle; // Use this as the dynamic key
+
+    // Check for duplicates
+    const fundAssets = clientState.assets[currentFundKey] || {};
+    const duplicateTitle = Object.values(fundAssets).some(
+      (asset) => asset.displayTitle.toLowerCase() === assetTitleTrimmed.toLowerCase()
+    );
+    if (duplicateTitle) {
+      alert("An asset with this name already exists.");
+      return;
+    }
+
+    // Determine the next index by finding the maximum existing index and adding 1
+    const maxIndex = Math.max(
+      -1,
+      ...Object.values(fundAssets)
+        .filter((asset) => !excludedAssetKeys.includes(asset.displayTitle.toLowerCase()))
+        .map((asset) => asset.index ?? 0)
+    );
+
+    // Initialize the new asset in clientState.assets using the correct dynamic key
+    const newState: Client = {
+      ...clientState,
+      assets: {
+        ...clientState.assets,
+        [currentFundKey]: {
+          ...fundAssets,
+          [newAssetType]: {
+            amount: 0,
+            firstDepositDate: null,
+            displayTitle: assetTitleTrimmed,
+            index: maxIndex + 1, // Assign the next index
+          },
+        },
+      },
+    };
+    setClientState(newState);
+
+    // Close the modal
+    closeAddAssetModal();
+  };
+
+  // Function to handle removing an asset
+  const handleRemoveAsset = (fundKey: string, assetType: string) => {
+    // Prevent removing protected assets and excluded keys
+    if (excludedAssetKeys.includes(assetType.toLowerCase())) {
+      alert("This asset cannot be removed.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to remove the asset "${assetType}"?`)) {
+      return;
+    }
+
+    // Remove from clientState.assets
+    const fundAssets = { ...clientState.assets[fundKey] };
+    delete fundAssets[assetType];
+
+    // After deletion, reassign indices to maintain order consistency
+    const updatedAssetsArray = Object.entries(fundAssets)
+      .filter(([type]) => !excludedAssetKeys.includes(type.toLowerCase()))
+      .sort(([, a], [, b]) => (a.index ?? 0) - (b.index ?? 0))
+      .map(([type, asset], idx) => {
+        asset.index = idx;
+        return [type, asset];
+      });
+
+    const updatedAssets = Object.fromEntries(updatedAssetsArray);
+
+    const newState: Client = {
+      ...clientState,
+      assets: {
+        ...clientState.assets,
+        [fundKey]: updatedAssets,
+      },
+    };
+    setClientState(newState);
+  };
+
+  // Function to handle editing an asset title
+  const handleEditAsset = (fundKey: string, oldAssetType: string, newAssetTitle: string) => {
+    const assetTitleTrimmed = newAssetTitle.trim();
+    if (assetTitleTrimmed === "") {
+      alert("Asset name cannot be empty.");
+      return;
+    }
+
+    // Prevent renaming to 'total', 'Total', 'fund', 'Fund'
+    if (excludedAssetKeys.includes(assetTitleTrimmed.toLowerCase())) {
+      alert("The asset name 'total' or 'fund' is reserved and cannot be used.");
+      return;
+    }
+
+    // Generate a new type based on the edited title
+    const newAssetType = assetTitleTrimmed.toLowerCase().replace(/\s+/g, "-");
+
+    // Check for duplicate asset titles within the same fund
+    const fundAssets = clientState.assets[fundKey];
+    const duplicateTitle = Object.values(fundAssets).some(
+      (asset) =>
+        asset.displayTitle.toLowerCase() === assetTitleTrimmed.toLowerCase() &&
+        asset.displayTitle.toLowerCase() !== fundAssets[oldAssetType].displayTitle.toLowerCase()
+    );
+    if (duplicateTitle) {
+      alert("An asset with this name already exists.");
+      return;
+    }
+
+    // Update clientState.assets
+    const oldAsset = fundAssets[oldAssetType];
+    const newAssets = {
+      ...fundAssets,
+      [newAssetType]: {
+        ...oldAsset,
+        displayTitle: assetTitleTrimmed,
+      },
+    };
+    delete newAssets[oldAssetType];
+
+    const newState: Client = {
+      ...clientState,
+      assets: {
+        ...clientState.assets,
+        [fundKey]: newAssets,
+      },
+    };
+    setClientState(newState);
+  };
+
+  // Function to move an asset up in the order
+  const handleMoveAssetUp = (fundKey: string, assetType: string) => {
+    const fundAssets = { ...clientState.assets[fundKey] };
+    const assetsArray = Object.entries(fundAssets)
+      .filter(([type]) => !excludedAssetKeys.includes(type.toLowerCase()))
+      .sort(([, a], [, b]) => (a.index ?? 0) - (b.index ?? 0));
+
+    const index = assetsArray.findIndex(([type]) => type === assetType);
+
+    if (index > 0) {
+      const prevAssetType = assetsArray[index - 1][0];
+      const currentAsset = fundAssets[assetType];
+      const prevAsset = fundAssets[prevAssetType];
+
+      // Swap indices
+      const tempIndex = currentAsset.index;
+      currentAsset.index = prevAsset.index;
+      prevAsset.index = tempIndex;
+
+      const newState: Client = {
+        ...clientState,
+        assets: {
+          ...clientState.assets,
+          [fundKey]: {
+            ...fundAssets,
+            [assetType]: currentAsset,
+            [prevAssetType]: prevAsset,
+          },
+        },
+      };
+      setClientState(newState);
+    }
+  };
+
+  // Function to move an asset down in the order
+  const handleMoveAssetDown = (fundKey: string, assetType: string) => {
+    const fundAssets = { ...clientState.assets[fundKey] };
+    const assetsArray = Object.entries(fundAssets)
+      .filter(([type]) => !excludedAssetKeys.includes(type.toLowerCase()))
+      .sort(([, a], [, b]) => (a.index ?? 0) - (b.index ?? 0));
+
+    const index = assetsArray.findIndex(([type]) => type === assetType);
+
+    if (index < assetsArray.length - 1) {
+      const nextAssetType = assetsArray[index + 1][0];
+      const currentAsset = fundAssets[assetType];
+      const nextAsset = fundAssets[nextAssetType];
+
+      // Swap indices
+      const tempIndex = currentAsset.index;
+      currentAsset.index = nextAsset.index;
+      nextAsset.index = tempIndex;
+
+      const newState: Client = {
+        ...clientState,
+        assets: {
+          ...clientState.assets,
+          [fundKey]: {
+            ...fundAssets,
+            [assetType]: currentAsset,
+            [nextAssetType]: nextAsset,
+          },
+        },
+      };
+      setClientState(newState);
+    }
+  };
+
+  useEffect(() => {
+    console.log("Client state updated:", clientState);
+  } , [clientState]);
+
+  return (
+    <CContainer className="py-3">
+      {Object.entries(clientState.assets).map(([fundKey, fundAssets]) => {
+        // Sort assets based on the index property
+        const sortedAssets = Object.entries(fundAssets)
+          .filter(([assetType]) => !excludedAssetKeys.includes(assetType.toLowerCase()))
+          .sort(([, a], [, b]) => (a.index ?? 0) - (b.index ?? 0));
+
+        return (
+          <div key={fundKey} className="mb-5">
+            <div className="mb-2 pb-3">
+              <h5>{fundKey.toUpperCase()} Fund Assets</h5>
+            </div>
+            {sortedAssets.map(([assetType, asset], index) => {
+              // Determine if the asset is the first or last in the list
+              const isFirst = index === 0;
+              const isLast = index === sortedAssets.length - 1;
+
+              // Determine the disabled state based on props and asset type
+              let isDisabled = viewOnly;
+
+              if (!isDisabled) {
+                if (activeFund !== undefined) {
+                  if (fundKey.toUpperCase() !== activeFund.toUpperCase()) {
+                    isDisabled = true;
+                  }
                 }
-            }}
-            onBlur={(e) => {
-                const value = e.target.value;
-                if (value === '' || isNaN(parseFloat(value))) {
-                    // Reset the asset value to 0
-                    const newState = {
-                        ...clientState,
-                        assets: {
-                            ...clientState.assets,
-                            [fund]: {
-                                ...clientState.assets[fund],
-                                [getAssetType(id)]: 0
-                            }
-                        }
-                    };
-                    setClientState(newState);
-                } 
-            }}/>
-        </CInputGroup>
-    );      
-}
+              }
+
+              return (
+                <AssetFormComponent
+                  key={`${fundKey}-${assetType}`}
+                  title={asset.displayTitle}
+                  id={`${fundKey}-${assetType}`}
+                  fundKey={fundKey}
+                  assetType={assetType}
+                  clientState={clientState}
+                  setClientState={setClientState}
+                  disabled={isDisabled}
+                  incrementAmount={incrementAmount}
+                  onRemove={handleRemoveAsset}
+                  onEdit={handleEditAsset}
+                  onMoveUp={handleMoveAssetUp}
+                  onMoveDown={handleMoveAssetDown}
+                  isEditable={!isDisabled} // All assets are editable unless restricted
+                  isFirst={isFirst}
+                  isLast={isLast}
+                />
+              );
+            })}
+            {/* Add Asset Button at the Bottom */}
+            {!viewOnly && (
+              <div className="mt-3">
+                <CButton color="primary" onClick={() => openAddAssetModal(fundKey)}>
+                  Add Asset
+                </CButton>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Add Asset Modal */}
+      <CModal visible={isModalOpen} onClose={closeAddAssetModal} alignment="center">
+        <CModalHeader>Add New Asset</CModalHeader>
+        <CModalBody>
+          <CFormInput
+            label="Asset Name"
+            placeholder="Enter asset name (e.g., Personal 2, IRA 3, Custom Field)"
+            value={newAssetTitle}
+            onChange={(e) => setNewAssetTitle(e.target.value.replace(/["']/g, ""))}
+          />
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={closeAddAssetModal}>
+            Cancel
+          </CButton>
+          <CButton color="primary" onClick={handleAddAsset}>
+            Add
+          </CButton>
+        </CModalFooter>
+      </CModal>
+    </CContainer>
+  );
+};

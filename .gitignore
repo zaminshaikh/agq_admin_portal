@@ -43,3 +43,5 @@ yarn-error.log*
 .env
 
 /src/db/team-shaikh-app-52dc5-firebase-adminsdk-11cu8-cb1096c1ae.json
+config.json
+config.json

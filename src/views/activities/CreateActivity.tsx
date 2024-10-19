@@ -100,6 +100,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
         createActivityIfOverride();
     }, [override]);
 
+
     return (
         <>
             {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}

@@ -1,13 +1,10 @@
-import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro"
+import { CButton, CModal, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro"
 import { useEffect, useState } from "react";
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 // import { IMaskMixin } from 'react-imask'
 import React from "react";
 import { DatabaseService, Client, emptyClient } from '../../db/database.ts'
 import { ClientInputModalBody, ValidateClient } from './ClientInputModalBody.tsx'
 import { FormValidationErrorModal } from '../../components/ErrorModal';
-import { handleActivity } from '../../../functions/src/index';
 
 // const CFormInputWithMask = React.forwardRef<HTMLInputElement, any>((props, ref) => (
 //     <CFormInput
@@ -51,7 +48,6 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
     const [clientState, setClientState] = useState<Client>(initialClientState);
 
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [useCompanyName, setUseCompanyName] = useState(clientState.companyName ? true : false) ;
     const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (activeClient?.connectedUsers?.includes(client.cid))}))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
@@ -60,10 +56,17 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
         const editClientIfOverride = async () => {
             if (override) {
                 await onSubmit(clientState, override, setClientState);
+                const db = new DatabaseService();
+                setShowModal(false);
+                const updatedClients = await db.getClients()
+                setClients(updatedClients);
             }
         };
         editClientIfOverride();
     }, [override]);
+
+    useEffect(() => { console.log(clientState?.assets)}, [clientState])
+
 
     return (
         
@@ -85,21 +88,20 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
                 <ClientInputModalBody 
                     clientState={clientState} 
                     setClientState={setClientState} 
-                    useCompanyName={useCompanyName}
-                    setUseCompanyName={setUseCompanyName} 
                     clientOptions={clientOptions}
                     clients={clients}
                     viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
                     <CButton color="primary" onClick={async () => {
-                        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields) && !override) {
+                        if (!ValidateClient(clientState, setInvalidInputFields) && !override) {
                             setShowErrorModal(true);
                         } else {
                             onSubmit(clientState, override, setClientState);
                             const db = new DatabaseService();
-                            setClients(await db.getClients());
                             setShowModal(false);
+                            const updatedClients = await db.getClients()
+                            setClients(updatedClients);
                         }
                         }}>Update</CButton>
                 </CModalFooter>

@@ -32,13 +32,12 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
     const [clientState, setClientState] = useState<Client>(initialClientState);
 
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [useCompanyName, setUseCompanyName] = useState(false);
     const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName}))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
     const handleCreateClient = async () => {
-        if (!ValidateClient(clientState, useCompanyName, setInvalidInputFields) && !override) {
+        if (!ValidateClient(clientState, setInvalidInputFields) && !override) {
             // If validation fails, show error modal
             setShowErrorModal(true); 
         } else {
@@ -66,6 +65,9 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
         createClientIfOverride();
     }, [override]);
 
+    useEffect(() => { console.log(clientState?.assets)}, [clientState])
+
+
     return (
         
         <div>
@@ -86,8 +88,6 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
                 <ClientInputModalBody 
                     clientState={clientState} 
                     setClientState={setClientState} 
-                    useCompanyName={useCompanyName} 
-                    setUseCompanyName={setUseCompanyName} 
                     clientOptions={clientOptions}
                     viewOnly={false}/>
                 <CModalFooter>
