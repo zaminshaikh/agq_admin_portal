@@ -62,13 +62,14 @@ const exceptions = ["LLC", "Inc", "Ltd"];
                 // Check if name does not match client's full name or company name
                 const clientFullName = clientState.firstName.trimEnd() + ' ' + clientState.lastName.trimEnd();
 
-                // Extract all displayTitles from clientState.assets
+                // Extract and sort displayTitles by length in descending order
                 const assetDisplayTitles = Object.values(clientState.assets)
                     .flatMap(fundAssets => Object.values(fundAssets))
                     .map(assetDetails => ({
                         original: assetDetails.displayTitle,
-                        lower: assetDetails.displayTitle.toLowerCase()
-                    }));
+                        lower: assetDetails.displayTitle.toLowerCase(),
+                    }))
+                    .sort((a, b) => b.lower.length - a.lower.length); // Sort descending by length
 
                 // Now check if any of the asset display titles are included in securityNameLower
                 const securityNameLower = row["Security Name"].toLowerCase();
