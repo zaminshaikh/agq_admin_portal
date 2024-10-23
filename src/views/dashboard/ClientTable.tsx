@@ -7,6 +7,8 @@ import { DeleteClient } from './DeleteClient';
 import { EditClient } from './EditClient';
 import ImportClients from './ImportClients';
 import { UnlinkClient } from './UnlinkClient';
+import { cilCheckCircle, cilXCircle } from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
 
 const ClientsTable = () => {
     const [showUnlinkClientModal, setShowUnlinkClientModal] = useState(false);
@@ -56,6 +58,13 @@ const ClientsTable = () => {
             label: 'CID',
             filter: false,
             sorter: false,
+        },
+        {
+            key: 'uid',
+            label: 'Signed Up',
+            _style: { width: '10%' },
+            sorter: false,
+            filter: false,
         },
         {
             key: 'firstName',
@@ -132,6 +141,15 @@ const ClientsTable = () => {
                 pagination
                 sorterValue={{ column: 'firstName', state: 'asc' }}
                 scopedColumns={{
+                    uid: (item: Client) => (
+                        <td className="text-center">
+                            {item.uid && item.uid.trim() !== '' ? (
+                                <CIcon icon={cilCheckCircle} className="text-success" />
+                            ) : (
+                                <CIcon icon={cilXCircle} className="text-danger" />
+                            )}
+                        </td>
+                    ),
                     totalAssets: (item: Client) => (
                         <td>
                             {formatCurrency(item.totalAssets)}
