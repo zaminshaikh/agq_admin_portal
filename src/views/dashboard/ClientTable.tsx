@@ -55,16 +55,10 @@ const ClientsTable = () => {
     const columns = [
         {
             key: 'cid',
+            _style: { width: '5%' },
             label: 'CID',
             filter: false,
             sorter: false,
-        },
-        {
-            key: 'uid',
-            label: 'Signed Up',
-            _style: { width: '10%' },
-            sorter: false,
-            filter: false,
         },
         {
             key: 'firstName',
@@ -85,12 +79,20 @@ const ClientsTable = () => {
             label: 'Total Assets',
         },
         {
+            key: 'uid',
+            label: 'Linked?',
+            _style: { width: '5%' },
+            sorter: false,
+            filter: false,
+        },
+        {
             key: 'show_details',
             label: '',
             _style: { width: '1%' },
             filter: false,
             sorter: false,
         },
+        
     ]
 
     // Function to toggle the visibility of details for a specific item
