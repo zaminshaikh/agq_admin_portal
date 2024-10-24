@@ -209,7 +209,6 @@ async function updateYTD(cid: string, usersCollectionID: string): Promise<void> 
         });
 
         await Promise.all(updatePromises);
-
     } catch (error) {
         console.error("Error updating YTD:", error);
         throw new functions.https.HttpsError('unknown', 'Failed to update YTD due to an unexpected error.', {
@@ -548,10 +547,6 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
     }
 
     try {
-        const currentYear = new Date().getFullYear();
-        const startOfYear = new Date(currentYear, 0, 1);
-        const endOfYear = new Date(currentYear, 11, 31);
-
         // Queue to track users that need to be processed
         const userQueue: string[] = [cid];
         let totalYTD = 0;
