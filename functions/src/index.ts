@@ -165,6 +165,8 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
     const activity = snapshot.data() as Activity;
     const { userId, activityId, userCollection} = context.params;
 
+    updateYTD(userId, userCollection); // Update YTD for the user and connected users
+
     if (activity.sendNotif !== true || userCollection === 'backup') {
         return null; // Exit if no notification is required
     }
