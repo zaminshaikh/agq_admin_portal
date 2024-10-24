@@ -179,6 +179,43 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
     }
 }
 
+
+/**
+ * Helper function to update YTD and totalYTD for a user and connected users.
+ */
+async function updateYTD(cid: string, usersCollectionID: string): Promise<void> {
+    try {
+        // Calculate YTD and totalYTD for the user
+        const ytd = await calculateYTDForUser(cid, usersCollectionID);
+        const totalYTD = await calculateTotalYTDForUser(cid, usersCollectionID);
+
+        // Update the user's document with ytd and totalYTD
+        const userRef = admin.firestore().collection(usersCollectionID).doc(cid);
+        await userRef.update({ ytd, totalYTD });
+
+        // Find all users where 'connectedUsers' array contains cid
+        const usersCollectionRef = admin.firestore().collection(usersCollectionID);
+        const connectedUsersSnapshot = await usersCollectionRef.where('connectedUsers', 'array-contains', cid).get();
+
+        const updatePromises = connectedUsersSnapshot.docs.map(async (doc) => {
+            const connectedUserCid = doc.id;
+            // Recalculate totalYTD for connected user
+            const connectedUserTotalYTD = await calculateTotalYTDForUser(connectedUserCid, usersCollectionID);
+
+            // Update connected user's document with totalYTD
+            await doc.ref.update({ totalYTD: connectedUserTotalYTD });
+        });
+
+        await Promise.all(updatePromises);
+
+    } catch (error) {
+        console.error("Error updating YTD:", error);
+        throw new functions.https.HttpsError('unknown', 'Failed to update YTD due to an unexpected error.', {
+            errorDetails: (error as Error).message,
+        });
+    }
+}
+
 /**
  * Callable function to link a new user's document in Firestore with their authentication UID.
  * 
@@ -399,6 +436,67 @@ exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
     }
   });
 
+
+/**
+ * Helper function to calculate YTD for a single user.
+ */
+async function calculateYTDForUser(userCid: string, usersCollectionID: string): Promise<number> {
+    const currentYear = new Date().getFullYear();
+    const startOfYear = new Date(currentYear, 0, 1);
+    const endOfYear = new Date(currentYear, 11, 31);
+
+    const activitiesRef = admin.firestore().collection(`/${usersCollectionID}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
+    const snapshot = await activitiesRef
+        .where("fund", "==", "AGQ")
+        .where("type", "in", ["profit", "income"])
+        .where("time", ">=", startOfYear)
+        .where("time", "<=", endOfYear)
+        .get();
+
+    let ytdTotal = 0;
+    snapshot.forEach((doc) => {
+        const activity = doc.data();
+        ytdTotal += activity.amount;
+    });
+
+    return ytdTotal;
+}
+
+/**
+ * Helper function to calculate total YTD for a user including connected users.
+ */
+async function calculateTotalYTDForUser(cid: string, usersCollectionID: string): Promise<number> {
+    const processedUsers: Set<string> = new Set();
+    const userQueue: string[] = [cid];
+    let totalYTD = 0;
+
+    while (userQueue.length > 0) {
+        const currentUserCid = userQueue.shift();
+
+        // Avoid processing the same user more than once
+        if (currentUserCid && !processedUsers.has(currentUserCid)) {
+            processedUsers.add(currentUserCid);
+
+            // Calculate YTD for the current user
+            const ytd = await calculateYTDForUser(currentUserCid, usersCollectionID);
+            totalYTD += ytd;
+
+            // Get the user document to retrieve connectedUsers
+            const userDoc = await admin.firestore().collection(`${usersCollectionID}`).doc(currentUserCid).get();
+            const userData = userDoc.data();
+
+            // Add connected users to the queue if they exist
+            if (userData && userData.connectedUsers) {
+                const connectedUsers = userData.connectedUsers as string[];
+                userQueue.push(...connectedUsers);
+            }
+        }
+    }
+
+    return totalYTD;
+}
+
+
 exports.calculateYTD = functions.https.onCall(async (data, context): Promise<object> => {
     const cid = data.cid;
     const usersCollectionID = data.usersCollectionID;
@@ -452,25 +550,6 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
         const startOfYear = new Date(currentYear, 0, 1);
         const endOfYear = new Date(currentYear, 11, 31);
 
-        // Function to calculate YTD for a single user
-        const calculateYTDForUser = async (userCid: string): Promise<number> => {
-            const activitiesRef = admin.firestore().collection(`/${usersCollectionID}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
-            const snapshot = await activitiesRef
-                .where("fund", "==", "AGQ")
-                .where("type", "in", ["profit", "income"])
-                .where("time", ">=", startOfYear)
-                .where("time", "<=", endOfYear)
-                .get();
-
-            let ytdTotal = 0;
-            snapshot.forEach((doc) => {
-                const activity = doc.data();
-                ytdTotal += activity.amount;
-            });
-
-            return ytdTotal;
-        };
-
         // Queue to track users that need to be processed
         const userQueue: string[] = [cid];
         let totalYTD = 0;
@@ -485,7 +564,7 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
                 processedUsers.add(currentUserCid);
 
                 // Calculate YTD for the current user
-                totalYTD += await calculateYTDForUser(currentUserCid);
+                totalYTD += await calculateYTDForUser(currentUserCid, usersCollectionID);
 
                 // Get the user document to retrieve connectedUsers
                 const userDoc = await admin.firestore().collection(`${usersCollectionID}`).doc(currentUserCid).get();
