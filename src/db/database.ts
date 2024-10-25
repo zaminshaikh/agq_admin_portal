@@ -459,21 +459,25 @@ export class DatabaseService {
         }
     }
 
-    // Filters out 0 values from a given fund
-    filterAssets = (assets: { [assetType: string ]: AssetDetails }) => {
-        return Object.fromEntries(
-            Object.entries(assets).filter(([key, value]) => value.amount !== 0)
-        );
-    }
+    // // Filters out 0 values from a given fund
+    // filterAssets = (assets: { [assetType: string ]: AssetDetails }) => {
+    //     return Object.fromEntries(
+    //         Object.entries(assets).filter(([key, value]) => value.amount !== 0)
+    //     );
+    // }
 
 
     async setAssets(client: Client) {
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
         const assetCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION);
 
-        // Filter out assets with amount 0
-        const agqAssets = this.filterAssets(client.assets.agq);
-        const ak1Assets = this.filterAssets(client.assets.ak1);
+        // // Filter out assets with amount 0
+        // const agqAssets = this.filterAssets(client.assets.agq);
+        // const ak1Assets = this.filterAssets(client.assets.ak1);
+
+                // Filter out assets with amount 0
+        const agqAssets = client.assets.agq;
+        const ak1Assets = client.assets.ak1;
 
         const prepareAssetDoc = (assets: { [assetType: string]: AssetDetails }, fundName: string) => {
             let total = 0;
