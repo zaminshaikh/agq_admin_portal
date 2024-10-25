@@ -408,7 +408,7 @@ export class DatabaseService {
      */
     setClient = async (client: Client) => {
         // Create a new DocumentData object from the newClient object, with a name property that is an object containing first, last, and company properties.
-        const newClientDocData: DocumentData = {
+        let newClientDocData: DocumentData = {
             ...client,
             name: {
                 first: client.firstName.trimEnd(),
@@ -422,11 +422,16 @@ export class DatabaseService {
                 delete newClientDocData[key];
         });
 
+        // Remove any fields with undefined values
+        newClientDocData = Object.fromEntries(
+            Object.entries(newClientDocData).filter(([_, value]) => value !== undefined)
+        );
+
         // Create a reference with the CID.
         const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
 
         // Updates/Creates the document with the CID
-        await setDoc(clientRef, newClientDocData);
+        await setDoc(clientRef, newClientDocData, { merge: true });
         
         // Update/Create the assets subcollection for client
         await this.setAssets(client); 
