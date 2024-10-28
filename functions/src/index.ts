@@ -670,3 +670,100 @@ exports.isUIDLinked = functions.https.onCall(async (data, context) => {
     }
 });
 
+
+/**
+ * Cloud Function to update 'uidGrantedAccess' when 'connectedUsers' changes.
+ */
+export const onConnectedUsersChange = functions.firestore
+  .document('{userCollection}/{userId}')
+  .onUpdate(async (change, context) => {
+    const userCollection = context.params.userCollection;
+    const userId = context.params.userId;
+
+    const beforeData = change.before.data();
+    const afterData = change.after.data();
+
+    const beforeConnectedUsers = beforeData.connectedUsers || [];
+    const afterConnectedUsers = afterData.connectedUsers || [];
+
+    // Check if 'connectedUsers' has changed
+    if (JSON.stringify(beforeConnectedUsers) === JSON.stringify(afterConnectedUsers)) {
+      // No changes in 'connectedUsers'
+      return null;
+    }
+
+    // Identify added and removed connected users
+    const addedConnectedUsers = afterConnectedUsers.filter(
+      (id: string) => !beforeConnectedUsers.includes(id)
+    );
+    const removedConnectedUsers = beforeConnectedUsers.filter(
+      (id: string) => !afterConnectedUsers.includes(id)
+    );
+
+    const db = admin.firestore();
+    const currentUserUid = afterData.uid;
+
+    if (!currentUserUid) {
+      console.log(`User ${userId} does not have a 'uid'. Skipping.`);
+      return null;
+    }
+
+    const usersRef = db.collection(userCollection);
+
+    // Handle added connected users
+    const addPromises = addedConnectedUsers.map(async (connectedUserId: string) => {
+      const connectedUserRef = usersRef.doc(connectedUserId);
+      const connectedUserDoc = await connectedUserRef.get();
+
+      if (!connectedUserDoc.exists) {
+        console.log(`Connected user ${connectedUserId} does not exist. Skipping.`);
+        return;
+      }
+
+      const connectedUserData = connectedUserDoc.data() as admin.firestore.DocumentData;
+      let uidGrantedAccess: string[] = connectedUserData.uidGrantedAccess || [];
+
+      // Ensure uidGrantedAccess is an array
+      if (!Array.isArray(uidGrantedAccess)) {
+        uidGrantedAccess = [];
+      }
+
+      if (!uidGrantedAccess.includes(currentUserUid)) {
+        uidGrantedAccess.push(currentUserUid);
+        await connectedUserRef.update({ uidGrantedAccess });
+        console.log(`Added ${currentUserUid} to uidGrantedAccess of user ${connectedUserId}`);
+      }
+    });
+
+    // Handle removed connected users
+    const removePromises = removedConnectedUsers.map(async (connectedUserId: string) => {
+      const connectedUserRef = usersRef.doc(connectedUserId);
+      const connectedUserDoc = await connectedUserRef.get();
+
+      if (!connectedUserDoc.exists) {
+        console.log(`Connected user ${connectedUserId} does not exist. Skipping.`);
+        return;
+      }
+
+      const connectedUserData = connectedUserDoc.data() as admin.firestore.DocumentData;
+      let uidGrantedAccess: string[] = connectedUserData.uidGrantedAccess || [];
+
+      // Ensure uidGrantedAccess is an array
+      if (!Array.isArray(uidGrantedAccess)) {
+        uidGrantedAccess = [];
+      }
+
+      if (uidGrantedAccess.includes(currentUserUid)) {
+        uidGrantedAccess = uidGrantedAccess.filter((uid) => uid !== currentUserUid);
+        await connectedUserRef.update({ uidGrantedAccess });
+        console.log(`Removed ${currentUserUid} from uidGrantedAccess of user ${connectedUserId}`);
+      }
+    });
+
+    // Wait for all promises to complete
+    await Promise.all([...addPromises, ...removePromises]);
+
+    console.log('uidGrantedAccess arrays have been updated successfully.');
+    return null;
+  });
+
