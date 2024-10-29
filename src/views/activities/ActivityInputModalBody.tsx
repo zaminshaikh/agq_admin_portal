@@ -1,4 +1,4 @@
-import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip } from "@coreui/react-pro";
+import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip, CFormTextarea } from "@coreui/react-pro";
 import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import React, { act, useEffect, useState } from "react";
 import { Activity, Client, DatabaseService, emptyClient, roundToNearestHour} from "src/db/database";
@@ -286,6 +286,24 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     setClientState={setClientState} 
                     activeFund={activityState.fund}
                     incrementAmount={activityState.isAmortization? activityState.principalPaid : activityState.amount}/>}
+
+            <CContainer className="py-3 px-3">
+                <CRow>
+                    <CCol>
+                        <CInputGroup>
+                            <CInputGroupText>Notes</CInputGroupText>
+                            <CFormTextarea
+                                id="notes"
+                                value={activityState.notes}
+                                placeholder="Enter notes here..."
+                                onChange={(e) => {
+                                    setActivityState({ ...activityState, notes: e.target.value });
+                                }}
+                            />
+                        </CInputGroup>
+                    </CCol>
+                </CRow>
+            </CContainer>
             
         </CModalBody>
     )
