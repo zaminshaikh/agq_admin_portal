@@ -1,10 +1,11 @@
 import * as functions from "firebase-functions/v1";
 import config from "../../config.json";
-import {Timestamp} from "firebase-admin/firestore";
+import {QueryDocumentSnapshot, Timestamp} from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();
 const messaging = admin.messaging();
+const db = admin.firestore();
 
 /**
  * Defines the structure for notification objects.
@@ -767,3 +768,83 @@ export const onConnectedUsersChange = functions.firestore
     return null;
   });
 
+
+/**
+ * Cloud Function to update 'recipient' fields in activities when asset names change.
+ */
+export const onAssetUpdate = functions.firestore
+  .document('/{userCollection}/{userId}/assets/{assetId}')
+  .onUpdate(async (change, context) => {
+    const userCollection = context.params.userCollection;
+    const userId = context.params.userId;
+
+    const beforeData = change.before.data();
+    const afterData = change.after.data();
+
+    // Get the list of asset keys (excluding 'total' and 'fund')
+    const beforeAssetKeys = Object.keys(beforeData).filter(
+      (key) => !['total', 'fund'].includes(key)
+    );
+    const afterAssetKeys = Object.keys(afterData).filter(
+      (key) => !['total', 'fund'].includes(key)
+    );
+
+    // Create a map of asset keys to displayTitles for before and after
+    const beforeDisplayTitles: { [key: string]: string } = {};
+    const afterDisplayTitles: { [key: string]: string } = {};
+
+    for (const key of beforeAssetKeys) {
+      const asset = beforeData[key];
+      if (asset && asset.displayTitle) {
+        beforeDisplayTitles[key] = asset.displayTitle;
+      }
+    }
+
+    for (const key of afterAssetKeys) {
+      const asset = afterData[key];
+      if (asset && asset.displayTitle) {
+        afterDisplayTitles[key] = asset.displayTitle;
+      }
+    }
+
+    // Identify assets with changed displayTitles
+    const keysToUpdate = Object.keys(afterDisplayTitles).filter((key) => {
+      return (
+        beforeDisplayTitles[key] &&
+        beforeDisplayTitles[key] !== afterDisplayTitles[key]
+      );
+    });
+
+    if (keysToUpdate.length === 0) {
+      // No changes in displayTitles
+      return null;
+    }
+
+    // Update activities for each changed displayTitle
+    const activitiesRef = db.collection(
+      `/${userCollection}/${userId}/activities`
+    );
+
+    const batch = db.batch();
+    const promises = keysToUpdate.map(async (key) => {
+      const oldDisplayTitle = beforeDisplayTitles[key];
+      const newDisplayTitle = afterDisplayTitles[key];
+
+      const snapshot = await activitiesRef
+        .where('recipient', '==', oldDisplayTitle)
+        .get();
+
+      snapshot.forEach((doc: QueryDocumentSnapshot) => {
+        batch.update(doc.ref, { recipient: newDisplayTitle });
+      });
+    });
+
+    await Promise.all(promises);
+    await batch.commit();
+
+    console.log(
+      `Updated recipient fields for user ${userId} in collection ${userCollection}.`
+    );
+
+    return null;
+  });
