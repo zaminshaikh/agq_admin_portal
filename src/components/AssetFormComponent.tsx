@@ -236,7 +236,7 @@ export const AssetFormComponent: React.FC<AssetFormComponentProps> = ({
 
       {/* Edit Asset Modal */}
       {isEditable && (
-        <CModal visible={isEditModalOpen} onClose={closeEditModal} alignment="center">
+        <CModal visible={isEditModalOpen} onClose={closeEditModal} alignment="center" backdrop="static">
           <CModalHeader>Edit Asset</CModalHeader>
           <CModalBody>
             <CFormInput
