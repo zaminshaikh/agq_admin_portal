@@ -181,7 +181,6 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
     }
 }
 
-
 /**
  * Helper function to update YTD and totalYTD for a user and connected users.
  */
@@ -191,29 +190,43 @@ async function updateYTD(cid: string, usersCollectionID: string): Promise<void> 
         const ytd = await calculateYTDForUser(cid, usersCollectionID);
         const totalYTD = await calculateTotalYTDForUser(cid, usersCollectionID);
 
-        // Update the user's document with ytd and totalYTD
-        const userRef = admin.firestore().collection(usersCollectionID).doc(cid);
-        await userRef.update({ ytd, totalYTD });
+        // Update the user's 'general' document within 'assets' subcollection with ytd and totalYTD
+        const userGeneralAssetRef = admin.firestore()
+            .collection(usersCollectionID)
+            .doc(cid)
+            .collection('assets')
+            .doc('general');
+        await userGeneralAssetRef.update({ ytd, totalYTD });
 
         // Find all users where 'connectedUsers' array contains cid
         const usersCollectionRef = admin.firestore().collection(usersCollectionID);
-        const connectedUsersSnapshot = await usersCollectionRef.where('connectedUsers', 'array-contains', cid).get();
+        const parentUsersSnapshot = await usersCollectionRef
+            .where('connectedUsers', 'array-contains', cid)
+            .get();
 
-        const updatePromises = connectedUsersSnapshot.docs.map(async (doc) => {
-            const connectedUserCid = doc.id;
+        const updatePromises = parentUsersSnapshot.docs.map(async (doc) => {
+            const parentUserCID = doc.id;
+
             // Recalculate totalYTD for connected user
-            const connectedUserTotalYTD = await calculateTotalYTDForUser(connectedUserCid, usersCollectionID);
+            const parentUserTotalYTD = await calculateTotalYTDForUser(parentUserCID, usersCollectionID);
 
-            // Update connected user's document with totalYTD
-            await doc.ref.update({ totalYTD: connectedUserTotalYTD });
+            // Update connected user's 'general' document within 'assets' subcollection with totalYTD
+            const parentUserGeneralAssetRef = admin.firestore()
+                .collection(usersCollectionID)
+                .doc(parentUserCID)
+                .collection('assets')
+                .doc('general');
+            await parentUserGeneralAssetRef.update({ totalYTD: parentUserTotalYTD });
         });
 
         await Promise.all(updatePromises);
     } catch (error) {
         console.error("Error updating YTD:", error);
-        throw new functions.https.HttpsError('unknown', 'Failed to update YTD due to an unexpected error.', {
-            errorDetails: (error as Error).message,
-        });
+        throw new functions.https.HttpsError(
+            'unknown',
+            'Failed to update YTD due to an unexpected error.',
+            { errorDetails: (error as Error).message },
+        );
     }
 }
 
