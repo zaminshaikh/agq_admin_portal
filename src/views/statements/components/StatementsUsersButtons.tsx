@@ -1,15 +1,16 @@
 import { CButton, CContainer, CSpinner, CCard, CCardBody, CCardTitle, CCardSubtitle, CCardText, CCollapse, CRow, CCol, CFormInput } from '@coreui/react-pro';
-import { DatabaseService, User, emptyUser, formatCurrency } from 'src/db/database.ts';
+import { DatabaseService, formatCurrency } from 'src/db/database.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Client } from 'src/db/database.ts';
 
 const StatementsUsersButtons = () => {
     const [showCreateNewClientModal, setShowCreateNewClientModal] = useState(false);
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
-    const [users, setUsers] = useState<User[]>([]);
-    const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
+    const [users, setUsers] = useState<Client[]>([]);
+    const [currentUser, setCurrentUser] = useState<Client | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState<string[]>([]);
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
@@ -27,7 +28,7 @@ const StatementsUsersButtons = () => {
             
             // If users are fetched successfully, update the state
             if (users !== null) {
-                users = users as User[];
+                users = users as Client[];
                 setUsers(users);
                 setIsLoading(false);
             }
@@ -81,7 +82,7 @@ const StatementsUsersButtons = () => {
         user.cid.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handleManageStatementsClick = (user: User) => {
+    const handleManageStatementsClick = (user: Client) => {
         navigate('/client-statements', { state: { client: user } });
     };
 

@@ -1,15 +1,15 @@
 import React from 'react';
 import { CContainer } from "@coreui/react-pro";
-import StatementsSearch from './components/StatementsSearch';
+import { Routes, Route } from 'react-router-dom';
 import StatementsUsersButtons from './components/StatementsUsersButtons';
+import ClientStatementsPage from './components/ClientStatementsPage';
 
 const Statements: React.FC = () => {
-
-    return (
-        <CContainer>
-            <StatementsUsersButtons />
-        </CContainer>
-    );
+  return (
+    <CContainer>
+        <ClientStatementsPage/>
+    </CContainer>
+  );
 };
 
 export default Statements;
