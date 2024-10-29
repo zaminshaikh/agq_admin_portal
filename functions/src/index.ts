@@ -1,10 +1,11 @@
 import * as functions from "firebase-functions/v1";
 import config from "../../config.json";
-import {Timestamp} from "firebase-admin/firestore";
+import {QueryDocumentSnapshot, Timestamp} from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();
 const messaging = admin.messaging();
+const db = admin.firestore();
 
 /**
  * Defines the structure for notification objects.
@@ -165,6 +166,8 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
     const activity = snapshot.data() as Activity;
     const { userId, activityId, userCollection} = context.params;
 
+    await updateYTD(userId, userCollection); // Update YTD for the user and connected users
+
     if (activity.sendNotif !== true || userCollection === 'backup') {
         return null; // Exit if no notification is required
     }
@@ -176,6 +179,55 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
     } catch (error) {
         console.error('Error handling activity:', error);
         throw new functions.https.HttpsError('unknown', 'Failed to handle activity', error);
+    }
+}
+
+/**
+ * Helper function to update YTD and totalYTD for a user and connected users.
+ */
+async function updateYTD(cid: string, usersCollectionID: string): Promise<void> {
+    try {
+        // Calculate YTD and totalYTD for the user
+        const ytd = await calculateYTDForUser(cid, usersCollectionID);
+        const totalYTD = await calculateTotalYTDForUser(cid, usersCollectionID);
+
+        // Update the user's 'general' document within 'assets' subcollection with ytd and totalYTD
+        const userGeneralAssetRef = admin.firestore()
+            .collection(usersCollectionID)
+            .doc(cid)
+            .collection('assets')
+            .doc('general');
+        await userGeneralAssetRef.update({ ytd, totalYTD });
+
+        // Find all users where 'connectedUsers' array contains cid
+        const usersCollectionRef = admin.firestore().collection(usersCollectionID);
+        const parentUsersSnapshot = await usersCollectionRef
+            .where('connectedUsers', 'array-contains', cid)
+            .get();
+
+        const updatePromises = parentUsersSnapshot.docs.map(async (doc) => {
+            const parentUserCID = doc.id;
+
+            // Recalculate totalYTD for connected user
+            const parentUserTotalYTD = await calculateTotalYTDForUser(parentUserCID, usersCollectionID);
+
+            // Update connected user's 'general' document within 'assets' subcollection with totalYTD
+            const parentUserGeneralAssetRef = admin.firestore()
+                .collection(usersCollectionID)
+                .doc(parentUserCID)
+                .collection('assets')
+                .doc('general');
+            await parentUserGeneralAssetRef.update({ totalYTD: parentUserTotalYTD });
+        });
+
+        await Promise.all(updatePromises);
+    } catch (error) {
+        console.error("Error updating YTD:", error);
+        throw new functions.https.HttpsError(
+            'unknown',
+            'Failed to update YTD due to an unexpected error.',
+            { errorDetails: (error as Error).message },
+        );
     }
 }
 
@@ -399,6 +451,67 @@ exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
     }
   });
 
+
+/**
+ * Helper function to calculate YTD for a single user.
+ */
+async function calculateYTDForUser(userCid: string, usersCollectionID: string): Promise<number> {
+    const currentYear = new Date().getFullYear();
+    const startOfYear = new Date(currentYear, 0, 1);
+    const endOfYear = new Date(currentYear, 11, 31);
+
+    const activitiesRef = admin.firestore().collection(`/${usersCollectionID}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
+    const snapshot = await activitiesRef
+        .where("fund", "==", "AGQ")
+        .where("type", "in", ["profit", "income"])
+        .where("time", ">=", startOfYear)
+        .where("time", "<=", endOfYear)
+        .get();
+
+    let ytdTotal = 0;
+    snapshot.forEach((doc) => {
+        const activity = doc.data();
+        ytdTotal += activity.amount;
+    });
+
+    return ytdTotal;
+}
+
+/**
+ * Helper function to calculate total YTD for a user including connected users.
+ */
+async function calculateTotalYTDForUser(cid: string, usersCollectionID: string): Promise<number> {
+    const processedUsers: Set<string> = new Set();
+    const userQueue: string[] = [cid];
+    let totalYTD = 0;
+
+    while (userQueue.length > 0) {
+        const currentUserCid = userQueue.shift();
+
+        // Avoid processing the same user more than once
+        if (currentUserCid && !processedUsers.has(currentUserCid)) {
+            processedUsers.add(currentUserCid);
+
+            // Calculate YTD for the current user
+            const ytd = await calculateYTDForUser(currentUserCid, usersCollectionID);
+            totalYTD += ytd;
+
+            // Get the user document to retrieve connectedUsers
+            const userDoc = await admin.firestore().collection(`${usersCollectionID}`).doc(currentUserCid).get();
+            const userData = userDoc.data();
+
+            // Add connected users to the queue if they exist
+            if (userData && userData.connectedUsers) {
+                const connectedUsers = userData.connectedUsers as string[];
+                userQueue.push(...connectedUsers);
+            }
+        }
+    }
+
+    return totalYTD;
+}
+
+
 exports.calculateYTD = functions.https.onCall(async (data, context): Promise<object> => {
     const cid = data.cid;
     const usersCollectionID = data.usersCollectionID;
@@ -448,29 +561,6 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
     }
 
     try {
-        const currentYear = new Date().getFullYear();
-        const startOfYear = new Date(currentYear, 0, 1);
-        const endOfYear = new Date(currentYear, 11, 31);
-
-        // Function to calculate YTD for a single user
-        const calculateYTDForUser = async (userCid: string): Promise<number> => {
-            const activitiesRef = admin.firestore().collection(`/${usersCollectionID}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
-            const snapshot = await activitiesRef
-                .where("fund", "==", "AGQ")
-                .where("type", "in", ["profit", "income"])
-                .where("time", ">=", startOfYear)
-                .where("time", "<=", endOfYear)
-                .get();
-
-            let ytdTotal = 0;
-            snapshot.forEach((doc) => {
-                const activity = doc.data();
-                ytdTotal += activity.amount;
-            });
-
-            return ytdTotal;
-        };
-
         // Queue to track users that need to be processed
         const userQueue: string[] = [cid];
         let totalYTD = 0;
@@ -485,7 +575,7 @@ exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promis
                 processedUsers.add(currentUserCid);
 
                 // Calculate YTD for the current user
-                totalYTD += await calculateYTDForUser(currentUserCid);
+                totalYTD += await calculateYTDForUser(currentUserCid, usersCollectionID);
 
                 // Get the user document to retrieve connectedUsers
                 const userDoc = await admin.firestore().collection(`${usersCollectionID}`).doc(currentUserCid).get();
@@ -594,3 +684,176 @@ exports.isUIDLinked = functions.https.onCall(async (data, context) => {
     }
 });
 
+
+/**
+ * Cloud Function to update 'uidGrantedAccess' when 'connectedUsers' changes.
+ */
+export const onConnectedUsersChange = functions.firestore
+  .document('{userCollection}/{userId}')
+  .onUpdate(async (change, context) => {
+    const userCollection = context.params.userCollection;
+    const userId = context.params.userId;
+
+    const beforeData = change.before.data();
+    const afterData = change.after.data();
+
+    const beforeConnectedUsers = beforeData.connectedUsers || [];
+    const afterConnectedUsers = afterData.connectedUsers || [];
+
+    // Check if 'connectedUsers' has changed
+    if (JSON.stringify(beforeConnectedUsers) === JSON.stringify(afterConnectedUsers)) {
+      // No changes in 'connectedUsers'
+      return null;
+    }
+
+    // Identify added and removed connected users
+    const addedConnectedUsers = afterConnectedUsers.filter(
+      (id: string) => !beforeConnectedUsers.includes(id)
+    );
+    const removedConnectedUsers = beforeConnectedUsers.filter(
+      (id: string) => !afterConnectedUsers.includes(id)
+    );
+
+    const db = admin.firestore();
+    const currentUserUid = afterData.uid;
+
+    if (!currentUserUid) {
+      console.log(`User ${userId} does not have a 'uid'. Skipping.`);
+      return null;
+    }
+
+    const usersRef = db.collection(userCollection);
+
+    // Handle added connected users
+    const addPromises = addedConnectedUsers.map(async (connectedUserId: string) => {
+      const connectedUserRef = usersRef.doc(connectedUserId);
+      const connectedUserDoc = await connectedUserRef.get();
+
+      if (!connectedUserDoc.exists) {
+        console.log(`Connected user ${connectedUserId} does not exist. Skipping.`);
+        return;
+      }
+
+      const connectedUserData = connectedUserDoc.data() as admin.firestore.DocumentData;
+      let uidGrantedAccess: string[] = connectedUserData.uidGrantedAccess || [];
+
+      // Ensure uidGrantedAccess is an array
+      if (!Array.isArray(uidGrantedAccess)) {
+        uidGrantedAccess = [];
+      }
+
+      if (!uidGrantedAccess.includes(currentUserUid)) {
+        uidGrantedAccess.push(currentUserUid);
+        await connectedUserRef.update({ uidGrantedAccess });
+        console.log(`Added ${currentUserUid} to uidGrantedAccess of user ${connectedUserId}`);
+      }
+    });
+
+    // Handle removed connected users
+    const removePromises = removedConnectedUsers.map(async (connectedUserId: string) => {
+      const connectedUserRef = usersRef.doc(connectedUserId);
+      const connectedUserDoc = await connectedUserRef.get();
+
+      if (!connectedUserDoc.exists) {
+        console.log(`Connected user ${connectedUserId} does not exist. Skipping.`);
+        return;
+      }
+
+      const connectedUserData = connectedUserDoc.data() as admin.firestore.DocumentData;
+      let uidGrantedAccess: string[] = connectedUserData.uidGrantedAccess || [];
+
+      // Ensure uidGrantedAccess is an array
+      if (!Array.isArray(uidGrantedAccess)) {
+        uidGrantedAccess = [];
+      }
+
+      if (uidGrantedAccess.includes(currentUserUid)) {
+        uidGrantedAccess = uidGrantedAccess.filter((uid) => uid !== currentUserUid);
+        await connectedUserRef.update({ uidGrantedAccess });
+        console.log(`Removed ${currentUserUid} from uidGrantedAccess of user ${connectedUserId}`);
+      }
+    });
+
+    // Wait for all promises to complete
+    await Promise.all([...addPromises, ...removePromises]);
+
+    console.log('uidGrantedAccess arrays have been updated successfully.');
+    return null;
+  });
+
+
+/**
+ * Cloud Function to update 'recipient' fields in activities when asset names change.
+ */
+export const onAssetUpdate = functions.firestore
+  .document('/{userCollection}/{userId}/assets/{assetId}')
+  .onUpdate(async (change, context) => {
+    const { userCollection, userId, assetId } = context.params;
+    console.log(`onAssetUpdate triggered for userCollection: ${userCollection}, userId: ${userId}`);
+
+    const fund = assetId == 'agq' ? 'AGQ' : 'AK1'; // Adjust fund name based on assetId
+
+    const beforeData = change.before.data();
+    const afterData = change.after.data();
+
+    // Get asset entries excluding 'total' and 'fund'
+    const beforeAssets = Object.entries(beforeData)
+      .filter(([key]) => !['total', 'fund'].includes(key))
+      .map(([key, value]) => ({ key, ...value }));
+    const afterAssets = Object.entries(afterData)
+      .filter(([key]) => !['total', 'fund'].includes(key))
+      .map(([key, value]) => ({ key, ...value }));
+
+    // Map assets by index (assuming index is unique and identifies the asset)
+    const beforeAssetsByIndex = new Map(beforeAssets.map(asset => [asset.index, asset]));
+    const afterAssetsByIndex = new Map(afterAssets.map(asset => [asset.index, asset]));
+
+    // Identify assets where the displayTitle has changed
+    const assetsToUpdate = [];
+
+    for (const [index, beforeAsset] of beforeAssetsByIndex) {
+      const afterAsset = afterAssetsByIndex.get(index);
+      if (afterAsset && beforeAsset.displayTitle !== afterAsset.displayTitle) {
+        assetsToUpdate.push({
+          oldDisplayTitle: beforeAsset.displayTitle,
+          newDisplayTitle: afterAsset.displayTitle,
+        });
+      }
+    }
+
+    console.log('assetsToUpdate:', assetsToUpdate);
+
+    if (assetsToUpdate.length === 0) {
+      console.log('No changes in displayTitles detected.');
+      return null;
+    }
+
+    // Update activities based on displayTitle changes
+    const activitiesRef = db.collection(`${userCollection}/${userId}/activities`);
+    const batch = db.batch();
+
+    for (const { oldDisplayTitle, newDisplayTitle } of assetsToUpdate) {
+      console.log(`Updating activities from "${oldDisplayTitle}" to "${newDisplayTitle}"`);
+
+      const snapshot = await activitiesRef
+        .where('fund', '==', fund)
+        .where('recipient', '==', oldDisplayTitle)
+        .get();
+
+      console.log(`Found ${snapshot.size} activities to update for recipient: "${oldDisplayTitle}"`);
+
+      snapshot.forEach((doc: QueryDocumentSnapshot) => {
+        batch.update(doc.ref, { recipient: newDisplayTitle });
+      });
+    }
+
+    try {
+      await batch.commit();
+      console.log('Batch commit successful.');
+    } catch (error) {
+      console.error('Batch commit failed:', error);
+    }
+
+    console.log(`Updated recipient fields for user ${userId} in collection ${userCollection}.`);
+    return null;
+  });
