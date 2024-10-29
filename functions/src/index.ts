@@ -788,76 +788,72 @@ export const onConnectedUsersChange = functions.firestore
 export const onAssetUpdate = functions.firestore
   .document('/{userCollection}/{userId}/assets/{assetId}')
   .onUpdate(async (change, context) => {
-    const userCollection = context.params.userCollection;
-    const userId = context.params.userId;
+    const { userCollection, userId, assetId } = context.params;
+    console.log(`onAssetUpdate triggered for userCollection: ${userCollection}, userId: ${userId}`);
+
+    const fund = assetId == 'agq' ? 'AGQ' : 'AK1'; // Adjust fund name based on assetId
 
     const beforeData = change.before.data();
     const afterData = change.after.data();
 
-    // Get the list of asset keys (excluding 'total' and 'fund')
-    const beforeAssetKeys = Object.keys(beforeData).filter(
-      (key) => !['total', 'fund'].includes(key)
-    );
-    const afterAssetKeys = Object.keys(afterData).filter(
-      (key) => !['total', 'fund'].includes(key)
-    );
+    // Get asset entries excluding 'total' and 'fund'
+    const beforeAssets = Object.entries(beforeData)
+      .filter(([key]) => !['total', 'fund'].includes(key))
+      .map(([key, value]) => ({ key, ...value }));
+    const afterAssets = Object.entries(afterData)
+      .filter(([key]) => !['total', 'fund'].includes(key))
+      .map(([key, value]) => ({ key, ...value }));
 
-    // Create a map of asset keys to displayTitles for before and after
-    const beforeDisplayTitles: { [key: string]: string } = {};
-    const afterDisplayTitles: { [key: string]: string } = {};
+    // Map assets by index (assuming index is unique and identifies the asset)
+    const beforeAssetsByIndex = new Map(beforeAssets.map(asset => [asset.index, asset]));
+    const afterAssetsByIndex = new Map(afterAssets.map(asset => [asset.index, asset]));
 
-    for (const key of beforeAssetKeys) {
-      const asset = beforeData[key];
-      if (asset && asset.displayTitle) {
-        beforeDisplayTitles[key] = asset.displayTitle;
+    // Identify assets where the displayTitle has changed
+    const assetsToUpdate = [];
+
+    for (const [index, beforeAsset] of beforeAssetsByIndex) {
+      const afterAsset = afterAssetsByIndex.get(index);
+      if (afterAsset && beforeAsset.displayTitle !== afterAsset.displayTitle) {
+        assetsToUpdate.push({
+          oldDisplayTitle: beforeAsset.displayTitle,
+          newDisplayTitle: afterAsset.displayTitle,
+        });
       }
     }
 
-    for (const key of afterAssetKeys) {
-      const asset = afterData[key];
-      if (asset && asset.displayTitle) {
-        afterDisplayTitles[key] = asset.displayTitle;
-      }
-    }
+    console.log('assetsToUpdate:', assetsToUpdate);
 
-    // Identify assets with changed displayTitles
-    const keysToUpdate = Object.keys(afterDisplayTitles).filter((key) => {
-      return (
-        beforeDisplayTitles[key] &&
-        beforeDisplayTitles[key] !== afterDisplayTitles[key]
-      );
-    });
-
-    if (keysToUpdate.length === 0) {
-      // No changes in displayTitles
+    if (assetsToUpdate.length === 0) {
+      console.log('No changes in displayTitles detected.');
       return null;
     }
 
-    // Update activities for each changed displayTitle
-    const activitiesRef = db.collection(
-      `/${userCollection}/${userId}/activities`
-    );
-
+    // Update activities based on displayTitle changes
+    const activitiesRef = db.collection(`${userCollection}/${userId}/activities`);
     const batch = db.batch();
-    const promises = keysToUpdate.map(async (key) => {
-      const oldDisplayTitle = beforeDisplayTitles[key];
-      const newDisplayTitle = afterDisplayTitles[key];
+
+    for (const { oldDisplayTitle, newDisplayTitle } of assetsToUpdate) {
+      console.log(`Updating activities from "${oldDisplayTitle}" to "${newDisplayTitle}"`);
 
       const snapshot = await activitiesRef
+        .where('fund', '==', fund)
         .where('recipient', '==', oldDisplayTitle)
         .get();
+
+      console.log(`Found ${snapshot.size} activities to update for recipient: "${oldDisplayTitle}"`);
 
       snapshot.forEach((doc: QueryDocumentSnapshot) => {
         batch.update(doc.ref, { recipient: newDisplayTitle });
       });
-    });
+    }
 
-    await Promise.all(promises);
-    await batch.commit();
+    try {
+      await batch.commit();
+      console.log('Batch commit successful.');
+    } catch (error) {
+      console.error('Batch commit failed:', error);
+    }
 
-    console.log(
-      `Updated recipient fields for user ${userId} in collection ${userCollection}.`
-    );
-
+    console.log(`Updated recipient fields for user ${userId} in collection ${userCollection}.`);
     return null;
   });
