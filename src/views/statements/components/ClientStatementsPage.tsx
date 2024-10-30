@@ -144,7 +144,7 @@ const ClientStatementsPage = () => {
     { key: 'clientName', label: 'Client', _style: { width: '20%' } },
     { key: 'documentTitle', label: 'Document Title', _style: { width: '40%' } },
     { key: 'dateAdded', label: 'Date Added', _style: { width: '15%' }, sorter: true },
-    { key: 'actions', label: 'Quick Actions', _style: { width: '25%' }, filter: false },
+    { key: 'actions', label: 'Quick Actions', _style: { width: '10%' }, filter: false },
   ];
 
   const items = documents.map((document) => ({
