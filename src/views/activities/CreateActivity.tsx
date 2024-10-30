@@ -54,6 +54,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                     fund: activityState.fund,
                     sendNotif: activityState.sendNotif,
                     isDividend: activityState.isDividend,
+                    notes: activityState.notes,
                     isAmortization: true,
                     amortizationCreated: true,
                 }
