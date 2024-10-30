@@ -29,6 +29,7 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
             isDividend: activityState.isDividend ?? false,
             isAmortization: true,
             amortizationCreated: true,
+            notes: activityState.notes ?? undefined,
         }
         
         const profit: Activity = {
