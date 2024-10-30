@@ -65,9 +65,6 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
         createClientIfOverride();
     }, [override]);
 
-    useEffect(() => { console.log(clientState?.assets)}, [clientState])
-
-
     return (
         
         <div>

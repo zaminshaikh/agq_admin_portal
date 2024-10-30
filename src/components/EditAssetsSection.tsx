@@ -266,10 +266,6 @@ export const EditAssetsSection: React.FC<EditAssetsSectionProps> = ({
     }
   };
 
-  useEffect(() => {
-    console.log("Client state updated:", clientState);
-  } , [clientState]);
-
   return (
     <CContainer className="py-3">
       {Object.entries(clientState.assets).map(([fundKey, fundAssets]) => {

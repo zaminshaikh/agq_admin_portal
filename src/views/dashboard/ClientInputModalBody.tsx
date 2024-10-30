@@ -128,6 +128,7 @@ const exceptions = ["LLC", "Inc", "Ltd"];
                     time: parsedDate,
                     formattedTime: formatDate(parsedDate),
                     type: getActivityType(row["Type"], Math.abs(parseFloat(row["Amount (Unscaled)"]))),
+                    notes: undefined,
                 };
     
                 // Add the activity to the activities array
@@ -351,7 +352,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     beneficiaries: newBeneficiaries,
                     };
                     setClientState(newClientState);
-                    console.log(clientState);
                 }}
                 />
             </CInputGroup>
@@ -428,8 +428,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         totalYTD: ytd,
                     };
                     setClientState(newClientState);
-                    console.log(ytd);
-                    console.log(clientState);
                     } catch (error) {
                     console.error(error);
                     } finally {
