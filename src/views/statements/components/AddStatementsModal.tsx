@@ -145,8 +145,8 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
           placeholder="Select Client"
           multiple={false}
         />
-    
-        <div className="mb-3">
+      
+        <div className="mb-3 mt-3"> {/* Added margin-top class */}
           <CFormInput
             type="file"
             accept=".pdf"
