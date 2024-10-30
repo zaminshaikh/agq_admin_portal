@@ -89,6 +89,14 @@ export interface GraphPoint {
     amount: number | null;
 }
 
+export interface StatementData {
+    statementTitle: string;
+    downloadURL: string;
+    clientId: string;
+    // Add other necessary fields here
+}
+  
+
 export const emptyClient: Client = {
     firstName: '',
     lastName: '',
@@ -686,5 +694,18 @@ export class DatabaseService {
             throw new Error('Failed to update YTD.');
         }
     }
+
+    async addStatement(statement: StatementData): Promise<void> {
+    try {
+        // Example using Firestore
+        const db = getFirestore(); // Import and initialize Firestore as needed
+        const statementsCollection = collection(db, 'statements');
+        await addDoc(statementsCollection, statement);
+    } catch (error) {
+        console.error('Error adding statement:', error);
+        throw error;
+    }
+    }
+    
 }
 
