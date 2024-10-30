@@ -1,25 +1,38 @@
 import React, { useEffect, useState } from 'react';
+import '@coreui/icons/css/all.min.css'; // Ensure this import is present
 import {
   CContainer,
   CSmartTable,
   CSpinner,
+  CButton,
+  CModal,
+  CModalHeader,
+  CModalBody,
+  CModalTitle,
 } from '@coreui/react-pro';
-import { getStorage, ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, listAll, getMetadata, getDownloadURL, deleteObject } from 'firebase/storage';
 import { DatabaseService, Client } from 'src/db/database.ts';
 
-interface Statement {
+// Import CoreUI Icons
+import CIcon from '@coreui/icons-react';
+import { cilTrash, cilSearch } from '@coreui/icons';
+
+interface Document {
   clientName: string;
-  statementTitle: string;
+  documentTitle: string;
   dateAdded: string;
   downloadURL: string;
+  storagePath: string;
 }
 
 const ClientStatementsPage = () => {
-  const [statements, setStatements] = useState<Statement[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchStatements = async () => {
+    const fetchDocuments = async () => {
       try {
         // Fetch all clients
         const db = new DatabaseService();
@@ -28,72 +41,96 @@ const ClientStatementsPage = () => {
 
         const storage = getStorage();
 
-        // Create an array of promises to fetch statements for each client
+        // Create an array of promises to fetch documents for each client
         const clientPromises = clients.map(async (client) => {
           const cid = client.cid;
-          console.log('Processing client CID:', cid);
 
-          // Reference to the client's statements folder
+          // Reference to the client's documents folder
           const listRef = ref(storage, `testUsersStatements/${cid}/`);
 
           try {
             // List all items in the folder
             const res = await listAll(listRef);
-            console.log(`Items found in ${cid}'s folder:`, res.items.length);
 
             if (res.items.length === 0) {
-              console.log(`No items found in ${cid}'s folder.`);
-              return []; // Return empty array if no statements
+              return []; // Return empty array if no documents
             }
 
-            // Fetch statements for this client
-            const statementPromises = res.items.map(async (itemRef) => {
+            // Fetch documents for this client
+            const documentPromises = res.items.map(async (itemRef) => {
               const metadata = await getMetadata(itemRef);
               const downloadURL = await getDownloadURL(itemRef);
-              console.log('Processing item:', metadata.name);
 
-              const statement: Statement = {
+              const document: Document = {
                 clientName: `${client.firstName} ${client.lastName}`,
-                statementTitle: metadata.name,
+                documentTitle: metadata.name,
                 dateAdded: metadata.timeCreated,
                 downloadURL: downloadURL,
+                storagePath: itemRef.fullPath, // Store the path to delete the file later
               };
 
-              return statement;
+              return document;
             });
 
-            // Wait for all statements of this client
-            const clientStatements = await Promise.all(statementPromises);
-            return clientStatements;
+            // Wait for all documents of this client
+            const clientDocuments = await Promise.all(documentPromises);
+            return clientDocuments;
           } catch (error) {
-            console.error(`Error fetching statements for CID ${cid}:`, error);
+            console.error(`Error fetching documents for CID ${cid}:`, error);
             return []; // Return empty array on error
           }
         });
 
-        // Wait for all clients' statements
-        const allStatementsArrays = await Promise.all(clientPromises);
+        // Wait for all clients' documents
+        const allDocumentsArrays = await Promise.all(clientPromises);
 
         // Flatten the array of arrays into a single array
-        const statementsData = allStatementsArrays.flat();
+        const documentsData = allDocumentsArrays.flat();
 
-        // Sort statements by dateAdded, newest first
-        statementsData.sort(
+        // Sort documents by dateAdded, newest first
+        documentsData.sort(
           (a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
         );
 
-        console.log('Total statements fetched:', statementsData.length);
+        console.log('Total documents fetched:', documentsData.length);
+        console.log('Documents:', documentsData);
 
-        setStatements(statementsData);
+        setDocuments(documentsData);
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching statements:', error);
+        console.error('Error fetching documents:', error);
         setIsLoading(false);
       }
     };
 
-    fetchStatements();
+    fetchDocuments();
   }, []);
+
+  const handlePreview = (document: Document) => {
+    setSelectedDocument(document);
+    setIsPreviewOpen(true);
+  };
+
+  const handleDelete = async (document: Document) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${document.documentTitle}?`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const storage = getStorage();
+      const fileRef = ref(storage, document.storagePath);
+      await deleteObject(fileRef);
+      // Remove the document from the list
+      setDocuments((prevDocuments) =>
+        prevDocuments.filter((s) => s.storagePath !== document.storagePath)
+      );
+      alert('File deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert('Failed to delete the file.');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -104,15 +141,18 @@ const ClientStatementsPage = () => {
   }
 
   const columns = [
-    { key: 'clientName', label: 'Name', _style: { width: '30%' } },
-    { key: 'statementTitle', label: 'Statement', _style: { width: '40%' } },
-    { key: 'dateAdded', label: 'Date', _style: { width: '20%' }, sorter: true },
+    { key: 'clientName', label: 'Client', _style: { width: '20%' } },
+    { key: 'documentTitle', label: 'Document Title', _style: { width: '40%' } },
+    { key: 'dateAdded', label: 'Date Added', _style: { width: '15%' }, sorter: true },
+    { key: 'actions', label: 'Quick Actions', _style: { width: '25%' }, filter: false },
   ];
 
-  const items = statements.map((statement) => ({
-    ...statement,
-    dateAdded: new Date(statement.dateAdded).toLocaleDateString(),
+  const items = documents.map((document) => ({
+    ...document,
+    dateAdded: new Date(document.dateAdded).toLocaleDateString(),
   }));
+
+  console.log('Items to display:', items);
 
   return (
     <CContainer>
@@ -120,10 +160,50 @@ const ClientStatementsPage = () => {
         items={items}
         columns={columns}
         columnSorter
-        itemsPerPage={10}
+        columnFilter
+        itemsPerPage={50}
         pagination
+        scopedColumns={{
+          actions: (item: any) => (
+            <td>
+              <CButton
+                color="info"
+                variant="ghost"
+                size="sm"
+                className="mr-2"
+                onClick={() => handlePreview(item)}
+              >
+                <CIcon icon={cilSearch} size="lg" />
+              </CButton>
+              <CButton
+                color="danger"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(item)}
+              >
+                <CIcon icon={cilTrash} size="lg" />
+              </CButton>
+            </td>
+          ),
+        }}
         tableProps={{ striped: true, hover: true }}
       />
+
+      {/* Preview Modal */}
+      <CModal size="xl" visible={isPreviewOpen} onClose={() => setIsPreviewOpen(false)}>
+        <CModalHeader closeButton>
+          <CModalTitle>{selectedDocument?.documentTitle}</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {selectedDocument && (
+            <iframe
+              src={selectedDocument.downloadURL}
+              title="Document Preview"
+              style={{ width: '100%', height: '80vh' }}
+            ></iframe>
+          )}
+        </CModalBody>
+      </CModal>
     </CContainer>
   );
 };
