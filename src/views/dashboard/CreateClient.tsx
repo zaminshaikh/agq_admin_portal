@@ -5,6 +5,7 @@ import { DatabaseService, Client, emptyClient } from '../../db/database.ts'
 import { ClientInputModalBody } from "./ClientInputModalBody.tsx";
 import { ValidateClient } from "./ClientInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal.tsx';
+import { Option, OptionsGroup } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 
 // const CFormInputWithMask = React.forwardRef<HTMLInputElement, any>((props, ref) => (
 //     <CFormInput
@@ -32,7 +33,7 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
     const [clientState, setClientState] = useState<Client>(initialClientState);
 
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName}))
+    const [clientOptions, setClientOptions] = useState<(Option | OptionsGroup)[]>(clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName})))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
@@ -86,6 +87,7 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
                     clientState={clientState} 
                     setClientState={setClientState} 
                     clientOptions={clientOptions}
+                    setClientOptions={setClientOptions}
                     viewOnly={false}/>
                 <CModalFooter>
                     <CButton color="danger" variant="outline" onClick={() => setShowModal(false)}>Discard</CButton>

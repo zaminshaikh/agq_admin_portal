@@ -17,6 +17,7 @@ interface ClientInputProps {
     setClientState: (clientState: Client) => void,
     clientOptions: (Option | OptionsGroup)[],
     clients?: Client[],
+    setClientOptions: (options: (Option | OptionsGroup)[]) => void,
     viewOnly: boolean,
 }
 
@@ -229,6 +230,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     setClientState,
     clients,
     clientOptions,
+    setClientOptions,
     viewOnly,
 }) => {
     const db = new DatabaseService();
@@ -365,10 +367,16 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 disabled={viewOnly}
                 onChange={
                 (selectedValues) => {
+                    const updatedOptions = clientOptions.map(option => ({
+                        ...option,
+                        selected: selectedValues.some(selected => selected.value === option.value),
+                    }));
                     const newClientState = {
-                    ...clientState,
-                    connectedUsers: selectedValues.map(selected => selected.value as string)
+                        ...clientState,
+                        connectedUsers: selectedValues.map(selected => selected.value as string)
                     }
+                    
+                    setClientOptions(updatedOptions);
                     setClientState(newClientState)
                 }
                 }
