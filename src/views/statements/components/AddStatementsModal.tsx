@@ -14,7 +14,6 @@ import {
 } from '@coreui/react-pro';
 import { Client, DatabaseService } from 'src/db/database';
 import { EditAssetsSection } from 'src/components/EditAssetsSection';
-import { useDropzone } from 'react-dropzone';
 import { ref, uploadBytes } from 'firebase/storage';
 import { getStorage } from 'firebase/storage';
 
@@ -37,7 +36,6 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [isDragActive, setIsDragActive] = useState(false);
   const [isRecipientSameAsClient, setIsRecipientSameAsClient] = useState<boolean>(true);
   const [activityState, setActivityState] = useState<any>({}); // Define appropriate type
   const [clientState, setClientState] = useState<Client | null>(null);
@@ -84,22 +82,11 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
     await uploadFiles();
   };
 
-  const handleDrop = (acceptedFiles: File[]) => {
-    setFiles(acceptedFiles);
-    setIsDragActive(false);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setFiles(Array.from(event.target.files));
+    }
   };
-
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: {
-      'application/pdf': ['.pdf'],
-    },
-    onDrop: (acceptedFiles) => {
-      setFiles(acceptedFiles);
-      setIsDragActive(false);
-    },
-    onDragEnter: () => setIsDragActive(true),
-    onDragLeave: () => setIsDragActive(false),
-  });
 
   const uploadFiles = async () => {
     if (!clientState || !clientState.cid) {
@@ -145,27 +132,14 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
           placeholder="Select Client"
           multiple={false}
         />
-
+    
         <div className="mb-3">
-          <label>Drag and drop PDF files here, or click to select files</label>
-          <div
-            {...getRootProps()}
-            style={{
-              border: '2px dashed #ccc',
-              borderRadius: '5px',
-              padding: '20px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              background: isDragActive ? '#f0f8ff' : '#fafafa',
-            }}
-          >
-            <input {...getInputProps()} />
-            {isDragActive ? (
-              <p>Drop the files here...</p>
-            ) : (
-              <p>Drag & drop some files here, or click to select files</p>
-            )}
-          </div>
+          <CFormInput
+            type="file"
+            accept=".pdf"
+            multiple
+            onChange={handleFileChange}
+          />
           {files.length > 0 && (
             <div style={{ marginTop: '10px' }}>
               <strong>Selected files:</strong>
