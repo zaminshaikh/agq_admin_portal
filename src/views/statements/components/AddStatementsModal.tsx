@@ -11,6 +11,7 @@ import {
   CInputGroupText,
   CInputGroup,
   CFormSelect,
+  CAlert,
 } from '@coreui/react-pro';
 import { Client, DatabaseService } from 'src/db/database';
 import { EditAssetsSection } from 'src/components/EditAssetsSection';
@@ -39,6 +40,7 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
   const [isRecipientSameAsClient, setIsRecipientSameAsClient] = useState<boolean>(true);
   const [activityState, setActivityState] = useState<any>({}); // Define appropriate type
   const [clientState, setClientState] = useState<Client | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -79,6 +81,17 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
   };
 
   const handleUpload = async () => {
+    if (!clientState || !clientState.cid) {
+      setErrorMessage('Please select a client.');
+      return;
+    }
+
+    if (files.length === 0) {
+      setErrorMessage('Please select at least one file.');
+      return;
+    }
+
+    setErrorMessage(null); // Clear any existing error messages
     await uploadFiles();
   };
 
@@ -151,6 +164,11 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
             </div>
           )}
         </div>
+        {errorMessage && (
+          <CAlert color="danger">
+            {errorMessage}
+          </CAlert>
+        )}
       </CModalBody>
       <CModalFooter>
         <CButton color="secondary" onClick={onClose} disabled={uploading}>
