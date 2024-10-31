@@ -51,7 +51,7 @@ export interface Client {
 }
 
 export interface Activity {
-    notes: string | number | string[] | undefined
+    notes?: string | number | string[] | undefined
     id?: string;
     parentDocId?: string;
     amount: number;
@@ -150,7 +150,8 @@ export const emptyActivity: Activity = {
     type: 'profit',
     isDividend: false,
     sendNotif: true,
-    isAmortization: false
+    isAmortization: false,
+    notes: undefined,
 };
 
 /**
@@ -603,13 +604,17 @@ export class DatabaseService {
         
         // Add the parentCollectionId field to the activity
         const activityWithParentId = {
-            ...activity,
-            parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION
+          ...activity,
+          parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
         };
-
+        
+        // Filter out undefined properties
+        const filteredActivity = Object.fromEntries(
+          Object.entries(activityWithParentId).filter(([_, v]) => v !== undefined)
+        );
+        
         // Add the activity to the subcollection
-        await addDoc(activityCollectionRef, activityWithParentId);
-
+        await addDoc(activityCollectionRef, filteredActivity);
     }
 
     setActivity = async (activity: Activity, {activityDocId}: {activityDocId?: string}, cid: string) => {
