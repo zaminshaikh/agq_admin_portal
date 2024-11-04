@@ -815,6 +815,7 @@ export const onAssetUpdate = functions.firestore
       const afterAsset = afterAssetsByIndex.get(index);
       if (afterAsset && beforeAsset.displayTitle !== afterAsset.displayTitle) {
         assetsToUpdate.push({
+          index,
           oldDisplayTitle: beforeAsset.displayTitle,
           newDisplayTitle: afterAsset.displayTitle,
         });
@@ -828,12 +829,30 @@ export const onAssetUpdate = functions.firestore
       return null;
     }
 
+    // Fetch the client's name
+    const userDocRef = db.doc(`${userCollection}/${userId}`);
+    const userDocSnap = await userDocRef.get();
+    const clientData = userDocSnap.data();
+    const clientName = clientData ? clientData.name.first + ' ' + clientData.name.last : null;
+    
+    if (!clientName) {
+      console.error(`Client name not found for user ${userId}`);
+      return null;
+    }
+
     // Update activities based on displayTitle changes
     const activitiesRef = db.collection(`${userCollection}/${userId}/activities`);
     const batch = db.batch();
 
     for (const { oldDisplayTitle, newDisplayTitle } of assetsToUpdate) {
-      console.log(`Updating activities from "${oldDisplayTitle}" to "${newDisplayTitle}"`);
+      let newRecipient = newDisplayTitle;
+
+      // If the new display title is 'Personal', set the recipient to client's name
+      if (newDisplayTitle === 'Personal') {
+        newRecipient = clientName ?? newDisplayTitle;
+      }
+
+      console.log(`Updating activities from "${oldDisplayTitle}" to "${newRecipient}"`);
 
       const snapshot = await activitiesRef
         .where('fund', '==', fund)
@@ -843,7 +862,7 @@ export const onAssetUpdate = functions.firestore
       console.log(`Found ${snapshot.size} activities to update for recipient: "${oldDisplayTitle}"`);
 
       snapshot.forEach((doc: QueryDocumentSnapshot) => {
-        batch.update(doc.ref, { recipient: newDisplayTitle });
+        batch.update(doc.ref, { recipient: newRecipient });
       });
     }
 
