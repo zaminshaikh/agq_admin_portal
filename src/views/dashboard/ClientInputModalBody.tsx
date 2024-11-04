@@ -130,6 +130,7 @@ const exceptions = ["LLC", "Inc", "Ltd"];
                     formattedTime: formatDate(parsedDate),
                     type: getActivityType(row["Type"], Math.abs(parseFloat(row["Amount (Unscaled)"]))),
                     notes: undefined,
+                    parentName: clientState.firstName + ' ' + clientState.lastName
                 };
     
                 // Add the activity to the activities array

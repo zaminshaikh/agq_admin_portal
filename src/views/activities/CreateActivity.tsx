@@ -57,7 +57,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                     notes: activityState.notes,
                     isAmortization: true,
                     amortizationCreated: true,
-                    parentName: activityState.parentName,
+                    parentName: clientState.firstName + ' ' + clientState.lastName
                 }
                 
                 const profit: Activity = {

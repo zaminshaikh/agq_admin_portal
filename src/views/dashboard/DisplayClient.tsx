@@ -27,6 +27,7 @@ export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal
                     clientState={currentClient} 
                     setClientState={(client: Client) => {}} 
                     clientOptions={clientOptions}
+                    setClientOptions={() => {}}
                     viewOnly={true}/>
         </CModal>
     )

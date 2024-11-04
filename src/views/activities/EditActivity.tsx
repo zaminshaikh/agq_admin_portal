@@ -30,6 +30,7 @@ const handleEditActivity = async (activityState: Activity, clientState: Client) 
             isAmortization: true,
             amortizationCreated: true,
             notes: activityState.notes ?? undefined,
+            parentName: clientState.firstName + ' ' + clientState.lastName
         }
         
         const profit: Activity = {

@@ -145,6 +145,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                     recipient: row["CLIENT'S FIRST NAME"] + ' ' + row["CLIENT'S LAST NAME"],
                     formattedTime: parseDateWithTwoDigitYear(row["FIRST DEPOSIT DATE"])?.toLocaleDateString(),
                     notes: parseFloat(row["FIRST DEPOSIT AMOUNT"]) > 0 ? 'Initial Deposit' : '',
+                    parentName: row["CLIENT'S FIRST NAME"] + ' ' + row["CLIENT'S LAST NAME"],
                 },
             ]
         };
