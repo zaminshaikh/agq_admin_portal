@@ -166,7 +166,7 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
     const activity = snapshot.data() as Activity;
     const { userId, activityId, userCollection} = context.params;
 
-    await updateYTD(userId, userCollection); // Update YTD for the user and connected users
+    // await updateYTD(userId, userCollection); // Update YTD for the user and connected users
 
     if (activity.sendNotif !== true || userCollection === 'backup') {
         return null; // Exit if no notification is required
@@ -191,12 +191,12 @@ async function updateYTD(cid: string, usersCollectionID: string): Promise<void> 
         const ytd = await calculateYTDForUser(cid, usersCollectionID);
         const totalYTD = await calculateTotalYTDForUser(cid, usersCollectionID);
 
-        // Update the user's 'general' document within 'assets' subcollection with ytd and totalYTD
+        // Update the user's general document within assets subcollection with ytd and totalYTD
         const userGeneralAssetRef = admin.firestore()
             .collection(usersCollectionID)
             .doc(cid)
-            .collection('assets')
-            .doc('general');
+            .collection(config.ASSETS_SUBCOLLECTION)
+            .doc(config.ASSETS_GENERAL_DOC_ID);
         await userGeneralAssetRef.update({ ytd, totalYTD });
 
         // Find all users where 'connectedUsers' array contains cid
@@ -211,12 +211,12 @@ async function updateYTD(cid: string, usersCollectionID: string): Promise<void> 
             // Recalculate totalYTD for connected user
             const parentUserTotalYTD = await calculateTotalYTDForUser(parentUserCID, usersCollectionID);
 
-            // Update connected user's 'general' document within 'assets' subcollection with totalYTD
+            // Update connected user's general within assets subcollection with totalYTD
             const parentUserGeneralAssetRef = admin.firestore()
                 .collection(usersCollectionID)
                 .doc(parentUserCID)
-                .collection('assets')
-                .doc('general');
+                .collection(config.ASSETS_SUBCOLLECTION)
+                .doc(config.ASSETS_GENERAL_DOC_ID);
             await parentUserGeneralAssetRef.update({ totalYTD: parentUserTotalYTD });
         });
 
@@ -855,5 +855,122 @@ export const onAssetUpdate = functions.firestore
     }
 
     console.log(`Updated recipient fields for user ${userId} in collection ${userCollection}.`);
+    return null;
+  });
+
+/**
+ * Cloud Function that triggers on creation, update, or deletion of an activity.
+ */
+export const onActivityWrite = functions.firestore
+  .document(`/{userCollection}/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`)
+  .onWrite(async (change, context) => {
+    const { userId, userCollection } = context.params;
+
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+
+    const getActivityDate = (activity: Activity): Date => {
+      if (activity.time instanceof admin.firestore.Timestamp) {
+        return activity.time.toDate();
+      } else {
+        return activity.time as Date;
+      }
+    };
+
+    const doesAffectYTD = (activity: Activity): boolean => {
+      const activityDate = getActivityDate(activity);
+      return (
+        activity.fund === 'AGQ' &&
+        ['profit', 'income'].includes(activity.type) &&
+        activityDate >= startOfYear
+      );
+    };
+
+    let shouldUpdateYTD = false;
+
+    if (!change.before.exists) {
+      // **Activity created**
+      const activity = change.after.data() as Activity;
+      if (doesAffectYTD(activity)) {
+        shouldUpdateYTD = true;
+      }
+    } else if (!change.after.exists) {
+      // **Activity deleted**
+      const activity = change.before.data() as Activity;
+      if (doesAffectYTD(activity)) {
+        shouldUpdateYTD = true;
+      }
+    } else {
+      // **Activity updated**
+      const beforeActivity = change.before.data() as Activity;
+      const afterActivity = change.after.data() as Activity;
+      const beforeAffectsYTD = doesAffectYTD(beforeActivity);
+      const afterAffectsYTD = doesAffectYTD(afterActivity);
+      if (beforeAffectsYTD || afterAffectsYTD) {
+        shouldUpdateYTD = true;
+      }
+    }
+
+    if (shouldUpdateYTD) {
+      await updateYTD(userId, userCollection); // Update YTD for the user and connected users
+    }
+
+    return null;
+  });
+
+/**
+ * Scheduled Cloud Function to reset ytd and totalYtd to 0 for all users on January 1st every year.
+ */
+export const scheduledYTDReset = functions.pubsub
+  .schedule('0 0 1 1 *') // Runs at 00:00 on January 1st every year
+  .timeZone('America/New_York') // Replace with your time zone, e.g., 'America/Los_Angeles'
+  .onRun(async (context) => {
+    const userCollection = 'users'; // Replace with your user collection name if different
+
+    try {
+      // Get all users
+      const usersSnapshot = await db.collection(userCollection).get();
+
+      let batch = db.batch();
+      let operationsCount = 0;
+      const maxBatchSize = 500; // Firestore batch limit
+
+      // Iterate over each user
+      for (const userDoc of usersSnapshot.docs) {
+        const userId = userDoc.id;
+
+        // Reference to the user's assets/general document
+        const assetsGeneralRef = db
+          .collection(userCollection)
+          .doc(userId)
+          .collection(config.ASSETS_SUBCOLLECTION)
+          .doc(config.ASSETS_GENERAL_DOC_ID);
+
+        // Update ytd and totalYtd to 0
+        batch.update(assetsGeneralRef, {
+          ytd: 0,
+          totalYtd: 0,
+        });
+
+        operationsCount++;
+
+        // Commit the batch every 500 operations
+        if (operationsCount === maxBatchSize) {
+          await batch.commit();
+          batch = db.batch(); // Create a new batch instance
+          operationsCount = 0;
+        }
+      }
+
+      // Commit any remaining operations
+      if (operationsCount > 0) {
+        await batch.commit();
+      }
+
+      console.log('YTD totals successfully reset for all users.');
+    } catch (error) {
+      console.error('Error resetting YTD totals:', error);
+      throw new Error('Failed to reset YTD totals.');
+    }
+
     return null;
   });
