@@ -61,13 +61,17 @@ const ActivitiesTable = () => {
             sorter: false,
         },
         {
-            key: 'recipient',
-            label: 'Recipient',
+            key: 'parentName',
+            label: 'Client',
         },
         {   
             label: 'Time',
             key: 'formattedTime',
-            _style: { width: '30%' },
+            _style: { width: '25%' },
+        },
+        {
+            key: 'recipient',
+            label: 'Recipient',
         },
         {
             key: 'amount',
