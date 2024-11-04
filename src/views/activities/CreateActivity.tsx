@@ -57,6 +57,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                     notes: activityState.notes,
                     isAmortization: true,
                     amortizationCreated: true,
+                    parentName: activityState.parentName,
                 }
                 
                 const profit: Activity = {
@@ -79,7 +80,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                 await Promise.all(promises);
             } else {
                 // Create activity with client cid
-                await db.createActivity(activityState, clientState.cid);
+                await db.createActivity({...activityState, parentName: clientState.firstName + ' ' + clientState.lastName}, clientState.cid);
                 if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
                     await db.setAssets(clientState);
                 }

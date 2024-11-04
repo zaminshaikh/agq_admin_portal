@@ -66,6 +66,7 @@ export interface Activity {
     isAmortization?: boolean
     principalPaid?: number | undefined
     profitPaid?: number | undefined
+    parentName: string;
 }
 
 export interface Notification {
@@ -152,6 +153,7 @@ export const emptyActivity: Activity = {
     sendNotif: true,
     isAmortization: false,
     notes: undefined,
+    parentName: '',
 };
 
 /**
