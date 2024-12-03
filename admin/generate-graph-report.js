@@ -29,6 +29,19 @@ function addLeftAlignedText(doc, text, fontSize) {
 }
 
 /**
+ * Formats a number as USD currency.
+ *
+ * @param {number} value - The number to format.
+ * @returns {string} - The formatted currency string.
+ */
+const formatUSD = (value) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(value);
+};
+
+/**
  * Generates a graphpoint PDF report for all users in the specified collection.
  *
  * @param {string} usersCollectionName - The name of the users collection.
@@ -111,8 +124,8 @@ async function generateGraphpointReport(usersCollectionName) {
         const tableRows = graphpoints.map((gp) => {
           return [
             gp.time.toDate().toLocaleString(),
-            gp.amount.toFixed(2),
-            gp.cashflow.toFixed(2),
+            formatUSD(gp.amount), // Format amount as USD
+            formatUSD(gp.cashflow), // Format cashflow as USD
           ];
         });
 
