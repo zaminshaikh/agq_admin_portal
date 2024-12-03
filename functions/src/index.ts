@@ -168,7 +168,7 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
 
     // await updateYTD(userId, userCollection); // Update YTD for the user and connected users
 
-    if (activity.sendNotif !== true || userCollection === 'backup') {
+    if (activity.sendNotif !== true || userCollection === 'backup' || userCollection === 'playground' || userCollection === 'playground2') {
         return null; // Exit if no notification is required
     }
 
@@ -846,17 +846,22 @@ export const onAssetUpdate = functions.firestore
 
     for (const { oldDisplayTitle, newDisplayTitle } of assetsToUpdate) {
       let newRecipient = newDisplayTitle;
+      let oldRecipient = oldDisplayTitle;
 
       // If the new display title is 'Personal', set the recipient to client's name
       if (newDisplayTitle === 'Personal') {
         newRecipient = clientName ?? newDisplayTitle;
       }
 
+      if (oldDisplayTitle === 'Personal') {
+        oldRecipient = clientName ?? oldDisplayTitle;
+      }
+
       console.log(`Updating activities from "${oldDisplayTitle}" to "${newRecipient}"`);
 
       const snapshot = await activitiesRef
         .where('fund', '==', fund)
-        .where('recipient', '==', oldDisplayTitle)
+        .where('recipient', '==', oldRecipient)
         .get();
 
       console.log(`Found ${snapshot.size} activities to update for recipient: "${oldDisplayTitle}"`);
