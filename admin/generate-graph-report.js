@@ -110,30 +110,40 @@ async function generateGraphpointReport(usersCollectionName) {
       console.log(`Adding user heading for ${userName} with alignment 'left'`);
       addLeftAlignedText(doc, userName, 20);
 
-      // Process each account
-      for (const [account, graphpoints] of Object.entries(graphpointsByAccount)) {
+        // Inside the generateGraphpointReport function, update the account handling as follows:
+        
+        for (const [account, graphpoints] of Object.entries(graphpointsByAccount)) {
+        // Determine the display name for the account
+        let displayAccountName = account;
+        
+        if (account.toLowerCase() === 'cumulative') {
+            displayAccountName = 'Cumulative';
+        } else if (account === userName) {
+            displayAccountName = 'Personal';
+        }
+        
         // Set alignment and reset font before writing account subheading
-        console.log(`Adding account subheading for ${account} with alignment 'left'`);
-        addLeftAlignedText(doc, `Account: ${account}`, 16);
-
+        console.log(`Adding account subheading for ${displayAccountName} with alignment 'left'`);
+        addLeftAlignedText(doc, `Account: ${displayAccountName}`, 16);
+        
         // Sort graphpoints by time
         graphpoints.sort((a, b) => a.time.toDate().getTime() - b.time.toDate().getTime());
-
+        
         // Prepare table data (excluding 'account')
         const tableHeaders = ['Time', 'Amount', 'Cashflow'];
         const tableRows = graphpoints.map((gp) => {
-          return [
+            return [
             gp.time.toDate().toLocaleString(),
             formatUSD(gp.amount), // Format amount as USD
             formatUSD(gp.cashflow), // Format cashflow as USD
-          ];
+            ];
         });
-
+        
         // Draw the table using the updated drawTable function
         drawTable(doc, tableHeaders, tableRows);
-
+        
         doc.moveDown();
-      }
+        }
 
       console.log(`Completed report generation for user CID: ${cid}`);
     }
