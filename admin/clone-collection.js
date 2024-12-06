@@ -32,7 +32,7 @@ async function cloneCollection(oldCollectionName, newCollectionName) {
     // Create an array of cloneDocument promises
     const clonePromises = documents.docs.map((doc) => {
       console.log(`Cloning document ID: ${doc.id}`);
-      return cloneDocument(doc.ref, newCollectionRef.doc(doc.id));
+      return cloneDocument(doc.ref, newCollectionRef.doc(doc.id), newCollectionName);
     });
 
     // Wait for all documents to be cloned in parallel
@@ -51,8 +51,9 @@ async function cloneCollection(oldCollectionName, newCollectionName) {
  *
  * @param {FirebaseFirestore.DocumentReference} srcDocRef - Reference to the source document.
  * @param {FirebaseFirestore.DocumentReference} destDocRef - Reference to the destination document.
+ * @param {string} newCollectionName - The name of the new collection.
  */
-async function cloneDocument(srcDocRef, destDocRef) {
+async function cloneDocument(srcDocRef, destDocRef, newCollectionName) {
   try {
     // Fetch the document data
     const docSnapshot = await srcDocRef.get();
@@ -61,8 +62,16 @@ async function cloneDocument(srcDocRef, destDocRef) {
       return;
     }
 
+    let data = docSnapshot.data();
+
+    const pathSegments = srcDocRef.path.split('/');
+    if (pathSegments.includes('activities')) {
+      data.parentCollection = newCollectionName;
+      console.log(`Updated 'parentCollection' for document ID: ${srcDocRef.id}`);
+    }
+
     // Set the data to the destination document
-    await destDocRef.set(docSnapshot.data());
+    await destDocRef.set(data);
     console.log(`Copied data for document ID: ${srcDocRef.id}`);
 
     // Retrieve all subcollections of the source document
@@ -87,7 +96,7 @@ async function cloneDocument(srcDocRef, destDocRef) {
       // Create an array of cloneDocument promises for subdocuments
       const subDocPromises = subDocs.docs.map((subDoc) => {
         console.log(`Cloning subdocument ID: ${subDoc.id} in subcollection '${subcollectionName}'`);
-        return cloneDocument(subDoc.ref, destSubcollectionRef.doc(subDoc.id));
+        return cloneDocument(subDoc.ref, destSubcollectionRef.doc(subDoc.id), newCollectionName);
       });
 
       // Wait for all subdocuments to be cloned in parallel
@@ -103,8 +112,8 @@ async function cloneDocument(srcDocRef, destDocRef) {
 }
 
 // Example usage
-const oldCollectionName = 'playground';   // Replace with the source collection name
-const newCollectionName = 'playground2';  // Replace with the destination collection name
+const oldCollectionName = 'users';   // Replace with the source collection name
+const newCollectionName = 'playground';  // Replace with the destination collection name
 
 cloneCollection(oldCollectionName, newCollectionName)
   .then(() => {

@@ -24,7 +24,7 @@ async function generateGraphpoints(usersCollectionName) {
   const usersRef = db.collection(usersCollectionName);
   
   try {
-    const usersSnapshot = await usersRef.get();
+    const usersSnapshot = await usersRef.orderBy('name').get();
     console.log(`Found ${usersSnapshot.size} users in collection '${usersCollectionName}'`);
 
     // Process all users in parallel
@@ -131,7 +131,7 @@ async function generateGraphpoints(usersCollectionName) {
 }
 
 // Example usage
-const usersCollectionName = 'playground2'; // Replace with your actual users collection name
+const usersCollectionName = 'playground'; // Replace with your actual users collection name
 generateGraphpoints(usersCollectionName)
   .then(() => {
     console.log('Graphpoints generation completed successfully');

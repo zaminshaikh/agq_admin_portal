@@ -55,6 +55,15 @@ async function generateGraphpointReport(usersCollectionName) {
     const usersSnapshot = await usersRef.get();
     console.log(`Found ${usersSnapshot.size} users in collection '${usersCollectionName}'`);
 
+    // Sort users alphabetically by first and last name
+    const sortedUsers = usersSnapshot.docs.sort((a, b) => {
+      const nameA = `${a.data().name.first} ${a.data().name.last}`.toLowerCase();
+      const nameB = `${b.data().name.first} ${b.data().name.last}`.toLowerCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+
     // Create a new PDF document
     const doc = new PDFDocument({ margin: 30, size: 'A4' });
 
@@ -68,7 +77,7 @@ async function generateGraphpointReport(usersCollectionName) {
 
     // Process each user sequentially
     let firstUser = true; // Flag to handle page addition
-    for (const userDoc of usersSnapshot.docs) {
+    for (const userDoc of sortedUsers) { // Use sortedUsers instead of usersSnapshot.docs
       const cid = userDoc.id;
       const userData = userDoc.data();
       const userName = `${userData.name.first} ${userData.name.last}`;
@@ -110,40 +119,47 @@ async function generateGraphpointReport(usersCollectionName) {
       console.log(`Adding user heading for ${userName} with alignment 'left'`);
       addLeftAlignedText(doc, userName, 20);
 
-        // Inside the generateGraphpointReport function, update the account handling as follows:
-        
-        for (const [account, graphpoints] of Object.entries(graphpointsByAccount)) {
+      // Sort account names with 'Cumulative' first, then alphabetical
+      const sortedAccounts = Object.keys(graphpointsByAccount).sort((a, b) => {
+        if (a.toLowerCase() === 'cumulative') return -1;
+        if (b.toLowerCase() === 'cumulative') return 1;
+        return a.localeCompare(b);
+      });
+
+      for (const account of sortedAccounts) {
+        const graphpoints = graphpointsByAccount[account];
+
         // Determine the display name for the account
         let displayAccountName = account;
-        
+
         if (account.toLowerCase() === 'cumulative') {
-            displayAccountName = 'Cumulative';
+          displayAccountName = 'Cumulative';
         } else if (account === userName) {
-            displayAccountName = 'Personal';
+          displayAccountName = 'Personal';
         }
-        
+
         // Set alignment and reset font before writing account subheading
         console.log(`Adding account subheading for ${displayAccountName} with alignment 'left'`);
         addLeftAlignedText(doc, `Account: ${displayAccountName}`, 16);
-        
+
         // Sort graphpoints by time
         graphpoints.sort((a, b) => a.time.toDate().getTime() - b.time.toDate().getTime());
-        
+
         // Prepare table data (excluding 'account')
         const tableHeaders = ['Time', 'Amount', 'Cashflow'];
         const tableRows = graphpoints.map((gp) => {
-            return [
+          return [
             gp.time.toDate().toLocaleString(),
             formatUSD(gp.amount), // Format amount as USD
             formatUSD(gp.cashflow), // Format cashflow as USD
-            ];
+          ];
         });
-        
+
         // Draw the table using the updated drawTable function
         drawTable(doc, tableHeaders, tableRows);
-        
+
         doc.moveDown();
-        }
+      }
 
       console.log(`Completed report generation for user CID: ${cid}`);
     }
@@ -247,7 +263,7 @@ function drawTable(doc, headers, rows) {
 }
 
 // Example usage
-const usersCollectionName = 'playground2'; // Replace with your actual users collection name
+const usersCollectionName = 'playground'; // Replace with your actual users collection name
 generateGraphpointReport(usersCollectionName)
   .then(() => {
     console.log('Graphpoint report generation completed successfully');
