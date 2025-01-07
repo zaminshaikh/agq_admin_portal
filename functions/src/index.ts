@@ -166,7 +166,7 @@ async function handleNewActivity(snapshot: functions.firestore.DocumentSnapshot,
     const activity = snapshot.data() as Activity;
     const { userId, activityId, userCollection} = context.params;
 
-    // await updateYTD(userId, userCollection); // Update YTD for the user and connected users
+    await updateYTD(userId, userCollection); // Update YTD for the user and connected users
 
     if (activity.sendNotif !== true || userCollection === 'backup' || userCollection === 'playground' || userCollection === 'playground2') {
         return null; // Exit if no notification is required
@@ -458,7 +458,7 @@ exports.checkDocumentLinked = functions.https.onCall(async (data, context) => {
 async function calculateYTDForUser(userCid: string, usersCollectionID: string): Promise<number> {
     const currentYear = new Date().getFullYear();
     const startOfYear = new Date(currentYear, 0, 1);
-    const endOfYear = new Date(currentYear, 11, 31);
+    const endOfYear = new Date(currentYear + 1, 0, 1);
 
     const activitiesRef = admin.firestore().collection(`/${usersCollectionID}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
     const snapshot = await activitiesRef
@@ -524,7 +524,7 @@ exports.calculateYTD = functions.https.onCall(async (data, context): Promise<obj
     try {
         const currentYear = new Date().getFullYear();
         const startOfYear = new Date(currentYear, 0, 1);
-        const endOfYear = new Date(currentYear, 11, 31);
+        const endOfYear = new Date(currentYear + 1, 0, 1);
 
         const activitiesRef = admin.firestore().collection(`/${usersCollectionID}/${cid}/${config.ACTIVITIES_SUBCOLLECTION}`);
         const snapshot = await activitiesRef

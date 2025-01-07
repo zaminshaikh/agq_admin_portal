@@ -91,7 +91,7 @@ async function generateGraphpoints(usersCollectionName) {
 
           // Prepare graphpoints
           const cumulativeGraphpoint = {
-            account: 'cumulative',
+            account: 'Cumulative',
             amount: cumulativeBalance,
             cashflow: cashflow,
             time: time,
