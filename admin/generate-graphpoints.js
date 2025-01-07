@@ -74,7 +74,7 @@ async function generateGraphpoints(usersCollectionName) {
         if (
           activity.type === 'deposit' ||
           activity.type === 'withdrawal' ||
-          activity.recipient.includes('IRA')
+          activity.isDividend
         ) {
           const cashflow = activity.amount * (activity.type === 'withdrawal' ? -1 : 1);
           const time = activity.time;
