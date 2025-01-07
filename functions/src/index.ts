@@ -972,7 +972,7 @@ export const scheduledYTDReset = functions.pubsub
         // Update ytd and totalYtd to 0
         batch.update(assetsGeneralRef, {
           ytd: 0,
-          totalYtd: 0,
+          totalYTD: 0,
         });
 
         operationsCount++;
