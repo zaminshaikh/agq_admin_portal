@@ -66,6 +66,7 @@ async function generateGraphpoints(usersCollectionName) {
 
       let cumulativeBalance = 0;
       const accountBalances = {};
+      let fundsMap = {};
 
       // Process activities sequentially to maintain balance integrity
       for (const activityDoc of activitiesSnapshot.docs) {
@@ -79,6 +80,7 @@ async function generateGraphpoints(usersCollectionName) {
           const cashflow = activity.amount * (activity.type === 'withdrawal' ? -1 : 1);
           const time = activity.time;
           const account = activity.recipient;
+          const fund = activity.fund || 'Unspecified';
 
           // Update cumulative balance
           cumulativeBalance += cashflow;
@@ -89,19 +91,34 @@ async function generateGraphpoints(usersCollectionName) {
           }
           accountBalances[account] += cashflow;
 
+          if (!fundsMap[fund]) {
+            fundsMap[fund] = {
+              cumulativeBalance: 0,
+              accountBalances: {}
+            };
+          }
+          fundsMap[fund].cumulativeBalance += cashflow;
+
+          if (!fundsMap[fund].accountBalances[account]) {
+            fundsMap[fund].accountBalances[account] = 0;
+          }
+          fundsMap[fund].accountBalances[account] += cashflow;
+
           // Prepare graphpoints
           const cumulativeGraphpoint = {
             account: 'Cumulative',
-            amount: cumulativeBalance,
+            amount: fundsMap[fund].cumulativeBalance,
             cashflow: cashflow,
             time: time,
+            fund: fund,
           };
 
           const accountGraphpoint = {
             account: account,
-            amount: accountBalances[account],
+            amount: fundsMap[fund].accountBalances[account],
             cashflow: cashflow,
             time: time,
+            fund: fund,
           };
 
           // Add graphpoints

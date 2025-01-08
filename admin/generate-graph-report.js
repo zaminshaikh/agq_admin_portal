@@ -93,15 +93,25 @@ async function generateGraphpointReport(usersCollectionName) {
         continue;
       }
 
-      // Organize graphpoints by account
-      const graphpointsByAccount = {};
+      // Group graphpoints by fund, then by account
+      const graphpointsByFund = {};
       graphpointsSnapshot.docs.forEach((doc) => {
-        const graphpoint = doc.data();
-        const account = graphpoint.account;
-        if (!graphpointsByAccount[account]) {
-          graphpointsByAccount[account] = [];
+        const gp = doc.data();
+        const fundName = gp.fund || 'Unspecified';
+        if (!graphpointsByFund[fundName]) {
+          graphpointsByFund[fundName] = {};
         }
-        graphpointsByAccount[account].push(graphpoint);
+        if (!graphpointsByFund[fundName][gp.account]) {
+          graphpointsByFund[fundName][gp.account] = [];
+        }
+        graphpointsByFund[fundName][gp.account].push(gp);
+      });
+
+      // Sort fund names (place 'Unspecified' last for clarity)
+      const sortedFunds = Object.keys(graphpointsByFund).sort((a, b) => {
+        if (a === 'Unspecified') return 1;
+        if (b === 'Unspecified') return -1;
+        return a.localeCompare(b);
       });
 
       // Add a new page for each user (except the first one)
@@ -119,46 +129,35 @@ async function generateGraphpointReport(usersCollectionName) {
       console.log(`Adding user heading for ${userName} with alignment 'left'`);
       addLeftAlignedText(doc, userName, 20);
 
-      // Sort account names with 'Cumulative' first, then alphabetical
-      const sortedAccounts = Object.keys(graphpointsByAccount).sort((a, b) => {
-        if (a.toLowerCase() === 'cumulative') return -1;
-        if (b.toLowerCase() === 'cumulative') return 1;
-        return a.localeCompare(b);
-      });
+      // For each fund, display a subheading and its accounts
+      for (const fund of sortedFunds) {
+        addLeftAlignedText(doc, `Fund: ${fund}`, 16);
 
-      for (const account of sortedAccounts) {
-        const graphpoints = graphpointsByAccount[account];
-
-        // Determine the display name for the account
-        let displayAccountName = account;
-
-        if (account.toLowerCase() === 'cumulative') {
-          displayAccountName = 'Cumulative';
-        } else if (account === userName) {
-          displayAccountName = 'Personal';
-        }
-
-        // Set alignment and reset font before writing account subheading
-        console.log(`Adding account subheading for ${displayAccountName} with alignment 'left'`);
-        addLeftAlignedText(doc, `Account: ${displayAccountName}`, 16);
-
-        // Sort graphpoints by time
-        graphpoints.sort((a, b) => a.time.toDate().getTime() - b.time.toDate().getTime());
-
-        // Prepare table data (excluding 'account')
-        const tableHeaders = ['Time', 'Amount', 'Cashflow'];
-        const tableRows = graphpoints.map((gp) => {
-          return [
-            gp.time.toDate().toLocaleString(),
-            formatUSD(gp.amount), // Format amount as USD
-            formatUSD(gp.cashflow), // Format cashflow as USD
-          ];
+        const accountsInFund = Object.keys(graphpointsByFund[fund]).sort((a, b) => {
+          if (a.toLowerCase() === 'cumulative') return -1;
+          if (b.toLowerCase() === 'cumulative') return 1;
+          return a.localeCompare(b);
         });
 
-        // Draw the table using the updated drawTable function
-        drawTable(doc, tableHeaders, tableRows);
+        for (const account of accountsInFund) {
+          const gps = graphpointsByFund[fund][account];
+          addLeftAlignedText(doc, `Account: ${account}`, 14);
 
-        doc.moveDown();
+          // Sort graphpoints by time
+          gps.sort((a, b) => a.time.toDate().getTime() - b.time.toDate().getTime());
+
+          // Prepare table data
+          const tableHeaders = ['Time', 'Amount', 'Cashflow'];
+          const tableRows = gps.map((gp) => [
+            gp.time.toDate().toLocaleString(),
+            formatUSD(gp.amount),
+            formatUSD(gp.cashflow),
+          ]);
+
+          // Draw the table using the updated drawTable function
+          drawTable(doc, tableHeaders, tableRows);
+          doc.moveDown();
+        }
       }
 
       console.log(`Completed report generation for user CID: ${cid}`);
