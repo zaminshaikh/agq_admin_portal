@@ -36,6 +36,10 @@ async function generateGraphpoints(usersCollectionName) {
       const activitiesRef = userRef.collection('activities');
       const graphpointsRef = userRef.collection('graphpoints');
 
+      // Retrieve user data
+      const userData = userDoc.data();
+      const fullName = `${userData.name.first} ${userData.name.last}`;
+
       // Clear existing graphpoints
       try {
         const existingGraphpoints = await graphpointsRef.get();
@@ -79,7 +83,12 @@ async function generateGraphpoints(usersCollectionName) {
         ) {
           const cashflow = activity.amount * (activity.type === 'withdrawal' ? -1 : 1);
           const time = activity.time;
-          const account = activity.recipient;
+          let account;
+          if (activity.recipient === fullName) {
+            account = 'Personal';
+          } else {
+            account = activity.recipient;
+          }
           const fund = activity.fund || 'Unspecified';
 
           // Update cumulative balance
