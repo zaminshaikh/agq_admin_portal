@@ -957,7 +957,7 @@ export const scheduledYTDReset = functions.pubsub
   .schedule('0 0 1 1 *') // Runs at 00:00 on January 1st every year
   .timeZone('America/New_York') // Replace with your time zone, e.g., 'America/Los_Angeles'
   .onRun(async (context) => {
-    const userCollection = 'users'; // Replace with your user collection name if different
+    const userCollection = config.FIRESTORE_ACTIVE_USERS_COLLECTION; // Replace with your user collection name if different
 
     try {
       // Get all users
@@ -1046,7 +1046,7 @@ exports.processScheduledActivities = functions.pubsub.schedule('every 2 minutes'
 
         batch.set(newActivityRef, {
             ...activity,
-            parentCollection: 'users', // Adjust if different
+            parentCollection: usersCollectionID, // Adjust if different
             formattedTime: admin.firestore.FieldValue.serverTimestamp(), // Or format as needed
         });
 
