@@ -1,5 +1,5 @@
 import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
-import { useEffect, useState } from "react";
+import { act, useEffect, useState } from "react";
 import React from "react";
 import { Activity, DatabaseService, Client, emptyActivity, emptyClient } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
@@ -10,6 +10,7 @@ import CIcon from '@coreui/icons-react';
 import { cilCalendar, cilPlus, cilTrash } from '@coreui/icons';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { amortize } from "src/utils/utilities.ts";
 
 
 interface ShowModalProps {
@@ -34,8 +35,6 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
         .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: selectedClient === client.cid }))
         .sort((a, b) => a.label.localeCompare(b.label));
     
-    const prepareActivities = () => { 
-    }
         
     const handleCreateActivity = async () => {
         if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
@@ -54,30 +53,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
 
             if (activityState.isAmortization === true && !activityState.amortizationCreated) {
                 
-                const activity = {
-                    parentDocId: clientState.cid ?? '',
-                    time: activityState.time,
-                    recipient: activityState.recipient,
-                    fund: activityState.fund,
-                    sendNotif: activityState.sendNotif,
-                    isDividend: activityState.isDividend,
-                    notes: activityState.notes,
-                    isAmortization: true,
-                    amortizationCreated: true,
-                    parentName: clientState.firstName + ' ' + clientState.lastName
-                }
-                
-                const profit: Activity = {
-                    ...activity,
-                    type: 'profit',
-                    amount: activityState.amount - (activityState.principalPaid ?? 0),
-                }
-
-                const withdrawal: Activity = {
-                    ...activity,
-                    type: 'withdrawal',
-                    amount: activityState.principalPaid ?? 0,
-                }
+                const [profit, withdrawal] = amortize(activityState, clientState);    
 
                 let promises = [];
                 promises.push(db.createActivity(profit, clientState.cid));
@@ -101,29 +77,40 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     }
 
     const handleScheduleActivity = async () => {
-        if (activityState.time <= new Date()) {
-            alert("Scheduled time must be in the future.");
-            return;
-        }
+        if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
+            setShowErrorModal(true);
+        } else {
+            if (override) {
+                setActivityState({
+                    ...activityState,
+                    time: new Date(),
+                });
+            }
+            if (activityState.time <= new Date()) {
+                alert("Scheduled time must be in the future.");
+                return;
+            }
 
-        if (!clientState) {
-            console.error("Invalid client state");
-            return;
-        }
+            if (!clientState) {
+                console.error("Invalid client state");
+                return;
+            }
+            
+            if (activityState.isAmortization === true && !activityState.amortizationCreated) {
+                    
+                const [profit, withdrawal] = amortize(activityState, clientState); 
 
-        const scheduledActivity = {
-            cid: clientState.cid,
-            activity: { ...activityState, parentName: clientState.firstName + ' ' + clientState.lastName },
-            status: 'pending',
-        };
+                await db.scheduleActivity(profit, clientState);
+                await db.scheduleActivity(withdrawal, clientState);
 
-        try {
-            await db.scheduleActivity(scheduledActivity);
+            } else {
+                await db.scheduleActivity(activityState, clientState);
+            }
             setShowModal(false);
-            // Refresh activities if needed
-        } catch (error) {
-            console.error("Error scheduling activity:", error);
-            // Handle error appropriately
+            const activities = await db.getActivities(); // Get the new updated activities
+            setAllActivities(activities)
+            // Filter by the client we just created an activity for
+            setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedClient ?? clientState.cid)));
         }
     };
 
@@ -177,3 +164,4 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
         
     )
 }
+

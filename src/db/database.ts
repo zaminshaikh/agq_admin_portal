@@ -69,6 +69,14 @@ export interface Activity {
     parentName: string;
 }
 
+export interface ScheduledActivity {
+    cid: string;
+    activity: Activity;
+    clientState: Client;
+    status: string;
+    scheduledTime: Date;
+}
+
 export interface Notification {
     activityId: string;
     recipient: string;
@@ -704,19 +712,29 @@ export class DatabaseService {
      * @param scheduledActivity - The activity data along with scheduling details.
      * @returns A promise that resolves when the scheduled activity is added.
      */
-    async scheduleActivity(scheduledActivity: {
-        cid: string;
-        activity: Activity;
-        status: string;
-    }): Promise<void> {
-        // ...existing code...
-        // filepath: /Users/zaminshaikh7/ts_admin_portal/src/db/database.ts
-        // Add scheduled activity to Firestore
-        await addDoc(collection(this.db, 'scheduledActivities'), {
-            cid: scheduledActivity.cid,
-            activity: scheduledActivity.activity,
-            status: scheduledActivity.status,
-        });
+    async scheduleActivity(activity: Activity, clientState: Client): Promise<void> {
+        // Add the parentCollectionId field to the activity
+        const activityWithParentId = {
+            ...activity,
+            parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
+        };
+        
+        // Filter out undefined properties
+        const filteredActivity = Object.fromEntries(
+            Object.entries(activityWithParentId).filter(([_, v]) => v !== undefined)
+        );
+
+        const scheduledActivity = {
+            cid: clientState.cid,
+            scheduledTime: filteredActivity.time,
+            activity: { ...filteredActivity, parentName: clientState.firstName + ' ' + clientState.lastName },
+            clientState,
+            status: 'pending',
+        };
+
+        console.log('filteredActivity', filteredActivity);
+        // Add the scheduled activity to the 'scheduledActivities' collection
+        await addDoc(collection(this.db, 'scheduledActivities'),scheduledActivity);
     }
     
 }
