@@ -75,6 +75,7 @@ export interface ScheduledActivity {
     clientState: Client;
     status: string;
     scheduledTime: Date;
+    usersCollectionID: string;
 }
 
 export interface Notification {
@@ -500,7 +501,6 @@ export class DatabaseService {
         // const agqAssets = this.filterAssets(client.assets.agq);
         // const ak1Assets = this.filterAssets(client.assets.ak1);
 
-                // Filter out assets with amount 0
         const agqAssets = client.assets.agq;
         const ak1Assets = client.assets.ak1;
 
@@ -729,6 +729,7 @@ export class DatabaseService {
             scheduledTime: filteredActivity.time,
             activity: { ...filteredActivity, parentName: clientState.firstName + ' ' + clientState.lastName },
             clientState,
+            usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
             status: 'pending',
         };
 

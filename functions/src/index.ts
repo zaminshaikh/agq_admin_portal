@@ -53,6 +53,15 @@ interface Activity {
     sendNotif?: boolean;
 }
 
+export interface AssetDetails {
+    amount: number;
+    firstDepositDate: Date | null;
+    displayTitle: string;
+    index: number;
+}
+
+
+
 // Define both activity paths
 const activityPath = `/{userCollection}/{userId}/${config.ACTIVITIES_SUBCOLLECTION}/{activityId}`;
 export const handleActivity = functions.firestore.document(activityPath).onCreate(handleNewActivity);
@@ -999,72 +1008,21 @@ export const scheduledYTDReset = functions.pubsub
     return null;
   });
 
-  /**
- * Example scheduled function to create future activities.
- * It runs every 12 hours, checks for scheduled documents,
- * and moves them into the user's "activities" subcollection.
- */
-export const scheduledCreateActivities = functions.pubsub
-  // Cron syntax: runs at minute 0, every 12 hours
-  .schedule('0 */12 * * *')
-  .onRun(async () => {
-    const now = new Date();
-    const scheduledRef = db.collection('scheduledActivities');
-
-    // Query documents whose scheduledTime is <= now and status is 'pending'
-    const snapshot = await scheduledRef
-      .where('scheduledTime', '<=', now)
-      .where('status', '==', 'pending')
-      .get();
-
-    if (snapshot.empty) {
-      console.log('No scheduled activities to process at this time.');
-      return null;
-    }
-
-    // Use a batch to process all updates at once
-    const batch = db.batch();
-    snapshot.forEach((doc) => {
-      const scheduledData = doc.data();
-      const { cid, activity } = scheduledData;
-      if (!cid || !activity) {
-        console.error(`Skipping invalid scheduled doc ${doc.id}: missing cid or activity`);
-        return;
-      }
-
-      // Create the actual activity in the user's "activities" subcollection
-      const userActivitiesRef = db
-        .collection(scheduledData.usersCollectionID || 'users')
-        .doc(cid)
-        .collection(config.ACTIVITIES_SUBCOLLECTION);
-
-      const newActivityRef = userActivitiesRef.doc();
-      batch.set(newActivityRef, {
-        ...activity,
-        time: new Date(), // final creation time
-      });
-
-      // Mark the scheduled doc as 'completed'
-      batch.update(doc.ref, { status: 'completed' });
-    });
-
-    await batch.commit();
-    console.log(`Processed ${snapshot.size} scheduled activities.`);
-    return null;
-  });
 
 /**
  * Scheduled Cloud Function to process scheduled activities.
  * Runs every minute and checks for activities where scheduledTime <= now and status is 'pending'.
  * Creates the actual activity and updates the scheduled activity's status to 'completed'.
  */
-export const processScheduledActivities = functions.pubsub.schedule('every 1 minutes').onRun(async (context) => {
+exports.processScheduledActivities = functions.pubsub.schedule('every 2 minutes').onRun(async (context) => {
     const now = admin.firestore.Timestamp.now();
     const scheduledActivitiesRef = db.collection('scheduledActivities');
     const querySnapshot = await scheduledActivitiesRef
         .where('scheduledTime', '<=', now)
         .where('status', '==', 'pending')
         .get();
+    
+    console.log(`Found ${querySnapshot.size} scheduled activities to process.`);
 
     if (querySnapshot.empty) {
         console.log('No scheduled activities to process at this time.');
@@ -1075,23 +1033,67 @@ export const processScheduledActivities = functions.pubsub.schedule('every 1 min
 
     querySnapshot.forEach(doc => {
         const data = doc.data();
-        const { cid, activity } = data;
+        const { cid, activity, clientState, usersCollectionID } = data;
 
         if (!cid || !activity) {
             console.error(`Scheduled activity ${doc.id} is missing 'cid' or 'activity' fields.`);
             return;
         }
 
-        const clientRef = db.collection('activeUsers').doc(cid); // Adjust collection name if different
-        const activitiesRef = clientRef.collection('activities');
+        const clientRef = db.collection(usersCollectionID).doc(cid); // Adjust collection name if different
+        const activitiesRef = clientRef.collection(config.ACTIVITIES_SUBCOLLECTION);
         const newActivityRef = activitiesRef.doc(); // Auto-generated ID
 
         batch.set(newActivityRef, {
             ...activity,
-            parentCollection: 'activeUsers', // Adjust if different
+            parentCollection: 'users', // Adjust if different
             formattedTime: admin.firestore.FieldValue.serverTimestamp(), // Or format as needed
         });
 
+        if (clientState) {
+            const assetCollectionRef = clientRef.collection(config.ASSETS_SUBCOLLECTION);
+
+            // // Filter out assets with amount 0
+            // const agqAssets = this.filterAssets(client.assets.agq);
+            // const ak1Assets = this.filterAssets(client.assets.ak1);
+
+            const agqAssets = clientState.assets.agq;
+            const ak1Assets = clientState.assets.ak1;
+
+            const prepareAssetDoc = (assets: { [assetType: string]: AssetDetails }, fundName: string) => {
+                let total = 0;
+                const assetDoc: any = { fund: fundName };
+                Object.keys(assets).forEach(assetType => {
+                    const asset = assets[assetType];
+                    assetDoc[assetType] = {
+                        amount: asset.amount,
+                        firstDepositDate: asset.firstDepositDate ? Timestamp.fromDate(asset.firstDepositDate) : null,
+                        displayTitle: asset.displayTitle,
+                        index: asset.index,
+                    };
+                    total += asset.amount;
+                });
+                assetDoc.total = total;
+                return assetDoc;
+            };
+
+            const agqDoc = prepareAssetDoc(agqAssets, 'AGQ');
+            const ak1Doc = prepareAssetDoc(ak1Assets, 'AK1');
+
+            const general = {
+                ytd: clientState.ytd ?? 0,
+                totalYTD: clientState.totalYTD ?? 0,
+                total: agqDoc.total + ak1Doc.total,
+            };
+
+            const agqRef = assetCollectionRef.doc(config.ASSETS_AGQ_DOC_ID);
+            const ak1Ref = assetCollectionRef.doc(config.ASSETS_AK1_DOC_ID);
+            const genRef = assetCollectionRef.doc(config.ASSETS_GENERAL_DOC_ID);
+
+            batch.update(agqRef, agqDoc);
+            batch.update(ak1Ref, ak1Doc);
+            batch.update(genRef, general);
+        }
         // Update the scheduled activity's status to 'completed'
         const scheduledActivityRef = scheduledActivitiesRef.doc(doc.id);
         batch.update(scheduledActivityRef, { status: 'completed' });

@@ -8,8 +8,6 @@ import { FormValidationErrorModal } from '../../components/ErrorModal';
 import Activities from './Activities';
 import CIcon from '@coreui/icons-react';
 import { cilCalendar, cilPlus, cilTrash } from '@coreui/icons';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
 import { amortize } from "src/utils/utilities.ts";
 
 
