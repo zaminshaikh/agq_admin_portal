@@ -55,7 +55,7 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
   useEffect(() => {
     const filtered = clients.filter(
       (client) =>
-        client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false
+        (client.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || client.lastName.toLowerCase().includes(searchTerm.toLowerCase())) ?? false
     );
     setFilteredClients(filtered);
   }, [searchTerm, clients]);
