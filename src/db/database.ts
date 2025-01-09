@@ -697,6 +697,27 @@ export class DatabaseService {
         throw error;
     }
     }
+
+    /**
+     * Schedules an activity by adding it to the 'scheduledActivities' collection.
+     *
+     * @param scheduledActivity - The activity data along with scheduling details.
+     * @returns A promise that resolves when the scheduled activity is added.
+     */
+    async scheduleActivity(scheduledActivity: {
+        cid: string;
+        activity: Activity;
+        status: string;
+    }): Promise<void> {
+        // ...existing code...
+        // filepath: /Users/zaminshaikh7/ts_admin_portal/src/db/database.ts
+        // Add scheduled activity to Firestore
+        await addDoc(collection(this.db, 'scheduledActivities'), {
+            cid: scheduledActivity.cid,
+            activity: scheduledActivity.activity,
+            status: scheduledActivity.status,
+        });
+    }
     
 }
 

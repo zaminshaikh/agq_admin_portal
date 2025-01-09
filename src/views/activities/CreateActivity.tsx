@@ -8,6 +8,8 @@ import { FormValidationErrorModal } from '../../components/ErrorModal';
 import Activities from './Activities';
 import CIcon from '@coreui/icons-react';
 import { cilCalendar, cilPlus, cilTrash } from '@coreui/icons';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 
 interface ShowModalProps {
@@ -31,6 +33,9 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     const clientOptions = clients!
         .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: selectedClient === client.cid }))
         .sort((a, b) => a.label.localeCompare(b.label));
+    
+    const prepareActivities = () => { 
+    }
         
     const handleCreateActivity = async () => {
         if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
@@ -95,6 +100,33 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
         }
     }
 
+    const handleScheduleActivity = async () => {
+        if (activityState.time <= new Date()) {
+            alert("Scheduled time must be in the future.");
+            return;
+        }
+
+        if (!clientState) {
+            console.error("Invalid client state");
+            return;
+        }
+
+        const scheduledActivity = {
+            cid: clientState.cid,
+            activity: { ...activityState, parentName: clientState.firstName + ' ' + clientState.lastName },
+            status: 'pending',
+        };
+
+        try {
+            await db.scheduleActivity(scheduledActivity);
+            setShowModal(false);
+            // Refresh activities if needed
+        } catch (error) {
+            console.error("Error scheduling activity:", error);
+            // Handle error appropriately
+        }
+    };
+
     useEffect(() => {
         const createActivityIfOverride = async () => {
             if (override) {
@@ -108,6 +140,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     return (
         <>
             {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
+        
             <CModal 
                 scrollable
                 visible={showModal} 
@@ -130,11 +163,11 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                         <CIcon icon={cilPlus} className="me-2" />
                         Create
                     </CButton>
-                    <CButton color="primary" variant="outline" onClick={() => {/* handle scheduling logic here */}}>
+                    <CButton color="primary" variant="outline" onClick={handleScheduleActivity}>
                         <CIcon icon={cilCalendar} className="me-2" />
                         Schedule
                     </CButton>
-                    <CButton color="danger" variant="outline" onClick={() => setShowModal(false)}>
+                    <CButton color="danger" variant="outline" onClick={() => {setShowModal(false)}}>
                         <CIcon icon={cilTrash} className="me-2" />
                         Discard
                     </CButton>
