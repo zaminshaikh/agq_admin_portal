@@ -38,12 +38,12 @@ export const FormValidationErrorModal: React.FC<FormValidationErrorModalProps> =
                 </ul>
             </CModalBody>
             <CModalFooter>
-                <CButton color="danger" variant="outline" onClick={() => {
+                <CButton color="primary" onClick={() => {
                     setOverride(true);
                     setShowErrorModal(false);
-                }}>OVERRIDE & PROCEED</CButton>
+                }}>Override & Create</CButton>
 
-                <CButton color="primary" onClick={() => {
+                <CButton color="secondary" onClick={() => {
                     setShowErrorModal(false);
                 }}>Go Back</CButton>
             </CModalFooter>

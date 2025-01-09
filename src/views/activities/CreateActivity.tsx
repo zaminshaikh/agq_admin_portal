@@ -6,6 +6,8 @@ import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 import Activities from './Activities';
+import CIcon from '@coreui/icons-react';
+import { cilCalendar, cilPlus, cilTrash } from '@coreui/icons';
 
 
 interface ShowModalProps {
@@ -124,8 +126,18 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                     clientOptions={clientOptions}            
                 />
                 <CModalFooter>
-                    <CButton color="primary" onClick={handleCreateActivity}>Create</CButton>
-                    <CButton color="danger" variant="outline" onClick={() => setShowModal(false)}>Discard</CButton>
+                    <CButton color="primary" onClick={handleCreateActivity}>
+                        <CIcon icon={cilPlus} className="me-2" />
+                        Create
+                    </CButton>
+                    <CButton color="primary" variant="outline" onClick={() => {/* handle scheduling logic here */}}>
+                        <CIcon icon={cilCalendar} className="me-2" />
+                        Schedule
+                    </CButton>
+                    <CButton color="danger" variant="outline" onClick={() => setShowModal(false)}>
+                        <CIcon icon={cilTrash} className="me-2" />
+                        Discard
+                    </CButton>
                 </CModalFooter>
             </CModal>
         </>
