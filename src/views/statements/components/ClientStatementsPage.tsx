@@ -12,6 +12,7 @@ import {
 } from '@coreui/react-pro';
 import { getStorage, ref, listAll, getMetadata, getDownloadURL, deleteObject } from 'firebase/storage';
 import { DatabaseService, Client } from 'src/db/database.ts';
+import config from '../../../../config.json';
 
 // Import CoreUI Icons
 import CIcon from '@coreui/icons-react';
@@ -46,7 +47,7 @@ const ClientStatementsPage = () => {
           const cid = client.cid;
 
           // Reference to the client's documents folder
-          const listRef = ref(storage, `testUsersStatements/${cid}/`);
+          const listRef = ref(storage, `${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}/`);
 
           try {
             // List all items in the folder

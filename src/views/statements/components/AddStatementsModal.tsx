@@ -17,6 +17,7 @@ import { Client, DatabaseService } from 'src/db/database';
 import { EditAssetsSection } from 'src/components/EditAssetsSection';
 import { ref, uploadBytes } from 'firebase/storage';
 import { getStorage } from 'firebase/storage';
+import config from '../../../../config.json'
 
 interface AddStatementModalProps {
   visible: boolean;
@@ -115,7 +116,7 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
     setUploading(true);
     const cid = clientState.cid;
     const uploadPromises = files.map((file) => {
-      const storagePath = `testUsersStatements/${cid}/${file.name}`;
+      const storagePath = `${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}/${file.name}`;
       console.log(`Uploading file to: ${storagePath}`);
       const storageRef = ref(getStorage(), storagePath);
       return uploadBytes(storageRef, file);
