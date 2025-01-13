@@ -1014,7 +1014,7 @@ export const scheduledYTDReset = functions.pubsub
  * Runs every minute and checks for activities where scheduledTime <= now and status is 'pending'.
  * Creates the actual activity and updates the scheduled activity's status to 'completed'.
  */
-exports.processScheduledActivities = functions.pubsub.schedule('every 2 minutes').onRun(async (context) => {
+exports.processScheduledActivities = functions.pubsub.schedule('0 */12 * * *').onRun(async (context) => {
     const now = admin.firestore.Timestamp.now();
     const scheduledActivitiesRef = db.collection('scheduledActivities');
     const querySnapshot = await scheduledActivitiesRef
