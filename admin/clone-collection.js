@@ -12,7 +12,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
-const limit = pLimit(5);
+const limit = pLimit(100);
 
 /**
  * Clones a Firestore collection, including all documents and their subcollections.
