@@ -1,8 +1,9 @@
 {
-    "FIRESTORE_ACTIVE_USERS_COLLECTION": "playground",
+    "FIRESTORE_ACTIVE_USERS_COLLECTION": "users",
     "ASSETS_SUBCOLLECTION": "assets",
     "NOTIFICATIONS_SUBCOLLECTION": "notifications",
     "ACTIVITIES_SUBCOLLECTION": "activities",
+    "SCHEDULED_ACTIVITIES_COLLECTION": "scheduledActivities",
     "GRAPH_POINTS_SUBCOLLECTION": "graphPoints",
     "ASSETS_GENERAL_DOC_ID": "general",
     "ASSETS_AGQ_DOC_ID": "agq",
