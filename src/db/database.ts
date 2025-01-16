@@ -462,7 +462,13 @@ export class DatabaseService {
                     ...activity,
                     parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION
                 };
-                addDoc(activityCollectionRef, activityWithParentId)
+          
+                // Filter out undefined properties
+                const filteredActivity = Object.fromEntries(
+                    Object.entries(activityWithParentId).filter(([_, v]) => v !== undefined)
+                );
+  
+                addDoc(activityCollectionRef, filteredActivity);
             });
             // Use Promise.all to add all activities concurrently
             await Promise.all(promise);
@@ -614,6 +620,8 @@ export class DatabaseService {
         const filteredActivity = Object.fromEntries(
           Object.entries(activityWithParentId).filter(([_, v]) => v !== undefined)
         );
+
+        console.log('Filtered Activity:', filteredActivity);
         
         // Add the activity to the subcollection
         await addDoc(activityCollectionRef, filteredActivity);
