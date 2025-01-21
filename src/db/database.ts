@@ -460,7 +460,7 @@ export class DatabaseService {
         // Update/Create a activity subcollection for client
         const activityCollectionRef = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION)
 
-        const graphCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID, config.GRAPH_POINTS_SUBCOLLECTION)
+        const graphCollectionRef = collection(clientRef, config.ASSETS_SUBCOLLECTION, config.ASSETS_GENERAL_DOC_ID, config.GRAPHPOINTS_SUBCOLLECTION)
 
         // If no activities exist, we leave the collection undefined
         if (client.activities !== undefined) {
@@ -610,6 +610,35 @@ export class DatabaseService {
         });
 
         return activities;
+    }
+
+    getScheduledActivities = async () => {
+        const scheduledActivitiesCollection = collection(this.db, config.SCHEDULED_ACTIVITIES_COLLECTION);
+        const querySnapshot = await getDocs(scheduledActivitiesCollection);
+
+        
+
+        const scheduledActivities: ScheduledActivity[] = querySnapshot.docs.map((doc) => {
+            const data = doc.data() as ScheduledActivity;
+
+            // Format the time field
+            let formattedTime = '';
+            const time = data.activity.time instanceof Timestamp ? data.activity.time.toDate() : data.activity.time;
+            if (time instanceof Date) {
+                formattedTime = formatDate(time);
+            }
+
+            return {
+                ...data,
+                id: doc.id,
+                activity: {
+                    ...data.activity,
+                    formattedTime,
+                }
+            };
+        });
+
+        return scheduledActivities;
     }
 
     createActivity = async (activity: Activity, cid: string) => {

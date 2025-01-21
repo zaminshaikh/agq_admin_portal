@@ -3,6 +3,7 @@ import ActivitiesTable from "./ActivitiesTable";
 import { useEffect, useState } from "react";
 import { DatabaseService, Client } from "src/db/database";
 import { CSpinner } from "@coreui/react-pro";
+import ScheduledActivitiesTable from "./ScheduledActivitiesTable";
 
 const Activities = () => {
     const { t } = useTranslation()
@@ -10,6 +11,7 @@ const Activities = () => {
     return (
         <div>
             <ActivitiesTable />
+            <ScheduledActivitiesTable />
         </div>
     );
 };

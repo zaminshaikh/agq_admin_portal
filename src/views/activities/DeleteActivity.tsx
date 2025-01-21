@@ -11,7 +11,6 @@ interface DeleteActivityProps {
     selectedClient?: string | number;
     setAllActivities: (activites: Activity[]) => void;
     setFilteredActivities: (activites: Activity[]) => void;
-    addToast: (dispatch: any) => void;
 }
 
 const exampleToast = (
@@ -35,7 +34,7 @@ const exampleToast = (
   </CToast>
 )
 
-const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedClient, setAllActivities, setFilteredActivities, addToast}) => {
+const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedClient, setAllActivities, setFilteredActivities}) => {
     const db = new DatabaseService();
 
     const deleteActivity = async () => {

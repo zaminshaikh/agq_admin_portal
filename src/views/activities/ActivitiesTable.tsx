@@ -120,7 +120,7 @@ const ActivitiesTable = () => {
 
     return (
         <CContainer>
-            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities} addToast={addToast}/>}
+            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} clients={clients} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             <div className="d-grid gap-2 py-3">
