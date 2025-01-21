@@ -1,5 +1,6 @@
 const admin = require('firebase-admin');
 const path = require('path');
+const pLimit = require('p-limit');
 
 // Path to the service account key file
 const serviceAccountPath = path.join(__dirname, 'team-shaikh-service-account.json');
@@ -11,6 +12,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+const limit = pLimit(100);
 
 /**
  * Clones a Firestore collection, including all documents and their subcollections.
@@ -30,10 +32,12 @@ async function cloneCollection(oldCollectionName, newCollectionName) {
     console.log(`Found ${documents.size} documents in '${oldCollectionName}'`);
 
     // Create an array of cloneDocument promises
-    const clonePromises = documents.docs.map((doc) => {
-      console.log(`Cloning document ID: ${doc.id}`);
-      return cloneDocument(doc.ref, newCollectionRef.doc(doc.id), newCollectionName);
-    });
+    const clonePromises = documents.docs.map((doc) =>
+      limit(async () => {
+        console.log(`Cloning document ID: ${doc.id}`);
+        return cloneDocument(doc.ref, newCollectionRef.doc(doc.id), newCollectionName);
+      })
+    );
 
     // Wait for all documents to be cloned in parallel
     await Promise.all(clonePromises);

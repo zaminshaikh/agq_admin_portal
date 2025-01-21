@@ -157,7 +157,7 @@ async function generateGraphpoints(usersCollectionName) {
 }
 
 // Example usage
-const usersCollectionName = 'playground'; // Replace with your actual users collection name
+const usersCollectionName = 'users'; // Replace with your actual users collection name
 generateGraphpoints(usersCollectionName)
   .then(() => {
     console.log('Graphpoints generation completed successfully');
