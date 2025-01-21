@@ -12,8 +12,9 @@ import Activities from './Activities';
 const ScheduledActivitiesTable = () => {
     const [isLoading, setIsLoading] = useState(true);
 
-    const [allActivities, setAllActivities] = useState<ScheduledActivity[]>([]); // New state for original activities
+    const [scheduledActivities, setScheduledActivities] = useState<ScheduledActivity[]>([]); // New state for original activities
     const [clients, setClients] = useState<Client[]>([]);
+    const [selectedClient, setSelectedClient] = useState<string | number | undefined>(undefined);
 
     const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
     const [showEditActivityModal, setShowEditActivityModal] = useState(false);
@@ -26,7 +27,7 @@ const ScheduledActivitiesTable = () => {
             const activities = await db.getScheduledActivities();
             const clients = await db.getClients();
 
-            setAllActivities(activities); // Store the original activities
+            setScheduledActivities(activities); // Store the original activities
             setClients(clients);
 
             setIsLoading(false);
@@ -116,8 +117,8 @@ const ScheduledActivitiesTable = () => {
     return (
         <CContainer>
             <h1 className="pt-5">Scheduled Activities</h1>
-`           {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={() => {}}/>}
-            {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={() => {}}/>}
+`           {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities}/>}
+            {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities} />}
             <CSmartTable
                 activePage={1}
                 cleaner
@@ -125,7 +126,7 @@ const ScheduledActivitiesTable = () => {
                 columns={columns}
                 columnFilter
                 columnSorter
-                items={allActivities.map((scheduledActivity) => ({...scheduledActivity.activity, status: scheduledActivity.status}))}
+                items={scheduledActivities.map((scheduledActivity) => ({...scheduledActivity.activity, id: scheduledActivity.id, status: scheduledActivity.status}))}
                 itemsPerPageSelect
                 itemsPerPage={20}
                 pagination
@@ -157,6 +158,7 @@ const ScheduledActivitiesTable = () => {
                             onClick={async () => {
                                 setCurrentActivity(item);
                                 setShowEditActivityModal(true);
+                                setSelectedClient(item.parentDocId);
                             }}
                             >
                             Edit
@@ -175,6 +177,7 @@ const ScheduledActivitiesTable = () => {
                             onClick={() => {
                                 setCurrentActivity(item);
                                 setShowDeleteActivityModal(true);
+                                setSelectedClient(item.parentDocId);
                             }}
                             >
                             Delete

@@ -70,6 +70,7 @@ export interface Activity {
 }
 
 export interface ScheduledActivity {
+    id: any
     cid: string;
     activity: Activity;
     clientState: Client;
@@ -773,6 +774,16 @@ export class DatabaseService {
         console.log('filteredActivity', filteredActivity);
         // Add the scheduled activity to the 'scheduledActivities' collection
         await addDoc(collection(this.db, 'scheduledActivities'),scheduledActivity);
+    }
+
+    async updateScheduledActivity(updatedActivity: ScheduledActivity & { id: string }) {
+        const docRef = doc(this.db, 'scheduledActivities', updatedActivity.id);
+        await setDoc(docRef, updatedActivity, { merge: true });
+    }
+    
+    async deleteScheduledActivity(id: string) {
+        const docRef = doc(this.db, 'scheduledActivities', id);
+        await deleteDoc(docRef);
     }
     
 }

@@ -2,15 +2,17 @@ import React from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton, CToast, CToastBody, CToastHeader } from '@coreui/react-pro';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Activity, DatabaseService, formatCurrency } from 'src/db/database';
+import { Activity, DatabaseService, formatCurrency, ScheduledActivity } from 'src/db/database';
 
 interface DeleteActivityProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
     activity?: Activity; 
     selectedClient?: string | number;
-    setAllActivities: (activites: Activity[]) => void;
-    setFilteredActivities: (activites: Activity[]) => void;
+    setAllActivities?: (activites: (Activity | ScheduledActivity)[]) => void | undefined;
+    setFilteredActivities?: (activites: Activity[]) => void | undefined;
+    setScheduledActivities?: (activites: ScheduledActivity[]) => void | undefined;
+    isScheduled?: boolean; // <-- Add this
 }
 
 const exampleToast = (
@@ -34,22 +36,30 @@ const exampleToast = (
   </CToast>
 )
 
-const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedClient, setAllActivities, setFilteredActivities}) => {
+const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedClient, setScheduledActivities, setAllActivities, setFilteredActivities, isScheduled}) => {
     const db = new DatabaseService();
 
     const deleteActivity = async () => {
         if (activity && activity.id) {
             try {
-                await db.deleteActivity(activity);
-                await db.deleteNotification(activity);
-                setShowModal(false);
-                const activities = await db.getActivities(); // Get the new updated activities
-                setAllActivities(activities)
-                // Filter by the client we just deleted an activity for
-                if (selectedClient) {
-                    setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedClient));
-                } else {
-                    setFilteredActivities(activities);
+                if (isScheduled && setScheduledActivities) {
+                    await db.deleteScheduledActivity(activity.id);
+                    setShowModal(false);
+                    const scheduledActivities = await db.getScheduledActivities(); // Get the new updated activities
+                    setScheduledActivities(scheduledActivities);
+                    return;
+                } else if (setAllActivities) {
+                    await db.deleteActivity(activity);
+                    await db.deleteNotification(activity);
+                    setShowModal(false);
+                    const activities = await db.getActivities(); // Get the new updated activities
+                    setAllActivities(activities);
+                    // Filter by the client we just deleted an activity for
+                    if (selectedClient && setFilteredActivities) {
+                        setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedClient));
+                    } else if (setFilteredActivities) {
+                        setFilteredActivities(activities);
+                    }
                 }
                 // addToast(exampleToast);
             } catch (error) {
