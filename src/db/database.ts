@@ -70,7 +70,7 @@ export interface Activity {
 }
 
 export interface ScheduledActivity {
-    id: any
+    id: string;
     cid: string;
     activity: Activity;
     clientState: Client;
@@ -615,9 +615,9 @@ export class DatabaseService {
 
     getScheduledActivities = async () => {
         const scheduledActivitiesCollection = collection(this.db, config.SCHEDULED_ACTIVITIES_COLLECTION);
-        const querySnapshot = await getDocs(scheduledActivitiesCollection);
-
-        
+        // const querySnapshot = await getDocs(scheduledActivitiesCollection);
+        const q = query(scheduledActivitiesCollection, where('usersCollectionID', '==', config.FIRESTORE_ACTIVE_USERS_COLLECTION));
+        const querySnapshot = await getDocs(q)
 
         const scheduledActivities: ScheduledActivity[] = querySnapshot.docs.map((doc) => {
             const data = doc.data() as ScheduledActivity;
@@ -635,7 +635,8 @@ export class DatabaseService {
                 activity: {
                     ...data.activity,
                     formattedTime,
-                }
+                    parentDocId: data.cid,
+                },
             };
         });
 
@@ -751,6 +752,7 @@ export class DatabaseService {
      * @returns A promise that resolves when the scheduled activity is added.
      */
     async scheduleActivity(activity: Activity, clientState: Client): Promise<void> {
+        delete activity.id;
         // Add the parentCollectionId field to the activity
         const activityWithParentId = {
             ...activity,
@@ -776,9 +778,25 @@ export class DatabaseService {
         await addDoc(collection(this.db, 'scheduledActivities'),scheduledActivity);
     }
 
-    async updateScheduledActivity(updatedActivity: ScheduledActivity & { id: string }) {
-        const docRef = doc(this.db, 'scheduledActivities', updatedActivity.id);
-        await setDoc(docRef, updatedActivity, { merge: true });
+    async updateScheduledActivity(updatedActivity: Activity, clientState: Client) {
+        const docRef = doc(this.db, 'scheduledActivities', updatedActivity.id ?? '');
+        delete updatedActivity.id;
+        const activityWithParentId = { 
+            ...updatedActivity,
+            parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
+        }
+        const filteredActivity = Object.fromEntries(
+            Object.entries(activityWithParentId).filter(([_, v]) => v !== undefined)
+        );
+        const updatedScheduledActivity = {
+            cid: clientState.cid,
+            scheduledTime: filteredActivity.time,
+            activity: { ...filteredActivity, parentName: clientState.firstName + ' ' + clientState.lastName },
+            clientState,
+            usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
+            status: 'pending',
+        };
+        await setDoc(docRef, updatedScheduledActivity, { merge: true });
     }
     
     async deleteScheduledActivity(id: string) {

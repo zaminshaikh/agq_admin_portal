@@ -9,7 +9,7 @@ interface DeleteActivityProps {
     setShowModal: (show: boolean) => void;
     activity?: Activity; 
     selectedClient?: string | number;
-    setAllActivities?: (activites: (Activity | ScheduledActivity)[]) => void | undefined;
+    setAllActivities?: (activites: Activity[]) => void | undefined;
     setFilteredActivities?: (activites: Activity[]) => void | undefined;
     setScheduledActivities?: (activites: ScheduledActivity[]) => void | undefined;
     isScheduled?: boolean; // <-- Add this

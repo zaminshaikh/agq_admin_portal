@@ -24,10 +24,10 @@ const ScheduledActivitiesTable = () => {
     useEffect(() => {
         const fetchActivities = async () => {
             const db = new DatabaseService();
-            const activities = await db.getScheduledActivities();
+            const newScheduledActivities = await db.getScheduledActivities();
             const clients = await db.getClients();
 
-            setScheduledActivities(activities); // Store the original activities
+            setScheduledActivities(newScheduledActivities); // Store the original activities
             setClients(clients);
 
             setIsLoading(false);
