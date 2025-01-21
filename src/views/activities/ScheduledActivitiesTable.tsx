@@ -53,7 +53,7 @@ const ScheduledActivitiesTable = () => {
             label: 'Client',
         },
         {   
-            label: 'Time',
+            label: 'Scheduled Time',
             key: 'formattedTime',
             _style: { width: '25%' },
         },
@@ -64,6 +64,11 @@ const ScheduledActivitiesTable = () => {
         {
             key: 'amount',
             label: 'Amount',
+        },
+        {
+            key: 'status',
+            label: 'Status',
+            _style: { width: '10%' },
         },
         {
             key: 'fund',
@@ -97,6 +102,8 @@ const ScheduledActivitiesTable = () => {
                 return 'warning'
             case 'withdrawal':
                 return 'danger'
+            case 'completed':
+                return 'success'
             default:
                 return 'primary'
         }
@@ -108,9 +115,9 @@ const ScheduledActivitiesTable = () => {
 
     return (
         <CContainer>
-            <CHeaderBrand>Test</CHeaderBrand>
-            {/* {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={() => {}}/>}
-            {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={() => {}}/>} */}
+            <h1 className="pt-5">Scheduled Activities</h1>
+`           {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={() => {}}/>}
+            {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={() => {}}/>}
             <CSmartTable
                 activePage={1}
                 cleaner
@@ -118,7 +125,7 @@ const ScheduledActivitiesTable = () => {
                 columns={columns}
                 columnFilter
                 columnSorter
-                items={allActivities.map((scheduledActivity) => scheduledActivity.activity)}
+                items={allActivities.map((scheduledActivity) => ({...scheduledActivity.activity, status: scheduledActivity.status}))}
                 itemsPerPageSelect
                 itemsPerPage={20}
                 pagination
@@ -132,6 +139,11 @@ const ScheduledActivitiesTable = () => {
                     amount: (item: Activity) => (
                         <td>
                             {formatCurrency(item.amount)}
+                        </td>
+                    ),
+                    status: (item: any) => (
+                        <td>
+                            <CBadge color={getBadge(item.status)}>{toSentenceCase(item.status)}</CBadge>
                         </td>
                     ),
                     edit: (item: Activity) => {
