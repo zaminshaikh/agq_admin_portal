@@ -56,7 +56,7 @@ const ScheduledActivitiesTable = () => {
         {   
             label: 'Scheduled Time',
             key: 'formattedTime',
-            _style: { width: '25%' },
+            _style: { width: '20%' },
         },
         {
             key: 'recipient',
@@ -69,11 +69,11 @@ const ScheduledActivitiesTable = () => {
         {
             key: 'status',
             label: 'Status',
-            _style: { width: '10%' },
+            _style: { width: '8%' },
         },
         {
             key: 'fund',
-            _style: { width: '10%' },
+            _style: { width: '7%' },
         },
         {
             key: 'edit',
@@ -147,7 +147,7 @@ const ScheduledActivitiesTable = () => {
                             <CBadge color={getBadge(item.status)}>{toSentenceCase(item.status)}</CBadge>
                         </td>
                     ),
-                    edit: (item: Activity) => {
+                    edit: (item: any) => {
                         return (
                         <td className="py-2">
                             <CButton
@@ -155,6 +155,7 @@ const ScheduledActivitiesTable = () => {
                             variant="outline"
                             shape="square"
                             size="sm"
+                            disabled={item.status === 'completed'}
                             onClick={async () => {
                                 setCurrentActivity(item);
                                 setShowEditActivityModal(true);
