@@ -1,7 +1,7 @@
 import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
 import { act, useEffect, useState } from "react";
 import React from "react";
-import { Activity, DatabaseService, Client, emptyActivity, emptyClient } from '../../db/database.ts'
+import { Activity, DatabaseService, Client, emptyActivity, emptyClient, ScheduledActivity } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
@@ -18,10 +18,11 @@ interface ShowModalProps {
     selectedClient?: string | number;
     setAllActivities: (activites: Activity[]) => void;
     setFilteredActivities: (activites: Activity[]) => void;
+    setScheduledActivities: (activites: ScheduledActivity[]) => void;
 }
 
 
-export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, selectedClient, setAllActivities, setFilteredActivities}) => {
+export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, selectedClient, setAllActivities, setFilteredActivities, setScheduledActivities}) => {
     const db = new DatabaseService();
     const [activityState, setActivityState] = useState<Activity>(emptyActivity);
     const [clientState, setClientState] = useState<Client | null>(clients?.find(client => client.cid === selectedClient) ?? null);
@@ -107,6 +108,8 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
             setShowModal(false);
             const activities = await db.getActivities(); // Get the new updated activities
             setAllActivities(activities)
+            const scheduledActivities = await db.getScheduledActivities(); // Get the new updated activities
+            setScheduledActivities(scheduledActivities);
             // Filter by the client we just created an activity for
             setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedClient ?? clientState.cid)));
         }

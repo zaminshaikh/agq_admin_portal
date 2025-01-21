@@ -9,18 +9,24 @@ import CIcon from "@coreui/icons-react";
 import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import Activities from './Activities';
 
-const ActivitiesTable = () => {
+interface TableProps {
+    allActivities: Activity[];
+    setAllActivities: (activities: Activity[]) => void;
+    filteredActivities: Activity[];
+    setFilteredActivities: (activities: Activity[]) => void;
+    clients: Client[];
+    setClients: (clients: Client[]) => void;
+    selectedClient: string | number | undefined;
+    setSelectedClient: (client: string | number | undefined) => void;
+}
+
+const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities, filteredActivities, setFilteredActivities, clients, setClients, selectedClient, setSelectedClient}) => {
     const [isLoading, setIsLoading] = useState(true);
     const [toast, addToast] = useState<any>(0)
     const toaster = useRef<HTMLDivElement | null>(null); 
 
-    const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
-    const [allActivities, setAllActivities] = useState<Activity[]>([]); // New state for original activities
-    const [clients, setClients] = useState<Client[]>([]);
     const [clientOptions, setClientOptions] = useState<Option[]>([]); 
-    const [selectedClient, setSelectedClient] = useState<string | number>(); 
 
-    const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
     const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
     const [showEditActivityModal, setShowEditActivityModal] = useState(false);
 
@@ -122,10 +128,6 @@ const ActivitiesTable = () => {
         <CContainer>
             {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
-            {showCreateActivityModal && <CreateActivity showModal={showCreateActivityModal} setShowModal={setShowCreateActivityModal} clients={clients} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
-            <div className="d-grid gap-2 py-3">
-                <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
-            </div> 
             <CRow className="justify-content-center py-3">
                 <CCol>
                     <CMultiSelect

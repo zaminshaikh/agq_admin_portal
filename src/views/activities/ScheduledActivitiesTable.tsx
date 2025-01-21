@@ -9,10 +9,14 @@ import CIcon from "@coreui/icons-react";
 import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import Activities from './Activities';
 
-const ScheduledActivitiesTable = () => {
+interface TableProps {
+    scheduledActivities: ScheduledActivity[];
+    setScheduledActivities: (activities: ScheduledActivity[]) => void;
+}
+
+const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, setScheduledActivities}) => {
     const [isLoading, setIsLoading] = useState(true);
 
-    const [scheduledActivities, setScheduledActivities] = useState<ScheduledActivity[]>([]); // New state for original activities
     const [clients, setClients] = useState<Client[]>([]);
     const [selectedClient, setSelectedClient] = useState<string | number | undefined>(undefined);
 
@@ -116,8 +120,8 @@ const ScheduledActivitiesTable = () => {
 
     return (
         <CContainer>
-            <h1 className="pt-5">Scheduled Activities</h1>
-`           {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities}/>}
+            <h1 className="pt-5 pb-2">Scheduled Activities</h1>
+            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities}/>}
             {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities} />}
             <CSmartTable
                 activePage={1}
