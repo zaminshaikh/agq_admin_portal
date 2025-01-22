@@ -83,18 +83,42 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
 
     useEffect(() => {
         if (activityState.recipient === null || activityState.recipient === '') {return;}
+        console.log(activityState);
         setIsRecipientSameAsClient(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
     }, [activityState.recipient, clientState]);
 
     const assetOptions = useMemo(() => {
+        if (!clientState) return [];
+
         let titles = new Set<string>();
-        for (const fund in clientState?.assets) {
+        for (const fund in clientState.assets) {
             for (const assetType in clientState.assets[fund]) {
-                titles.add(clientState.assets[fund][assetType].displayTitle);
+                const displayTitle = clientState.assets[fund][assetType].displayTitle;
+                if (displayTitle === 'Personal') {
+                    titles.add(`${clientState.firstName} ${clientState.lastName}`);
+                } else {
+                    titles.add(displayTitle);
+                }
             }
         }
-        return [...titles].map(title => ({ label: title, value: title }));
+        
+        const arr = [...titles];
+        // const personalTitle = `${clientState.firstName} ${clientState.lastName}`;
+        // if (arr.includes(personalTitle)) {
+        //     return arr.map((title) =>
+        //         title === personalTitle
+        //             ? { label: title, value: title, selected: true }
+        //             : { label: title, value: title }
+        //     );
+        // }
+        return arr.map((title, i) =>
+            // i === 0
+            //     ? { label: title, value: title, selected: true }
+            //     : 
+            ({ label: title, value: title })
+        );
     }, [clientState]);
+
 
     return (
         <CModalBody>
@@ -189,11 +213,12 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                                 checked={isRecipientSameAsClient}
                                 onChange={(e) => {
                                     setIsRecipientSameAsClient(e.target.checked);
-                                    if (e.target.checked && clientState) {
-                                        setActivityState({ ...activityState, recipient: clientState.firstName + ' ' + clientState.lastName });
-                                    } else if (clientState) {
-                                        setActivityState({ ...activityState, recipient: clientState.companyName});
-                                    }
+                                    // if (e.target.checked && clientState) {
+                                    //     setActivityState({ ...activityState, recipient: clientState.firstName + ' ' + clientState.lastName });
+                                    // } else if (clientState) {
+                                    //     setActivityState({ ...activityState, recipient: clientState.companyName});
+                                    // }
+                                    console.log(activityState);
                                 }}
                             />
                         </CTooltip>
@@ -207,8 +232,9 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                         placeholder="Select Recipient"
                         multiple={false}
                         disabled={isRecipientSameAsClient}
+                        defaultValue={activityState.recipient}
                         onChange={(selected) => {
-                            const val = selected.map((opt) => opt.value).join(', ');
+                            const val = selected.map((opt) => opt.value as string)[0];
                             setActivityState({ ...activityState, recipient: val });
                         }}
                     />

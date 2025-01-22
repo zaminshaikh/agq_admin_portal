@@ -19,7 +19,8 @@ const Activities = () => {
 
     return (
         <div>
-            {showCreateActivityModal && <CreateActivity 
+            {showCreateActivityModal && 
+            <CreateActivity 
                 showModal={showCreateActivityModal} 
                 setShowModal={setShowCreateActivityModal} 
                 clients={clients} 
@@ -27,7 +28,7 @@ const Activities = () => {
                 setAllActivities={setAllActivities} 
                 setFilteredActivities={setFilteredActivities}
                 setScheduledActivities={setScheduledActivities}
-                />}
+            />}
             <div className="d-grid gap-2 py-3">
                 <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
             </div> 
@@ -41,7 +42,10 @@ const Activities = () => {
                 selectedClient={selectedClient}
                 setSelectedClient={setSelectedClient}
             />
-            <ScheduledActivitiesTable scheduledActivities={scheduledActivities} setScheduledActivities={setScheduledActivities}/>
+            <ScheduledActivitiesTable 
+                scheduledActivities={scheduledActivities} 
+                setScheduledActivities={setScheduledActivities}
+            />
         </div>
     );
 };
