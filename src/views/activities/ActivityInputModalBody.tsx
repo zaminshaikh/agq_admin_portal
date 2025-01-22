@@ -1,6 +1,6 @@
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip, CFormTextarea } from "@coreui/react-pro";
 import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
-import React, { act, useEffect, useState } from "react";
+import React, { act, useEffect, useState, useMemo } from "react";
 import { Activity, Client, DatabaseService, emptyClient, roundToNearestHour} from "src/db/database";
 import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -85,6 +85,16 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         if (activityState.recipient === null || activityState.recipient === '') {return;}
         setIsRecipientSameAsClient(activityState.recipient == clientState?.firstName + ' ' + clientState?.lastName);
     }, [activityState.recipient, clientState]);
+
+    const assetOptions = useMemo(() => {
+        let titles = new Set<string>();
+        for (const fund in clientState?.assets) {
+            for (const assetType in clientState.assets[fund]) {
+                titles.add(clientState.assets[fund][assetType].displayTitle);
+            }
+        }
+        return [...titles].map(title => ({ label: title, value: title }));
+    }, [clientState]);
 
     return (
         <CModalBody>
@@ -190,15 +200,16 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     </CInputGroup>
                     </CCol>
                     <CCol xl={8}>
-                    <CFormInput
+                    <CMultiSelect
                         id="recipient"
                         className="mb-3a custom-multiselect-dropdown"
-                        value={activityState.recipient }
+                        options={assetOptions}
                         placeholder="Select Recipient"
                         multiple={false}
-                        disabled={isRecipientSameAsClient} // Disable this dropdown if the checkbox is checked
-                        onChange={(e) => {
-                            setActivityState({ ...activityState, recipient: e.target.value });
+                        disabled={isRecipientSameAsClient}
+                        onChange={(selected) => {
+                            const val = selected.map((opt) => opt.value).join(', ');
+                            setActivityState({ ...activityState, recipient: val });
                         }}
                     />
                     </CCol>
