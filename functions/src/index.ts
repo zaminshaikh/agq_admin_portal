@@ -947,6 +947,9 @@ export const onActivityWrite = functions.firestore
       await updateYTD(userId, userCollection); // Update YTD for the user and connected users
     }
 
+    // Generate graphpoints for this specific user
+    await updateGraphpoints(userCollection, userId);
+
     return null;
   });
 
@@ -1108,3 +1111,99 @@ exports.processScheduledActivities = functions.pubsub.schedule('0 */12 * * *').o
 
     return null;
 });
+
+async function updateGraphpoints(userCollection: string, userId: string): Promise<void> {
+    const userRef = db.collection(userCollection).doc(userId);
+    const activitiesRef = userRef.collection(config.ACTIVITIES_SUBCOLLECTION);
+    const graphpointsRef = userRef.collection(config.GRAPHPOINTS_SUBCOLLECTION);
+
+    // Clear existing graphpoints
+    const existingGraphpoints = await graphpointsRef.get();
+    const deletePromises = existingGraphpoints.docs.map(doc => doc.ref.delete());
+    await Promise.all(deletePromises);
+
+    // Retrieve client name
+    const userDoc = await userRef.get();
+    const cid = userDoc.id;
+    const userData = userDoc.data() || {};
+    const fullName = userData.name ? `${userData.name.first} ${userData.name.last}` : null;
+    
+    // Retrieve and sort activities by time
+    const activitiesSnapshot = await activitiesRef.orderBy('time').get();
+
+    let cumulativeBalance = 0;
+    const accountBalances: Record<string, number> = {};
+    let fundsMap: Record<string, {cumulativeBalance: number, accountBalances: Record<string, number>}> = {};
+
+    // Process relevant activities to generate new graphpoints
+    for (const activityDoc of activitiesSnapshot.docs) {
+        const activity = activityDoc.data();
+
+        if (
+            activity.type === 'deposit' ||
+            activity.type === 'withdrawal' ||
+            activity.isDividend
+        ) {
+            const cashflow = activity.amount * (activity.type === 'withdrawal' ? -1 : 1);
+            const time = activity.time;
+            let account;
+            if (activity.recipient === fullName) {
+                account = 'Personal';
+            } else {
+                account = activity.recipient;
+            }
+            const fund = activity.fund || 'Unspecified';
+
+            // Update cumulative balance
+            cumulativeBalance += cashflow;
+
+            // Update account-specific balance
+            if (!accountBalances[account]) {
+                accountBalances[account] = 0;
+            }
+            accountBalances[account] += cashflow;
+
+            if (!fundsMap[fund]) {
+            fundsMap[fund] = {
+                cumulativeBalance: 0,
+                accountBalances: {}
+            };
+            }
+            fundsMap[fund].cumulativeBalance += cashflow;
+
+            if (!fundsMap[fund].accountBalances[account]) {
+                fundsMap[fund].accountBalances[account] = 0;
+            }
+            fundsMap[fund].accountBalances[account] += cashflow;
+
+            // Prepare graphpoints
+            const cumulativeGraphpoint = {
+                account: 'Cumulative',
+                amount: fundsMap[fund].cumulativeBalance,
+                cashflow: cashflow,
+                time: time,
+                fund: fund,
+            };
+
+            const accountGraphpoint = {
+                account: account,
+                amount: fundsMap[fund].accountBalances[account],
+                cashflow: cashflow,
+                time: time,
+                fund: fund,
+            };
+
+            // Add graphpoints
+            try {
+                await graphpointsRef.add(cumulativeGraphpoint);
+                console.log(`Added cumulative graphpoint for user CID: ${cid} at time: ${time.toDate()}`);
+
+                await graphpointsRef.add(accountGraphpoint);
+                console.log(`Added graphpoint for account '${account}' for user CID: ${cid} at time: ${time.toDate()}`);
+            } catch (addError) {
+                console.error(`Error adding graphpoints for user CID: ${cid}:`, addError);
+                throw addError;
+            }
+        }
+    }
+}
