@@ -145,7 +145,9 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                     setShowModal={setShowDeleteSelectedModal}
                     selectedActivities={selectedActivities}
                     setSelectedActivities={setSelectedActivities}
+                    allActivities={allActivities}
                     setAllActivities={setAllActivities}
+                    filteredActivities={filteredActivities}
                     setFilteredActivities={setFilteredActivities}
                     selectedClient={selectedClient}
                 />

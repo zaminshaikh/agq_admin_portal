@@ -14,7 +14,9 @@ interface DeleteSelectedActivitiesProps {
   setShowModal: (show: boolean) => void;
   selectedActivities: Activity[];
   setSelectedActivities: (activities: Activity[]) => void;
+  allActivities: Activity[];
   setAllActivities: (activities: Activity[]) => void;
+  filteredActivities: Activity[];
   setFilteredActivities: (activities: Activity[]) => void;
   selectedClient?: string | number;
 }
@@ -24,7 +26,9 @@ export const DeleteSelectedActivities: React.FC<DeleteSelectedActivitiesProps> =
   setShowModal,
   selectedActivities,
   setSelectedActivities,
+  allActivities,
   setAllActivities,
+  filteredActivities,
   setFilteredActivities,
   selectedClient,
 }) => {
@@ -80,14 +84,9 @@ export const DeleteSelectedActivities: React.FC<DeleteSelectedActivitiesProps> =
       setSelectedActivities([]);
       setIsLoading(false)
       setShowModal(false)
-      const activities = await db.getActivities(); // Get the new updated activities
-      setAllActivities(activities);
-      // Filter by the client we just deleted an activity for
-      if (selectedClient && setFilteredActivities) {
-          setFilteredActivities(activities.filter((activities) => activities.parentDocId === selectedClient));
-      } else if (setFilteredActivities) {
-          setFilteredActivities(activities);
-      }
+
+      setAllActivities(allActivities.filter(a => !selectedActivities.find(sa => sa.id === a.id)))
+      setFilteredActivities(filteredActivities.filter(a => !selectedActivities.find(sa => sa.id === a.id)))
     } catch (error) {
       setPasswordError('Incorrect password')
       console.error('Failed to delete selected activities:', error)
