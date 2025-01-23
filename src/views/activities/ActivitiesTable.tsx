@@ -240,6 +240,7 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                 pagination
                 sorterValue={{ column: 'formattedTime', state: 'desc' }}
                 selectable
+                selected={selectedActivities} 
                 onSelectedItemsChange={(items) => {
                     setSelectedActivities(items as Activity[]);
                 }}
