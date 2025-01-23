@@ -137,7 +137,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                 alignment="center"
                 onClose={() => setShowModal(false)}>
                 <CModalHeader closeButton>
-                    <CModalTitle>Create New Activity</CModalTitle>
+                    <CModalTitle >Create New Activity</CModalTitle>
                 </CModalHeader>
                 <ActivityInputModalBody
                     activityState={activityState}

@@ -15,27 +15,6 @@ interface DeleteActivityProps {
     isScheduled?: boolean; // <-- Add this
 }
 
-const exampleToast = (
-  <CToast>
-    <CToastHeader closeButton>
-      <svg
-        className="rounded me-2"
-        width="20"
-        height="20"
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="xMidYMid slice"
-        focusable="false"
-        role="img"
-      >
-        <rect width="100%" height="100%" fill="#007aff"></rect>
-      </svg>
-      <div className="fw-bold me-auto">CoreUI for React.js</div>
-      <small>7 min ago</small>
-    </CToastHeader>
-    <CToastBody>Hello, world! This is a toast message.</CToastBody>
-  </CToast>
-)
-
 const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedClient, setScheduledActivities, setAllActivities, setFilteredActivities, isScheduled}) => {
     const db = new DatabaseService();
 
@@ -77,8 +56,8 @@ const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal,
             size="lg"
             onClose={() => setShowModal(false)}>
             <CModalHeader>
-                <CModalTitle>
-                    <FontAwesomeIcon className="pr-5" icon={faExclamationTriangle} color="red" />  WARNING
+                <CModalTitle style={{fontSize: '2rem'}}>
+                    <FontAwesomeIcon className="me-2" icon={faExclamationTriangle} color="red" /> Delete Activity?
                 </CModalTitle>
             </CModalHeader>
             <CModalBody className="px-5">

@@ -4,10 +4,14 @@ import { Activity, DatabaseService, Client, formatCurrency } from "src/db/databa
 import { CreateActivity } from "./CreateActivity";
 import DeleteActivity from "./DeleteActivity";
 import EditActivity from "./EditActivity";
-import { cilArrowRight, cilReload } from "@coreui/icons";
+import { cilArrowRight, cilReload, cilTrash } from "@coreui/icons";
 import CIcon from "@coreui/icons-react";
 import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import Activities from './Activities';
+import { faExclamationTriangle, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DeleteSelectedActivities from './DeleteSelectedActivities';
+import { toSentenceCase } from "src/utils/utilities";
 
 interface TableProps {
     allActivities: Activity[];
@@ -22,13 +26,15 @@ interface TableProps {
 
 const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities, filteredActivities, setFilteredActivities, clients, setClients, selectedClient, setSelectedClient}) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [toast, addToast] = useState<any>(0)
-    const toaster = useRef<HTMLDivElement | null>(null); 
+    const [isHovered, setIsHovered] = useState(false);
 
     const [clientOptions, setClientOptions] = useState<Option[]>([]); 
 
-    const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
     const [showEditActivityModal, setShowEditActivityModal] = useState(false);
+    const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
+    const [showDeleteSelectedButton, setShowDeleteSelectedButton] = useState(false);
+    const [selectedActivities, setSelectedActivities] = useState<Activity[]>([]);
+    const [showDeleteSelectedModal, setShowDeleteSelectedModal] = useState(false);
 
     const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
     
@@ -51,6 +57,14 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
         };
         fetchActivities();
     }, []);
+
+    useEffect(() => {
+        if (selectedActivities.length > 0) {
+            setShowDeleteSelectedButton(true);
+        } else {
+            setShowDeleteSelectedButton(false);
+        }
+    }, [selectedActivities]);
 
     if (isLoading) {
         return( 
@@ -120,14 +134,51 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
         }
       }
 
-    function toSentenceCase(str: string) {
-        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    }
-
     return (
+
         <CContainer>
             {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
             {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity}  selectedClient={selectedClient} setAllActivities={setAllActivities} setFilteredActivities={setFilteredActivities}/>}
+            {showDeleteSelectedModal && (
+                <DeleteSelectedActivities
+                    showModal={showDeleteSelectedModal}
+                    setShowModal={setShowDeleteSelectedModal}
+                    selectedActivities={selectedActivities}
+                    setSelectedActivities={setSelectedActivities}
+                    setAllActivities={setAllActivities}
+                    setFilteredActivities={setFilteredActivities}
+                    selectedClient={selectedClient}
+                />
+            )}
+            {showDeleteSelectedButton && <div
+                style={{
+                    position: 'fixed',
+                    bottom: '20px',
+                    left: '58%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 999,
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.7)',
+                }}
+            >
+                <CButton
+                    style={{ 
+                        backgroundColor: isHovered ? '#D1464B' : '#191C25',
+                        // opacity: isHovered ? 0.9 : 1,
+                        boxShadow: '2px 8px 8px rgba(0, 0, 0, 0.05)',
+                        borderColor: '#D1464B',
+                        borderWidth: '1.5px',
+                        padding: '8px 72px',
+                        fontSize: '1.1rem',
+                        // fontWeight: 'bold'
+                    }}
+                    className={isHovered ? 'text-light' : 'text-danger'}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onClick={() => setShowDeleteSelectedModal(true)}
+                >
+                    <CIcon icon={cilTrash} className="me-2" /> Delete {selectedActivities.length} {selectedActivities.length > 1 ? 'Activities' : 'Activity'}
+                </CButton>
+            </div>}
             <CRow className="justify-content-center py-3">
                 <CCol>
                     <CMultiSelect
@@ -188,6 +239,10 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                 itemsPerPage={20}
                 pagination
                 sorterValue={{ column: 'formattedTime', state: 'desc' }}
+                selectable
+                onSelectedItemsChange={(items) => {
+                    setSelectedActivities(items as Activity[]);
+                }}
                 scopedColumns={{
                     type: (item: Activity) => (
                         <td>

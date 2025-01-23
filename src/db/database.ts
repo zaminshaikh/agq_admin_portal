@@ -52,8 +52,9 @@ export interface Client {
 }
 
 export interface Activity {
-    notes?: string | number | string[] | undefined
     id?: string;
+    notes?: string | number | string[] | undefined
+    // selected?: boolean;
     parentDocId?: string;
     amount: number;
     fund: string;
