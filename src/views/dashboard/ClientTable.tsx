@@ -86,6 +86,12 @@ const ClientsTable = () => {
             filter: false,
         },
         {
+            key: 'lastLoggedIn',
+            label: 'Last Login',
+            _style: { width: '15%' },
+            filter: false,
+        },
+        {
             key: 'show_details',
             label: '',
             _style: { width: '1%' },
@@ -157,6 +163,7 @@ const ClientsTable = () => {
                             {formatCurrency(item.totalAssets)}
                         </td>
                     ),
+
                     show_details: (item: Client) => {
                         return (
                         <td className="py-2">

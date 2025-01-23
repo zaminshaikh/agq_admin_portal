@@ -41,6 +41,7 @@ export interface Client {
     ytd: number;
     totalYTD: number;
     _selected?: boolean;
+    lastLoggedIn?: string | null | undefined;
     activities?: Activity[];
     graphPoints?: GraphPoint[];
     assets: {
@@ -354,6 +355,11 @@ export class DatabaseService {
             phoneNumber: data?.phoneNumber ?? '',
             firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
             beneficiaries: data?.beneficiaries ?? [],
+            lastLoggedIn:data?.lastLoggedIn?.toDate() 
+                ? formatDate(data?.lastLoggedIn?.toDate()) // If the lastLoggedIn field is a valid date, format it
+                : ((data?.uid && data?.uid != '') // Else we'll check if the user has logged in before
+                    ? 'Before 01/25' // If they have, it was before we added the feature to track last login
+                    : 'N/A'), // If they haven't, we'll display N/A, because they have not linked their account
             _selected: false,
             assets: {
                 agq: parseAssetsData(agqAssetsData), // Dynamically parse AGQ assets
