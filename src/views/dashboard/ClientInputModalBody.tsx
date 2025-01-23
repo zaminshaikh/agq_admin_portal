@@ -359,6 +359,13 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 />
             </CInputGroup>
 
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>App Email</CInputGroupText>
+                <CFormInput value={clientState.appEmail}  disabled={true}/>
+                <CInputGroupText>UID</CInputGroupText>
+                <CFormInput value={clientState.uid}  disabled={true}/>
+            </CInputGroup>
+
             <CMultiSelect 
                 id="connected-clients"
                 className="mb-3  py-3" 
@@ -607,12 +614,13 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 </CTableBody>
             </CTable>}
 
+{/* 
             <div className="mb-3 ">
                 <h5>Upload Graph Points</h5>
                 <div  className="mb-3 py-3">
                 <CFormInput type="file" id="formFile" onChange={(event) => handleGraphPointsFileChange(event, clientState, setClientState)} disabled={viewOnly}/>
                 </div>
-            </div>
+            </div> */}
             </CModalBody>
     )
 } 
