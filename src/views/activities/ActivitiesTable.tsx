@@ -159,14 +159,14 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                     left: '58%',
                     transform: 'translateX(-50%)',
                     zIndex: 999,
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.7)',
+                    boxShadow: '2px 5px 5px rgba(0, 0, 0, 0.2)',
                 }}
             >
                 <CButton
                     style={{ 
                         backgroundColor: isHovered ? '#D1464B' : '#191C25',
                         // opacity: isHovered ? 0.9 : 1,
-                        boxShadow: '2px 8px 8px rgba(0, 0, 0, 0.05)',
+                        boxShadow: '2px 4px 4px rgba(0, 0, 0, 0.05)',
                         borderColor: '#D1464B',
                         borderWidth: '1.5px',
                         padding: '8px 72px',
