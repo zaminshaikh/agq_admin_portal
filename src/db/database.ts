@@ -356,7 +356,7 @@ export class DatabaseService {
             phoneNumber: data?.phoneNumber ?? '',
             firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
             beneficiaries: data?.beneficiaries ?? [],
-            lastLoggedIn:data?.lastLoggedIn?.toDate() 
+            lastLoggedIn: data?.lastLoggedIn instanceof Timestamp
                 ? formatDate(data?.lastLoggedIn?.toDate()) // If the lastLoggedIn field is a valid date, format it
                 : ((data?.uid && data?.uid != '') // Else we'll check if the user has logged in before
                     ? 'Before 01/25' // If they have, it was before we added the feature to track last login
