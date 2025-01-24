@@ -3,7 +3,7 @@
     "ASSETS_SUBCOLLECTION": "assets",
     "NOTIFICATIONS_SUBCOLLECTION": "notifications",
     "ACTIVITIES_SUBCOLLECTION": "activities",
-    "GRAPHPOINTS_SUBCOLLECTION": "graphPoints",
+    "GRAPHPOINTS_SUBCOLLECTION": "graphpoints",
     "SCHEDULED_ACTIVITIES_COLLECTION": "scheduledActivities",
     "ASSETS_GENERAL_DOC_ID": "general",
     "ASSETS_AGQ_DOC_ID": "agq",
