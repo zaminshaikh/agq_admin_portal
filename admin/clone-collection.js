@@ -117,7 +117,7 @@ async function cloneDocument(srcDocRef, destDocRef, newCollectionName) {
 
 // Example usage
 const oldCollectionName = 'users';   // Replace with the source collection name
-const newCollectionName = 'playground';  // Replace with the destination collection name
+const newCollectionName = 'backup';  // Replace with the destination collection name
 
 cloneCollection(oldCollectionName, newCollectionName)
   .then(() => {
