@@ -4,13 +4,11 @@ import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/mult
 import Papa from 'papaparse';
 import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { isValid, parse, set } from 'date-fns';
-import CIcon from '@coreui/icons-react';
-import * as icon from '@coreui/icons';
 import { useState, useEffect } from 'react';
 import { formatDate, parseDateWithTwoDigitYear, toTitleCase } from 'src/utils/utilities.ts';
-import Activities from '../activities/Activities.tsx';
-import EditActivity from '../activities/EditActivity.tsx';
 import countries from '../../utils/countries.json';
+import states from '../../utils/states.json';
+import provinces from '../../utils/provinces.json';
 
 interface ClientInputProps {
     clientState: Client,
@@ -242,13 +240,35 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     const [editedActivity, setEditedActivity] = useState<Activity>(emptyActivity);
 
     useEffect(() => {
+        let updatedState = { ...clientState };
+    
         if (!clientState.country) {
-            setClientState({
-                ...clientState,
-                country: 'US',
-            });
+            updatedState.country = 'US';
+        } else if (clientState.country === 'CA') {
+            updatedState.state = '';
+        } else if (clientState.country === 'US') {
+            updatedState.province = '';
+        } else {
+            updatedState.state = '';
+            updatedState.province = '';
         }
-    }, [clientState.country, setClientState]);
+    
+        // Construct the address
+        updatedState.address = `${updatedState.street}, ${updatedState.city}, ${
+            updatedState.state || updatedState.province
+        }, ${updatedState.zip}, ${updatedState.country}`;
+    
+        setClientState(updatedState);
+        console.log(updatedState.address);
+    }, [
+        clientState.street,
+        clientState.city,
+        clientState.state,
+        clientState.province,
+        clientState.zip,
+        clientState.country,
+        setClientState,
+    ]);
 
     const handleRemoveActivity = (index: number) => {
         const updatedActivities = clientState.activities?.filter((_, i) => i !== index);
@@ -299,6 +319,52 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 />
             </CInputGroup>
 
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>Email</CInputGroupText>
+                <CFormInput type="email" id="email" value={clientState.initEmail} disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    initEmail: e.target.value,
+                    };
+                    setClientState(newClientState)
+                }}/>
+                <CInputGroupText>Phone Number</CInputGroupText>
+                <CFormInput
+                    id="phone-number"
+                    value={clientState.phoneNumber}
+                    disabled={viewOnly}
+                    onChange={(e) => {
+                        const newClientState = {
+                        ...clientState,
+                        phoneNumber: maskPhoneNumber(e.target.value),
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
+            </CInputGroup>
+
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>DOB</CInputGroupText>
+                <CFormInput type="date" id="dob"  value = {clientState.dob ? clientState.dob.toISOString().split('T')[0] : ''} disabled={viewOnly}
+                onChange={(e) => {
+                    const inputValue = e.target.value;
+                    let newDob = inputValue ? parse(inputValue, 'yyyy-MM-dd', new Date()) : null;
+                    if (!newDob || !isValid(newDob)) newDob = null;
+                    setClientState({ ...clientState, dob: newDob });
+                }}/>
+                <CInputGroupText>First Deposit Date</CInputGroupText>
+                <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate ? clientState.firstDepositDate.toISOString().split('T')[0] : ''} disabled={viewOnly}
+                onChange={(e) => {
+                    const inputValue = e.target.value;
+                    let newDate = inputValue ? parse(inputValue, 'yyyy-MM-dd', new Date()) : null;
+                    if (!newDate || !isValid(newDate)) newDate = null;
+                    setClientState({ ...clientState, firstDepositDate: newDate });
+                }}/>
+            </CInputGroup>
+
             <CInputGroup className="mb-3  py-3">
                 <CInputGroupText>Address:</CInputGroupText>
                 <CInputGroupText>Street</CInputGroupText>
@@ -337,8 +403,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     <CInputGroupText>State</CInputGroupText>
                     <CFormSelect
                         id="state"
-                        value={clientState.state}
-                        disabled={viewOnly}
+                        value={clientState.state}.map(state => ({ label: state.name, value: state.code }))}
                         onChange={(e) => {
                             const newClientState = {
                                 ...clientState,
@@ -346,11 +411,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             };
                             setClientState(newClientState);
                         }}
-                    >
-                        <option value="">Select State</option>
-                        <option value="AL">Alabama</option>
-                        {/* ...other US states... */}
-                    </CFormSelect>
+                    />
                 </>
             )}
 
@@ -361,6 +422,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         id="province"
                         value={clientState.province}
                         disabled={viewOnly}
+                        options={provinces.map(province => ({ label: province.name, value: province.code }))}
                         onChange={(e) => {
                             const newClientState = {
                                 ...clientState,
@@ -368,11 +430,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             };
                             setClientState(newClientState);
                         }}
-                        >
-                        <option value="">Select Province</option>
-                        <option value="ON">Ontario</option>
-                        {/* ...other Canadian provinces... */}
-                    </CFormSelect>
+                        />
                 </>
             )}
                 <CInputGroupText>Zip Code</CInputGroupText>
@@ -405,56 +463,6 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         setClientState(newClientState);
                     }}
                 />
-            </CInputGroup>
-
-            <CInputGroup className="mb-3  py-3">
-                <CInputGroupText>DOB</CInputGroupText>
-                <CFormInput type="date" id="dob"  value = {clientState.dob ? clientState.dob.toISOString().split('T')[0] : ''} disabled={viewOnly}
-                onChange={(e) => {
-                    const inputValue = e.target.value;
-                    let newDob = inputValue ? parse(inputValue, 'yyyy-MM-dd', new Date()) : null;
-                    if (!newDob || !isValid(newDob)) newDob = null;
-                    setClientState({ ...clientState, dob: newDob });
-                }}/>
-            </CInputGroup>
-
-            <CInputGroup className="mb-3  py-3">
-                <CInputGroupText>Phone Number</CInputGroupText>
-                <CFormInput
-                    id="phone-number"
-                    value={clientState.phoneNumber}
-                    disabled={viewOnly}
-                    onChange={(e) => {
-                        const newClientState = {
-                        ...clientState,
-                        phoneNumber: maskPhoneNumber(e.target.value),
-                        };
-                        setClientState(newClientState);
-                    }}
-                />
-            </CInputGroup>
-
-            <CInputGroup className="mb-3  py-3">
-                <CInputGroupText>Email</CInputGroupText>
-                <CFormInput type="email" id="email" value={clientState.initEmail} disabled={viewOnly}
-                onChange={(e) => {
-                    const newClientState = {
-                    ...clientState,
-                    initEmail: e.target.value,
-                    };
-                    setClientState(newClientState)
-                }}/>
-            </CInputGroup>
-
-            <CInputGroup className="mb-3  py-3">
-                <CInputGroupText>First Deposit Date</CInputGroupText>
-                <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate ? clientState.firstDepositDate.toISOString().split('T')[0] : ''} disabled={viewOnly}
-                onChange={(e) => {
-                    const inputValue = e.target.value;
-                    let newDate = inputValue ? parse(inputValue, 'yyyy-MM-dd', new Date()) : null;
-                    if (!newDate || !isValid(newDate)) newDate = null;
-                    setClientState({ ...clientState, firstDepositDate: newDate });
-                }}/>
             </CInputGroup>
 
             <CInputGroup className="mb-3  py-3">
