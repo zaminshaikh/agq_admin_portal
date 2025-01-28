@@ -1,4 +1,4 @@
-import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton, CTable, CTableHead, CTableHeaderCell, CTableRow, CTableBody, CTableDataCell, CForm, CFormSelect } from '@coreui/react-pro';
+import { CModalBody, CInputGroup, CInputGroupText, CFormInput, CFormCheck, CMultiSelect, CContainer, CRow, CCol, CButton, CLoadingButton, CTable, CTableHead, CTableHeaderCell, CTableRow, CTableBody, CTableDataCell, CForm, CFormSelect, CFormTextarea } from '@coreui/react-pro';
 import { Activity, DatabaseService, GraphPoint, Client, formatCurrency, emptyActivity } from '../../db/database.ts'
 import { Option, OptionsGroup } from '@coreui/react-pro/dist/esm/components/multi-select/types';
 import Papa from 'papaparse';
@@ -587,7 +587,19 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
             <EditAssetsSection clientState={clientState} setClientState={setClientState} viewOnly={viewOnly}/>
 
-            <div className="mb-3 ">
+            <CInputGroup className='pb-5'>
+                <CInputGroupText>Notes</CInputGroupText>
+                <CFormTextarea
+                    id="notes"
+                    value={clientState.notes}
+                    placeholder="Enter notes here..."
+                    onChange={(e) => {
+                        setClientState({ ...clientState, notes: e.target.value });
+                    }}
+                />
+            </CInputGroup>
+
+            <div className="my-3 ">
                 <h5>Upload Previous Activities</h5>
                 <div  className="mb-3 py-3">
                 <CFormInput type="file" id="formFile" onChange={(event) => handleActivitiesFileChange(event, clientState, setClientState)} disabled={viewOnly}/>

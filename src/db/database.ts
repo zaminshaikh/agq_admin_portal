@@ -48,6 +48,7 @@ export interface Client {
     totalYTD: number;
     _selected?: boolean;
     lastLoggedIn?: string | null | undefined;
+    notes?: string | undefined;
     activities?: Activity[];
     graphPoints?: GraphPoint[];
     assets: {
@@ -380,6 +381,7 @@ export class DatabaseService {
                     ? 'Before 01/25' // If they have, it was before we added the feature to track last login
                     : 'N/A'), // If they haven't, we'll display N/A, because they have not linked their account
             _selected: false,
+            notes: data?.notes ?? '',
             assets: {
                 agq: parseAssetsData(agqAssetsData), // Dynamically parse AGQ assets
                 ak1: parseAssetsData(ak1AssetsData), // Dynamically parse AK1 assets
