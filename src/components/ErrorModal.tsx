@@ -41,7 +41,7 @@ export const FormValidationErrorModal: React.FC<FormValidationErrorModalProps> =
                 <CButton color="primary" onClick={() => {
                     setOverride(true);
                     setShowErrorModal(false);
-                }}>Override & Create</CButton>
+                }}>Override & Proceed</CButton>
 
                 <CButton color="secondary" onClick={() => {
                     setShowErrorModal(false);
