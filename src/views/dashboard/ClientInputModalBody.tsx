@@ -295,13 +295,12 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
             <CInputGroup className="mb-3  py-3">
                 <CInputGroupText>DOB</CInputGroupText>
-                <CFormInput type="date" id="dob"  value = {clientState.dob?.toISOString().split('T')[0] ?? ''} disabled={viewOnly}
+                <CFormInput type="date" id="dob"  value = {clientState.dob ? clientState.dob.toISOString().split('T')[0] : ''} disabled={viewOnly}
                 onChange={(e) => {
-                    const newClientState = {
-                    ...clientState,
-                    dob: parse(e.target.value, 'yyyy-MM-dd', new Date()),
-                    };
-                    setClientState(newClientState)
+                    const inputValue = e.target.value;
+                    let newDob = inputValue ? parse(inputValue, 'yyyy-MM-dd', new Date()) : null;
+                    if (!newDob || !isValid(newDob)) newDob = null;
+                    setClientState({ ...clientState, dob: newDob });
                 }}/>
             </CInputGroup>
 
@@ -331,13 +330,12 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
             <CInputGroup className="mb-3  py-3">
                 <CInputGroupText>First Deposit Date</CInputGroupText>
-                <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate?.toISOString().split('T')[0] ?? ''} disabled={viewOnly}
+                <CFormInput type="date" id="first-deposit-date" value={clientState.firstDepositDate ? clientState.firstDepositDate.toISOString().split('T')[0] : ''} disabled={viewOnly}
                 onChange={(e) => {
-                    const newClientState = {
-                    ...clientState,
-                    firstDepositDate: parse(e.target.value, 'yyyy-MM-dd', new Date()),
-                    };
-                    setClientState(newClientState)
+                    const inputValue = e.target.value;
+                    let newDate = inputValue ? parse(inputValue, 'yyyy-MM-dd', new Date()) : null;
+                    if (!newDate || !isValid(newDate)) newDate = null;
+                    setClientState({ ...clientState, firstDepositDate: newDate });
                 }}/>
             </CInputGroup>
 
