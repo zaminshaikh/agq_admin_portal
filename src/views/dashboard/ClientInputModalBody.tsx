@@ -250,6 +250,15 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
         setClientState(newState);
     };
 
+    function maskPhoneNumber(value: string) {
+        const digits = value.replace(/\D/g, '');
+        let result = '';
+        if (digits.length > 0) result = '(' + digits.slice(0, 3);
+        if (digits.length >= 4) result += ') ' + digits.slice(3, 6);
+        if (digits.length >= 7) result += '-' + digits.slice(6, 10);
+        return result;
+    }
+
     return (
             <CModalBody className="px-5">
             <CInputGroup className="mb-3 py-3">
@@ -306,14 +315,18 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
             <CInputGroup className="mb-3  py-3">
                 <CInputGroupText>Phone Number</CInputGroupText>
-                <CFormInput id="phone-number" value={clientState.phoneNumber} disabled={viewOnly}
-                onChange={(e) => {
-                    const newClientState = {
-                    ...clientState,
-                    phoneNumber: e.target.value,
-                    };
-                    setClientState(newClientState)
-                }}/>
+                <CFormInput
+                    id="phone-number"
+                    value={clientState.phoneNumber}
+                    disabled={viewOnly}
+                    onChange={(e) => {
+                        const newClientState = {
+                        ...clientState,
+                        phoneNumber: maskPhoneNumber(e.target.value),
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
             </CInputGroup>
 
             <CInputGroup className="mb-3  py-3">
