@@ -121,7 +121,7 @@ export const emptyClient: Client = {
     street: '',
     city: '',
     zip: '',
-    country: '',
+    country: 'US',
     dob: null,
     phoneNumber: '',
     firstDepositDate: null,

@@ -6,7 +6,7 @@ import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { isValid, parse, set } from 'date-fns';
 import CIcon from '@coreui/icons-react';
 import * as icon from '@coreui/icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatDate, parseDateWithTwoDigitYear, toTitleCase } from 'src/utils/utilities.ts';
 import Activities from '../activities/Activities.tsx';
 import EditActivity from '../activities/EditActivity.tsx';
@@ -241,6 +241,15 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     const [editActivityIndex, setEditActivityIndex] = useState<number | null>(null);
     const [editedActivity, setEditedActivity] = useState<Activity>(emptyActivity);
 
+    useEffect(() => {
+        if (!clientState.country) {
+            setClientState({
+                ...clientState,
+                country: 'US',
+            });
+        }
+    }, [clientState.country, setClientState]);
+
     const handleRemoveActivity = (index: number) => {
         const updatedActivities = clientState.activities?.filter((_, i) => i !== index);
         const newState = {
@@ -291,6 +300,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
             </CInputGroup>
 
             <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>Address:</CInputGroupText>
                 <CInputGroupText>Street</CInputGroupText>
                 <CFormInput
                     id="street"
@@ -320,22 +330,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
             </CInputGroup>
 
             <CInputGroup className="mb-3  py-3">
-                <CInputGroupText>Country</CInputGroupText>
-                <CFormSelect
-                    id="country"
-                    // value={clientState.country}
-                    disabled={viewOnly}
-                    options={countries.map(country => ({ label: country.name, value: country.code, selected: country.code === "US" }))}
-                    onChange={(e) => {
-                        const newCountry = e.target.value;
-                        const newClientState = {
-                            ...clientState,
-                            country: newCountry,
-                            state: '', // Reset state/province when country changes
-                        };
-                        setClientState(newClientState);
-                    }}
-                />
+                
 
             {clientState.country === 'US' && (
                 <>
@@ -389,6 +384,23 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         const newClientState = {
                             ...clientState,
                             zip: e.target.value,
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
+
+                <CInputGroupText>Country</CInputGroupText>
+                <CFormSelect
+                    id="country"
+                    value={clientState.country}
+                    disabled={viewOnly}
+                    options={countries.map(country => ({ label: country.name, value: country.code }))}
+                    onChange={(e) => {
+                        const newCountry = e.target.value;
+                        const newClientState = {
+                            ...clientState,
+                            country: newCountry,
+                            state: '', // Reset state/province when country changes
                         };
                         setClientState(newClientState);
                     }}
