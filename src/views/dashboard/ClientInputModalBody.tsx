@@ -403,7 +403,9 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     <CInputGroupText>State</CInputGroupText>
                     <CFormSelect
                         id="state"
-                        value={clientState.state}.map(state => ({ label: state.name, value: state.code }))}
+                        value={clientState.state}
+                        disabled={viewOnly}
+                        options={states.map(state => ({ label: state.name, value: state.code }))}
                         onChange={(e) => {
                             const newClientState = {
                                 ...clientState,
