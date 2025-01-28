@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { formatDate, parseDateWithTwoDigitYear, toTitleCase } from 'src/utils/utilities.ts';
 import Activities from '../activities/Activities.tsx';
 import EditActivity from '../activities/EditActivity.tsx';
-
+import countries from '../../utils/countries.json';
 
 interface ClientInputProps {
     clientState: Client,
@@ -291,15 +291,108 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
             </CInputGroup>
 
             <CInputGroup className="mb-3  py-3">
-                <CInputGroupText>Address</CInputGroupText>
-                <CFormInput id="address" value={clientState.address} disabled={viewOnly}
-                onChange={(e) => {
-                    const newClientState = {
-                    ...clientState,
-                    address: e.target.value,
-                    };
-                    setClientState(newClientState)
-                }}/>
+                <CInputGroupText>Street</CInputGroupText>
+                <CFormInput
+                    id="street"
+                    value={clientState.street}
+                    disabled={viewOnly}
+                    onChange={(e) => {
+                        const newClientState = {
+                            ...clientState,
+                            street: e.target.value,
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
+                <CInputGroupText>City</CInputGroupText>
+                <CFormInput
+                    id="city"
+                    value={clientState.city}
+                    disabled={viewOnly}
+                    onChange={(e) => {
+                        const newClientState = {
+                            ...clientState,
+                            city: e.target.value,
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
+            </CInputGroup>
+
+            <CInputGroup className="mb-3  py-3">
+                <CInputGroupText>Country</CInputGroupText>
+                <CFormSelect
+                    id="country"
+                    // value={clientState.country}
+                    disabled={viewOnly}
+                    options={countries.map(country => ({ label: country.name, value: country.code, selected: country.code === "US" }))}
+                    onChange={(e) => {
+                        const newCountry = e.target.value;
+                        const newClientState = {
+                            ...clientState,
+                            country: newCountry,
+                            state: '', // Reset state/province when country changes
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
+
+            {clientState.country === 'US' && (
+                <>
+                    <CInputGroupText>State</CInputGroupText>
+                    <CFormSelect
+                        id="state"
+                        value={clientState.state}
+                        disabled={viewOnly}
+                        onChange={(e) => {
+                            const newClientState = {
+                                ...clientState,
+                                state: e.target.value,
+                            };
+                            setClientState(newClientState);
+                        }}
+                    >
+                        <option value="">Select State</option>
+                        <option value="AL">Alabama</option>
+                        {/* ...other US states... */}
+                    </CFormSelect>
+                </>
+            )}
+
+            {clientState.country === 'CA' && (
+                <>
+                    <CInputGroupText>Province</CInputGroupText>
+                    <CFormSelect
+                        id="province"
+                        value={clientState.province}
+                        disabled={viewOnly}
+                        onChange={(e) => {
+                            const newClientState = {
+                                ...clientState,
+                                province: e.target.value,
+                            };
+                            setClientState(newClientState);
+                        }}
+                        >
+                        <option value="">Select Province</option>
+                        <option value="ON">Ontario</option>
+                        {/* ...other Canadian provinces... */}
+                    </CFormSelect>
+                </>
+            )}
+                <CInputGroupText>Zip Code</CInputGroupText>
+                <CFormInput
+                    id="zip"
+                    value={clientState.zip}
+                    disabled={viewOnly}
+                    onChange={(e) => {
+                        const newClientState = {
+                            ...clientState,
+                            zip: e.target.value,
+                        };
+                        setClientState(newClientState);
+                    }}
+                />
             </CInputGroup>
 
             <CInputGroup className="mb-3  py-3">
@@ -643,7 +736,11 @@ export const ValidateClient = (clientState: Client, setInvalidInputFields: (fiel
     const fieldValidations: { displayName: string, condition: boolean }[] = [
         { displayName: 'First Name', condition: clientState.firstName === '' },
         { displayName: 'Last Name', condition: clientState.lastName === '' },
-        { displayName: 'Address', condition: clientState.address === '' },
+        { displayName: 'Street', condition: clientState.street === '' },
+        { displayName: 'City', condition: clientState.city === '' },
+        { displayName: 'Country', condition: clientState.country === '' },
+        { displayName: 'State/Province', condition: clientState.country === 'US' ? clientState.state === '' : clientState.province === '' },
+        { displayName: 'Zip Code', condition: clientState.zip === '' },
         { displayName: 'DOB', condition: !clientState.dob || isNaN(clientState.dob.getTime()) },
         { displayName: 'Phone Number', condition: clientState.phoneNumber === '' },
         { displayName: 'Email', condition: clientState.initEmail === '' },

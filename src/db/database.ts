@@ -30,6 +30,12 @@ export interface Client {
     lastName: string;
     companyName: string;
     address: string;
+    province: string
+    state: string
+    street: string
+    city: string
+    zip: string
+    country: string
     dob: Date | null;
     phoneNumber: string;
     appEmail: string;
@@ -110,6 +116,12 @@ export const emptyClient: Client = {
     lastName: '',
     companyName: '',
     address: '',
+    province: '',
+    state: '',
+    street: '',
+    city: '',
+    zip: '',
+    country: '',
     dob: null,
     phoneNumber: '',
     firstDepositDate: null,
@@ -346,6 +358,12 @@ export class DatabaseService {
             lastName: data?.name?.last ?? '',
             companyName: data?.name?.company ?? '',
             address: data?.address ?? '',
+            province: data?.province ?? '',
+            state: data?.state ?? '',
+            street: data?.street ?? '',
+            city: data?.city ?? '',
+            zip: data?.zip ?? '',
+            country: data?.country ?? '',
             dob: data?.dob?.toDate() ?? null,
             initEmail: data?.initEmail ?? data?.email ?? '',
             appEmail: data?.appEmail ?? data?.email ?? 'Client has not logged in yet',
