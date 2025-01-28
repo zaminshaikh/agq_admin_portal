@@ -151,66 +151,66 @@ const exceptions = ["LLC", "Inc", "Ltd"];
 };
 
 
-const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+// const handleGraphPointsFileChange = (event: React.ChangeEvent<HTMLInputElement>, clientState: Client, setClientState: (state: Client) => void) => {
+//     const file = event.target.files?.[0];
+//     if (!file) return;
 
-    // Parse the CSV file
-    Papa.parse(file, {
-        header: true,
-        complete: (results) => {
-            // Initialize an array to store the activities
-            let graphPoints: GraphPoint[] = [];
+//     // Parse the CSV file
+//     Papa.parse(file, {
+//         header: true,
+//         complete: (results) => {
+//             // Initialize an array to store the activities
+//             let graphPoints: GraphPoint[] = [];
     
-            results.data.forEach((row: any) => {
-                // Skip if row is empty
-                if (Object.values(row).every(x => (x === null || x === ''))) return;
+//             results.data.forEach((row: any) => {
+//                 // Skip if row is empty
+//                 if (Object.values(row).every(x => (x === null || x === ''))) return;
     
-                // Get the date string from the row
-                const amountString = row["Amount"] ?? row["amount"];
-                const dateString = row["Date"] ?? row["date"];
-                if (!dateString) {
-                    console.warn("Date field is missing or undefined in row:", row);
-                    return;
-                }
+//                 // Get the date string from the row
+//                 const amountString = row["Amount"] ?? row["amount"];
+//                 const dateString = row["Date"] ?? row["date"];
+//                 if (!dateString) {
+//                     console.warn("Date field is missing or undefined in row:", row);
+//                     return;
+//                 }
     
-                console.log(`Raw date string: ${dateString}`);
+//                 console.log(`Raw date string: ${dateString}`);
     
-                // Parse the date string correctly
-                const parsedDate = parseDateWithTwoDigitYear(dateString);
+//                 // Parse the date string correctly
+//                 const parsedDate = parseDateWithTwoDigitYear(dateString);
 
-                // Remove commas and dollar signs from the amount string and parse it as a float
-                const cleanedAmountString = amountString.replace(/[$,]/g, '');
-                const amount = parseFloat(cleanedAmountString);
+//                 // Remove commas and dollar signs from the amount string and parse it as a float
+//                 const cleanedAmountString = amountString.replace(/[$,]/g, '');
+//                 const amount = parseFloat(cleanedAmountString);
     
-                if (!isValid(parsedDate)) {
-                    console.warn("Invalid date format in row:", row);
-                    return;
-                }
+//                 if (!isValid(parsedDate)) {
+//                     console.warn("Invalid date format in row:", row);
+//                     return;
+//                 }
     
-                console.log(`Parsed date: ${parsedDate}`);
+//                 console.log(`Parsed date: ${parsedDate}`);
     
-                // Create an activity from each row of the CSV
-                const point: GraphPoint = {
-                    time: parsedDate,
-                    amount: amount,
-                };
+//                 // Create an activity from each row of the CSV
+//                 const point: GraphPoint = {
+//                     time: parsedDate,
+//                     amount: amount,
+//                 };
     
-                // Add the activity to the activities array
-                graphPoints.push(point);
-            });
+//                 // Add the activity to the activities array
+//                 graphPoints.push(point);
+//             });
     
-            console.log(graphPoints);
+//             console.log(graphPoints);
     
-            // Update the client state with the new activities
-            const newClientState = {
-                ...clientState,
-                graphPoints,
-            };
-            setClientState(newClientState);
-        }
-    });
-}
+//             // Update the client state with the new activities
+//             const newClientState = {
+//                 ...clientState,
+//                 graphPoints,
+//             };
+//             setClientState(newClientState);
+//         }
+//     });
+// }
 
 /**
  * Component representing the body of the client input modal.
@@ -252,14 +252,20 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
             updatedState.state = '';
             updatedState.province = '';
         }
-    
-        // Construct the address
-        updatedState.address = `${updatedState.street}, ${updatedState.city}, ${
-            updatedState.state || updatedState.province
-        }, ${updatedState.zip}, ${updatedState.country}`;
+
+        if (clientState.street && clientState.city && clientState.zip && clientState.country) {
+            let stateOrProvince = clientState.country === 'US' ? clientState.state : clientState.province;
+            if (stateOrProvince !== '') {stateOrProvince = stateOrProvince + ', ';}
+            // Construct the address
+            updatedState.address = `${updatedState.street}, ${updatedState.city}, ${stateOrProvince}${updatedState.zip}, ${updatedState.country}`;
+
+        } else {
+            updatedState.address = '';
+        }
     
         setClientState(updatedState);
         console.log(updatedState.address);
+        console.log(updatedState.state);
     }, [
         clientState.street,
         clientState.city,
