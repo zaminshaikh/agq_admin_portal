@@ -16,16 +16,16 @@ const db = admin.firestore();
  * Generates graphpoints for all users in the specified collection.
  * Utilizes Promise.all to process multiple users in parallel for enhanced performance.
  *
- * @param {string} usersCollectionName - The name of the users collection.
+ * @param {string} usersCollectionID - The name of the users collection.
  */
-async function generateGraphpoints(usersCollectionName) {
-  console.log(`Starting graphpoints generation for collection '${usersCollectionName}'`);
+async function generateGraphpoints(usersCollectionID) {
+  console.log(`Starting graphpoints generation for collection '${usersCollectionID}'`);
 
-  const usersRef = db.collection(usersCollectionName);
+  const usersRef = db.collection(usersCollectionID);
   
   try {
     const usersSnapshot = await usersRef.orderBy('name').get();
-    console.log(`Found ${usersSnapshot.size} users in collection '${usersCollectionName}'`);
+    console.log(`Found ${usersSnapshot.size} users in collection '${usersCollectionID}'`);
 
     // Process all users in parallel
     const userPromises = usersSnapshot.docs.map(async (userDoc) => {
@@ -149,16 +149,106 @@ async function generateGraphpoints(usersCollectionName) {
 
     // Wait for all users to be processed
     await Promise.all(userPromises);
-    console.log(`Successfully generated graphpoints for all users in collection '${usersCollectionName}'`);
+    console.log(`Successfully generated graphpoints for all users in collection '${usersCollectionID}'`);
+
+    // Generate overall graphpoints
+    await generateOverallGraphpoints();
   } catch (error) {
-    console.error(`Error generating graphpoints for collection '${usersCollectionName}':`, error);
+    console.error(`Error generating graphpoints for collection '${usersCollectionID}':`, error);
+    throw error;
+  }
+}
+
+/**
+ * Generates overall graphpoints for total assets under management using collectionGroup.
+ *
+ * @param {string} usersCollectionID - The name of the users collection.
+ */
+async function generateOverallGraphpoints(usersCollectionID) {
+  console.log(`Starting overall graphpoints generation using collectionGroup`);
+
+  try {
+    const activitiesQuery = db.collectionGroup('activities').orderBy('time');
+    const activitiesSnapshot = await activitiesQuery.get();
+    console.log(`Retrieved ${activitiesSnapshot.size} activities using collectionGroup`);
+
+    const overallGraphpointsRef = db.collection('graphpoints');
+    const existingGraphpoints = await overallGraphpointsRef.get();
+    if (!existingGraphpoints.empty) {
+        const deletePromises = existingGraphpoints.docs.map(doc => {
+          console.log(`Deleting graphpoint ID: ${doc.id} in overall graphpoints`);
+          return doc.ref.delete();
+        });
+        await Promise.all(deletePromises);
+        console.log(`Cleared existing graphpoints`);
+    } else {
+        console.log(`No existing graphpoints found`);
+    }
+
+    let fundsMap = {};
+    let cumulativeBalance = 0;
+
+    const activityPromises = activitiesSnapshot.docs.map(async (activityDoc) => {
+        
+        const activity = activityDoc.data();
+
+        if (
+            activity.type === 'deposit' ||
+            activity.type === 'withdrawal' ||
+            activity.isDividend
+          )
+        {
+            const cashflow = activity.amount * (activity.type === 'withdrawal' ? -1 : 1);
+            const time = activity.time;
+            const fund = activity.fund || 'Unspecified';
+
+            if (!fundsMap[fund]) {
+                fundsMap[fund] = 0;
+            }
+            fundsMap[fund] += cashflow;
+            cumulativeBalance += cashflow;
+
+            // Prepare graphpoints
+            const cumulativeGraphpoint = {
+                fund: 'Cumulative',
+                amount: cumulativeBalance,
+                cashflow: cashflow,
+                time: time,
+                usersCollection: usersCollectionID,
+            };
+
+            const fundGraphpoint = {
+                fund: activity.fund,
+                amount: fundsMap[fund],
+                cashflow: cashflow,
+                time: time,
+                usersCollection: usersCollectionID,
+            };
+            // Add graphpoints
+            try {
+                await overallGraphpointsRef.add(cumulativeGraphpoint);
+                console.log(`Added cumulative graphpoint at time: ${time.toDate()}`);
+        
+                await overallGraphpointsRef.add(fundGraphpoint);
+                console.log(`Added graphpoint for fund '${fund}' at time: ${time.toDate()}`);
+              } catch (addError) {
+                console.error(`Error adding overall graphpoints:`, addError);
+                throw addError;
+              }
+        }
+    });
+
+    await Promise.all(activityPromises);
+    console.log(`Successfully generated overall graphpoints using collectionGroup`);
+  } catch (error) {
+    console.error(`Error generating overall graphpoints:`, error);
     throw error;
   }
 }
 
 // Example usage
-const usersCollectionName = 'users'; // Replace with your actual users collection name
-generateGraphpoints(usersCollectionName)
+const usersCollectionID = 'playground'; // Replace with your actual users collection name
+generateOverallGraphpoints(usersCollectionID)
   .then(() => {
     console.log('Graphpoints generation completed successfully');
     process.exit(0); // Exit successfully
