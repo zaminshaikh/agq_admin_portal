@@ -644,10 +644,11 @@ exports.unlinkUser = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Update the Firestore document: Set specified fields to empty strings
+    // Update the Firestore document: Set specified fields to empty strings and clear the 'tokens' array
     await userRef.update({
       appEmail: '',
       uid: '',
+      tokens: [],
     });
 
     console.log(`Firestore: Cleared fields for user with cid ${cid}.`);
