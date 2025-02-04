@@ -120,6 +120,35 @@ const ClientsTable = () => {
         // Update the state with the new details array
         setDetails(newDetails);
     }
+
+    const handleSendInvite = () => {
+        if (currentClient && currentClient.initEmail) {
+          const subject = encodeURIComponent("AGQ App Invitation");
+          
+          const emailBody = 
+            `Dear ${currentClient.firstName},\n\n` +
+            "We hope this message finds you well.  AGQ is excited to launch our new app!\n" +
+            "With this app, you can easily access your up-to-date investment information right from your phone.\n\n" +
+            "To get started, please follow these steps:\n" +
+            "   1. Click the Link:\n" +
+            "       • For iOS Users: https://testflight.apple.com/join/e9kMgByH\n" +
+            "       • For Android Users: https://play.google.com/apps/internaltest/4701740371572084825\n\n" +
+            "       Important note: the app is only available on mobile devices and links must be open on such devices for download.\n\n" +
+            `   2. Enter Your Client ID (CID): ${currentClient.cid} (This is a unique 8-digit identifier. Please keep it confidential).\n\n` +
+            "   3. Set Up Your Account: Follow the instructions to create your account using your email and CID. This setup is a one-time process; you will not need to remember your CID for future logins.\n\n" +
+            "We’ve designed the platform to be simple and intuitive. If you have questions or need any assistance, our support team is just a click away at management@agqconsulting.com.\n" +
+            "Please note - The login via the website will be phased out in early 2025 so we appreciate your help with this transition.\n\n" +
+            "Thank you for your continued trust in our team. We are excited to bring you a more convenient and seamless experience with this new app.\n\n" +
+            "Cordially,\n\n" +
+            "On behalf of Sonny and Kash\n\n" +
+            "Melinda Toepp  |  Executive Assistant";
+      
+          const body = encodeURIComponent(emailBody);
+      
+          // Construct the mailto link
+          window.location.href = `mailto:${currentClient.initEmail}?subject=${subject}&body=${body}`;
+        }
+      };
     
     return (
         <CContainer>
@@ -207,10 +236,10 @@ const ClientsTable = () => {
                                 <CCol className="text-center">
                                     <CButton size="sm" color="info" className='ml-1' variant="outline" 
                                         onClick={() => {
-                                            setShowDisplayDetailsModal(true)
                                             setCurrentClient(clients.find(client => client.cid === item.cid))
+                                            handleSendInvite();
                                         }}>
-                                        Client Details
+                                        Send Invite
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
