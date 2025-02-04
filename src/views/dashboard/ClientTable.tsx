@@ -81,8 +81,7 @@ const ClientsTable = () => {
         {
             key: 'uid',
             label: 'Linked?',
-            _style: { width: '5%' },
-            sorter: false,
+            _style: { width: '9%' },
             filter: false,
         },
         {
