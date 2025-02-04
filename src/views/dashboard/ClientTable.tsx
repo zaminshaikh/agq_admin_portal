@@ -63,12 +63,12 @@ const ClientsTable = () => {
         {
             key: 'firstName',
             label: 'First',
-            _style: { width: '15%'},
+            _style: { width: '10%'},
         },
         {
             key: 'lastName',
             label: 'Last',
-            _style: { width: '15%'},
+            _style: { width: '10%'},
         },
         {
             key: 'initEmail',
@@ -77,11 +77,12 @@ const ClientsTable = () => {
         {
             key: 'totalAssets',
             label: 'Total Assets',
+            _style: { width: '15%' },
         },
         {
             key: 'uid',
             label: 'Linked?',
-            _style: { width: '9%' },
+            _style: { width: '15%' },
             filter: false,
         },
         {
