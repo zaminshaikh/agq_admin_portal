@@ -22,6 +22,7 @@ import { processScheduledActivities } from "./scheduled/scheduledActivities";
 import { linkNewUser } from "./callable/linkUser";
 import { isUIDLinked, checkDocumentExists, checkDocumentLinked } from "./callable/checkDocsAndUID";
 import { unlinkUser } from "./callable/unlinkUser";
+import { calculateTotalYTD, calculateYTD } from "./callable/ytd";
 
 // Expose Firestore triggers
 export const f_handleActivity = handleActivity;
@@ -39,3 +40,5 @@ export const f_checkDocumentExists = checkDocumentExists;
 export const f_checkDocumentLinked = checkDocumentLinked;
 export const f_unlinkUser = unlinkUser;
 export const f_isUIDLinked = isUIDLinked;
+export const f_calculateTotalYTD = calculateTotalYTD;
+export const f_calculateYTD = calculateYTD;

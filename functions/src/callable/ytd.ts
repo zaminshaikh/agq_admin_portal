@@ -1,14 +1,14 @@
-import * as functions from 'firebase-functions';
 import {calculateTotalYTDForUser, calculateYTDForUser} from '../helpers/ytd';
+import * as functions from "firebase-functions/v1";
 
-exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promise<number> => {
+export const calculateTotalYTD = functions.https.onCall(async (data, context): Promise<number> => {
     const cid = data.cid;
     const usersCollectionID = data.usersCollectionID;
 
     return calculateTotalYTDForUser(cid, usersCollectionID);
 });
 
-exports.calculateTotalYTD = functions.https.onCall(async (data, context): Promise<number> => {
+export const calculateYTD = functions.https.onCall(async (data, context): Promise<number> => {
     const cid = data.cid;
     const usersCollectionID = data.usersCollectionID;
 
