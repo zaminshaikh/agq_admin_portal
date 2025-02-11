@@ -6,7 +6,7 @@
 
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import { addUidToConnectedUsers } from "../utils";
+import { addUidToConnectedUsers } from "../helpers/addUidToConnectedUsers";
 
 /**
  * Callable: linkNewUser

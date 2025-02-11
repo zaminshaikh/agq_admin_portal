@@ -6,7 +6,7 @@
 
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import { addUidToConnectedUsers } from "../utils";
+import { addUidToConnectedUsers } from "../helpers/addUidToConnectedUsers";
 
 /**
  * Trigger: onUpdate of a user's main doc. When `connectedUsers` changes, we add/remove
