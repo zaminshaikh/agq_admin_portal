@@ -6,9 +6,7 @@
 
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import config from "../../lib/config.json";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
-import { Activity } from "../interfaces/activity.interface";
 
 const db = admin.firestore();
 
