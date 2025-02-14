@@ -9,7 +9,7 @@
 
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import config from "../../lib/config.json";
+import config from "../../config.json";
 import { Activity } from "../interfaces/activity.interface";
 import { updateYTD } from "../helpers/ytd";
 import { updateGraphpoints } from "../helpers/graphpoints";

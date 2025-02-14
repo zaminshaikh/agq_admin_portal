@@ -6,7 +6,7 @@
  */
 
 import * as admin from "firebase-admin";
-import config from "../../lib/config.json";
+import config from "../../config.json";
 import { Activity } from "../interfaces/activity.interface";
 
 const db = admin.firestore();

@@ -23,22 +23,29 @@ import { linkNewUser } from "./callable/linkUser";
 import { isUIDLinked, checkDocumentExists, checkDocumentLinked } from "./callable/checkDocsAndUID";
 import { unlinkUser } from "./callable/unlinkUser";
 import { calculateTotalYTD, calculateYTD } from "./callable/ytd";
+import * as functions from "firebase-functions";
 
-// Expose Firestore triggers
-export const f_handleActivity = handleActivity;
-export const f_onActivityWrite = onActivityWrite;
-export const f_onAssetUpdate = onAssetUpdate;
-export const f_onConnectedUsersChange = onConnectedUsersChange;
+export {
+  // ======= TRIGGERS =======
+  handleActivity,
+  onActivityWrite,
+  onAssetUpdate,
+  onConnectedUsersChange,
 
-// Expose scheduled tasks
-export const f_scheduledYTDReset = scheduledYTDReset;
-export const f_processScheduledActivities = processScheduledActivities;
+  // ======= SCHEDULED =======
+  scheduledYTDReset,
+  processScheduledActivities,
 
-// Expose callable functions
-export const f_linkNewUser = linkNewUser;
-export const f_checkDocumentExists = checkDocumentExists;
-export const f_checkDocumentLinked = checkDocumentLinked;
-export const f_unlinkUser = unlinkUser;
-export const f_isUIDLinked = isUIDLinked;
-export const f_calculateTotalYTD = calculateTotalYTD;
-export const f_calculateYTD = calculateYTD;
+  // ======= CALLABLE =======
+  linkNewUser,
+  isUIDLinked,
+  checkDocumentExists,
+  checkDocumentLinked,
+  unlinkUser,
+  calculateTotalYTD,
+  calculateYTD
+}
+
+export const helloWorlddd = functions.https.onRequest((req: any, res: { send: (arg0: string) => void; }) => {
+  res.send("Hello from Firebase!");
+});

@@ -7,7 +7,7 @@
 
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import config from "../../lib/config.json";
+import config from "../../config.json";
 
 const db = admin.firestore();
 

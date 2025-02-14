@@ -7,7 +7,7 @@
 import * as admin from "firebase-admin";
 import { Activity } from "../interfaces/activity.interface";
 import { Notification } from "../interfaces/notification.interface";
-import config from "../../lib/config.json";
+import config from "../../config.json";
 
 const messaging = admin.messaging();
 
