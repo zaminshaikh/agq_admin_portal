@@ -21,7 +21,7 @@ const db = admin.firestore();
  * 3) Marks the scheduled activity doc as 'completed'.
  */
 export const processScheduledActivities = functions.pubsub
-  .schedule("0 */12 * * *") // Runs every 12 hours
+  .schedule("*/5 * * * *") // Runs every 5 minutes 
   .onRun(async (context) => {
     const now = admin.firestore.Timestamp.now();
     const scheduledActivitiesRef = db.collection("scheduledActivities");
@@ -72,11 +72,27 @@ export const processScheduledActivities = functions.pubsub
           const docObj: any = { fund: fundName };
           for (const key of Object.keys(assets)) {
             const asset = assets[key];
+            let firstDeposit;
+            if (asset.firstDepositDate) {
+              // If it's a Firestore Timestamp, just use it
+              if (asset.firstDepositDate instanceof admin.firestore.Timestamp) {
+                firstDeposit = asset.firstDepositDate;
+              } 
+              // If it's a Date, convert
+              else if (asset.firstDepositDate instanceof Date) {
+                firstDeposit = admin.firestore.Timestamp.fromDate(asset.firstDepositDate);
+              }
+              // If it's a string, parse and convert if valid
+              else {
+                const parsed = new Date(asset.firstDepositDate);
+                if (!isNaN(parsed.getTime())) {
+                  firstDeposit = admin.firestore.Timestamp.fromDate(parsed);
+                }
+              }
+            }
             docObj[key] = {
               amount: asset.amount,
-              firstDepositDate: asset.firstDepositDate
-                ? admin.firestore.Timestamp.fromDate(asset.firstDepositDate)
-                : null,
+              firstDepositDate: firstDeposit || null,
               displayTitle: asset.displayTitle,
               index: asset.index,
             };
