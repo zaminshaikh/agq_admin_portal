@@ -21,7 +21,7 @@ const db = admin.firestore();
  * 3) Marks the scheduled activity doc as 'completed'.
  */
 export const processScheduledActivities = functions.pubsub
-  .schedule("*/5 * * * *") // Runs every 5 minutes 
+  .schedule("0 * * * *") // Runs every hour at minute 0
   .onRun(async (context) => {
     const now = admin.firestore.Timestamp.now();
     const scheduledActivitiesRef = db.collection("scheduledActivities");
