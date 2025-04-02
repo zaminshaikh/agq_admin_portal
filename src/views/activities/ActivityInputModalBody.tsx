@@ -63,15 +63,31 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     const initialDate = activityState.time instanceof Timestamp
         ? roundToNearestHour(activityState.time.toDate())
         : roundToNearestHour(activityState.time);
-    const [date, setDate] = React.useState<Date | null>(initialDate);
+    
+    // Instead of a single date state, use separate date and time states
+    const [dateValue, setDateValue] = useState<string>(
+        initialDate ? initialDate.toISOString().split('T')[0] : ''
+    );
+    const [timeValue, setTimeValue] = useState<string>(
+        initialDate ? initialDate.toTimeString().slice(0, 5) : ''
+    );
     const [isRecipientSameAsClient, setIsRecipientSameAsClient] = useState<boolean>(true);
 
-    const handleDateChange = (newDate: Date | null) => {
-        if (newDate === null) { return; }
-        const roundedDate = roundToNearestHour(newDate);
-        setDate(roundedDate);
+    // Updated handler for date and time changes
+    const handleDateTimeChange = (newDate: string, newTime: string) => {
+        if (!newDate || !newTime) { return; }
+        
+        // Combine date and time strings into a Date object
+        const combinedDateTime = new Date(`${newDate}T${newTime}`);
+        if (isNaN(combinedDateTime.getTime())) return;
+        
+        const roundedDate = roundToNearestHour(combinedDateTime);
         setActivityState({ ...activityState, time: roundedDate });
     };
+
+    useEffect(() => {
+        handleDateTimeChange(dateValue, timeValue);
+    }, [dateValue, timeValue]);
 
     useEffect(() => {
         const newDate = activityState.time instanceof Timestamp
@@ -79,7 +95,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             : roundToNearestHour(activityState.time);
         
         setActivityState({...activityState, time: newDate});
-    }, [date]);
+    }, [dateValue, timeValue]);
 
     useEffect(() => {
         if (activityState.recipient === null || activityState.recipient === '') {return;}
@@ -169,9 +185,24 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             <CContainer className="py-3 px-3">
                 <CRow>
                 <CCol>
-                  <div style={{ position: 'relative', zIndex: 1050 }}>
-                      <CDatePicker placeholder={"Date and Time of Activity"} date={date} onDateChange={handleDateChange} timepicker/>    
-                  </div>
+                    <CInputGroup>
+                        <CInputGroupText>Date</CInputGroupText>
+                        <CFormInput 
+                            type="date" 
+                            value={dateValue}
+                            onChange={(e) => setDateValue(e.target.value)}
+                        />
+                    </CInputGroup>
+                </CCol>
+                <CCol>
+                    <CInputGroup>
+                        <CInputGroupText>Time</CInputGroupText>
+                        <CFormInput 
+                            type="time" 
+                            value={timeValue}
+                            onChange={(e) => setTimeValue(e.target.value)}
+                        />
+                    </CInputGroup>
                 </CCol>
                 <CCol>
                 <CMultiSelect
