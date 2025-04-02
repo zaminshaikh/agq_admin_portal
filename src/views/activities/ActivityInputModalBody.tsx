@@ -1,12 +1,9 @@
-import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton, CCol, CContainer, CDatePicker, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip, CFormTextarea } from "@coreui/react-pro";
+import { CCol, CContainer, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip, CFormTextarea } from "@coreui/react-pro";
 import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
-import React, { act, useEffect, useState, useMemo } from "react";
-import { Activity, Client, DatabaseService, emptyClient, roundToNearestHour} from "src/db/database";
+import React, { useEffect, useState, useMemo } from "react";
+import { Activity, Client, DatabaseService, roundToNearestHour} from "src/db/database";
 import { EditAssetsSection } from "../../components/EditAssetsSection";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
-import { time } from "console";
-import { Timestamp, setDoc } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 
 interface ActivityInputProps {
