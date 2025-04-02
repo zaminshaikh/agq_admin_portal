@@ -248,9 +248,9 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                           setClientState(newClientState);
                           // Update the recipient if needed
                           if (isRecipientSameAsClient) {
-                              setActivityState({ ...activityState, recipient: client, parentDocId: cid });
+                              setActivityState({ ...activityState, recipient: client, parentDocId: cid, parentName: client });
                           } else {
-                              setActivityState({ ...activityState, parentDocId: cid });
+                              setActivityState({ ...activityState, parentDocId: cid, parentName: client });
                           }
                       }
                     }}
