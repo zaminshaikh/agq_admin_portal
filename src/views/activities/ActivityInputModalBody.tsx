@@ -169,7 +169,9 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             <CContainer className="py-3 px-3">
                 <CRow>
                 <CCol>
-                    <CDatePicker placeholder={"Date and Time of Activity"} date={date} onDateChange={handleDateChange} timepicker/>    
+                  <div style={{ position: 'relative', zIndex: 1050 }}>
+                      <CDatePicker placeholder={"Date and Time of Activity"} date={date} onDateChange={handleDateChange} timepicker/>    
+                  </div>
                 </CCol>
                 <CCol>
                 <CMultiSelect
@@ -182,18 +184,24 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     multiple={false}
                     allowCreateOptions={false}
                     onChange={async (selectedValue) => {
-                        if (selectedValue.length === 0) {
-                            setClientState(await db.getClient(activityState.parentDocId ?? ''));
-                        } else {
-                            const client = selectedValue.map(selected => selected.label as string)[0];
-                            const cid = selectedValue.map(selected => selected.value as string)[0];
-                            setClientState(await db.getClient(cid) ?? await db.getClient(activityState.parentDocId ?? ''));
-
-                            // Update the recipient as well if the checkbox is checked
-                            if (isRecipientSameAsClient) {
-                                setActivityState({ ...activityState, recipient: client });
-                            }
-                        }
+                      if (selectedValue.length === 0) {
+                          return; // Don't reset if nothing selected
+                      }
+                      
+                      const cid = selectedValue.map(selected => selected.value as string)[0];
+                      const client = selectedValue.map(selected => selected.label as string)[0];
+                      
+                      // Get the client before setting state
+                      const newClientState = await db.getClient(cid);
+                      if (newClientState) {
+                          setClientState(newClientState);
+                          // Update the recipient if needed
+                          if (isRecipientSameAsClient) {
+                              setActivityState({ ...activityState, recipient: client, parentDocId: cid });
+                          } else {
+                              setActivityState({ ...activityState, parentDocId: cid });
+                          }
+                      }
                     }}
                 />
                 </CCol>
