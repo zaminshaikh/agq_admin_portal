@@ -740,8 +740,8 @@ export class DatabaseService {
         const calculateYTD = httpsCallable<{cid: string, usersCollectionID: string}, {ytd: number}>(functions, 'calculateYTD');
         try {
             const result = await calculateYTD({ cid: cid, usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION });
-            console.log('YTD Total:', result.data.ytd);
-            return result.data.ytd;
+            console.log('YTD Total:', result.data);
+            return result.data as unknown as number;
         } catch (error) {
             console.error('Error updating YTD:', error);
             throw new Error('Failed to update YTD.');
@@ -752,8 +752,8 @@ export class DatabaseService {
         const calculateYTD = httpsCallable<{cid: string, usersCollectionID: string}, {ytdTotal: number}>(functions, 'calculateTotalYTD');
         try {
             const result = await calculateYTD({ cid: cid, usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION });
-            console.log('YTD Total:', result.data.ytdTotal);
-            return result.data.ytdTotal;
+            console.log('YTD Total:', result.data);
+            return result.data as unknown as number;
         } catch (error) {
             console.error('Error updating YTD:', error);
             throw new Error('Failed to update YTD.');
