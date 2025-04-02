@@ -64,24 +64,47 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         ? roundToNearestHour(activityState.time.toDate())
         : roundToNearestHour(activityState.time);
     
-    // Instead of a single date state, use separate date and time states
-    const [dateValue, setDateValue] = useState<string>(
-        initialDate ? initialDate.toISOString().split('T')[0] : ''
-    );
-    const [timeValue, setTimeValue] = useState<string>(
-        initialDate ? initialDate.toTimeString().slice(0, 5) : ''
-    );
+    // Format date using local timezone to avoid date shifting issues
+    const formatDateForInput = (date: Date | null): string => {
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    // Format time using local timezone
+    const formatTimeForInput = (date: Date | null): string => {
+        if (!date) return '';
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    };
+    
+    // Initialize values using local formatting
+    const [dateValue, setDateValue] = useState<string>(formatDateForInput(initialDate));
+    const [timeValue, setTimeValue] = useState<string>(formatTimeForInput(initialDate));
     const [isRecipientSameAsClient, setIsRecipientSameAsClient] = useState<boolean>(true);
 
     // Updated handler for date and time changes
     const handleDateTimeChange = (newDate: string, newTime: string) => {
         if (!newDate || !newTime) { return; }
         
-        // Combine date and time strings into a Date object
-        const combinedDateTime = new Date(`${newDate}T${newTime}`);
+        console.log(`New Date: ${newDate}, New Time: ${newTime}`);
+        
+        // Parse date and time components separately to avoid timezone issues
+        const [year, month, day] = newDate.split('-').map(Number);
+        const [hours, minutes] = newTime.split(':').map(Number);
+        
+        // Create date in local timezone
+        const combinedDateTime = new Date();
+        combinedDateTime.setFullYear(year, month - 1, day);
+        combinedDateTime.setHours(hours, minutes, 0, 0);
+        
         if (isNaN(combinedDateTime.getTime())) return;
         
         const roundedDate = roundToNearestHour(combinedDateTime);
+        console.log(`Rounded Date: ${roundedDate}`);
         setActivityState({ ...activityState, time: roundedDate });
     };
 
@@ -89,13 +112,13 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
         handleDateTimeChange(dateValue, timeValue);
     }, [dateValue, timeValue]);
 
-    useEffect(() => {
-        const newDate = activityState.time instanceof Timestamp
-            ? roundToNearestHour(activityState.time.toDate())
-            : roundToNearestHour(activityState.time);
+    // useEffect(() => {
+    //     const newDate = activityState.time instanceof Timestamp
+    //         ? roundToNearestHour(activityState.time.toDate())
+    //         : roundToNearestHour(activityState.time);
         
-        setActivityState({...activityState, time: newDate});
-    }, [dateValue, timeValue]);
+    //     setActivityState({...activityState, time: newDate});
+    // }, [dateValue, timeValue]);
 
     useEffect(() => {
         if (activityState.recipient === null || activityState.recipient === '') {return;}
