@@ -63,23 +63,62 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     const initialDate = activityState.time instanceof Timestamp
         ? roundToNearestHour(activityState.time.toDate())
         : roundToNearestHour(activityState.time);
-    const [date, setDate] = React.useState<Date | null>(initialDate);
+    
+    // Format date using local timezone to avoid date shifting issues
+    const formatDateForInput = (date: Date | null): string => {
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    // Format time using local timezone
+    const formatTimeForInput = (date: Date | null): string => {
+        if (!date) return '';
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    };
+    
+    // Initialize values using local formatting
+    const [dateValue, setDateValue] = useState<string>(formatDateForInput(initialDate));
+    const [timeValue, setTimeValue] = useState<string>(formatTimeForInput(initialDate));
     const [isRecipientSameAsClient, setIsRecipientSameAsClient] = useState<boolean>(true);
 
-    const handleDateChange = (newDate: Date | null) => {
-        if (newDate === null) { return; }
-        const roundedDate = roundToNearestHour(newDate);
-        setDate(roundedDate);
+    // Updated handler for date and time changes
+    const handleDateTimeChange = (newDate: string, newTime: string) => {
+        if (!newDate || !newTime) { return; }
+        
+        console.log(`New Date: ${newDate}, New Time: ${newTime}`);
+        
+        // Parse date and time components separately to avoid timezone issues
+        const [year, month, day] = newDate.split('-').map(Number);
+        const [hours, minutes] = newTime.split(':').map(Number);
+        
+        // Create date in local timezone
+        const combinedDateTime = new Date();
+        combinedDateTime.setFullYear(year, month - 1, day);
+        combinedDateTime.setHours(hours, minutes, 0, 0);
+        
+        if (isNaN(combinedDateTime.getTime())) return;
+        
+        const roundedDate = roundToNearestHour(combinedDateTime);
+        console.log(`Rounded Date: ${roundedDate}`);
         setActivityState({ ...activityState, time: roundedDate });
     };
 
     useEffect(() => {
-        const newDate = activityState.time instanceof Timestamp
-            ? roundToNearestHour(activityState.time.toDate())
-            : roundToNearestHour(activityState.time);
+        handleDateTimeChange(dateValue, timeValue);
+    }, [dateValue, timeValue]);
+
+    // useEffect(() => {
+    //     const newDate = activityState.time instanceof Timestamp
+    //         ? roundToNearestHour(activityState.time.toDate())
+    //         : roundToNearestHour(activityState.time);
         
-        setActivityState({...activityState, time: newDate});
-    }, [date]);
+    //     setActivityState({...activityState, time: newDate});
+    // }, [dateValue, timeValue]);
 
     useEffect(() => {
         if (activityState.recipient === null || activityState.recipient === '') {return;}
@@ -169,9 +208,24 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             <CContainer className="py-3 px-3">
                 <CRow>
                 <CCol>
-                  <div style={{ position: 'relative', zIndex: 1050 }}>
-                      <CDatePicker placeholder={"Date and Time of Activity"} date={date} onDateChange={handleDateChange} timepicker/>    
-                  </div>
+                    <CInputGroup>
+                        <CInputGroupText>Date</CInputGroupText>
+                        <CFormInput 
+                            type="date" 
+                            value={dateValue}
+                            onChange={(e) => setDateValue(e.target.value)}
+                        />
+                    </CInputGroup>
+                </CCol>
+                <CCol>
+                    <CInputGroup>
+                        <CInputGroupText>Time</CInputGroupText>
+                        <CFormInput 
+                            type="time" 
+                            value={timeValue}
+                            onChange={(e) => setTimeValue(e.target.value)}
+                        />
+                    </CInputGroup>
                 </CCol>
                 <CCol>
                 <CMultiSelect
