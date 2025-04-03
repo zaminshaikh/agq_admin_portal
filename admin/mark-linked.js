@@ -11,7 +11,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
-const USERS_COLLECTION = 'playground'; // from config.FIRESTORE_ACTIVE_USERS_COLLECTION
+const USERS_COLLECTION = 'users'; // from config.FIRESTORE_ACTIVE_USERS_COLLECTION
 
 /**
  * Updates all user documents in the specified collection with a "linked" field

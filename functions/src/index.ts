@@ -13,6 +13,7 @@ admin.initializeApp();
 import { handleActivity, onActivityWrite } from "./triggers/activityTriggers";
 import { onAssetUpdate } from "./triggers/assetTriggers";
 import { onConnectedUsersChange } from "./triggers/connectedUsersTriggers";
+import { onUserLinkStatusChange } from "./triggers/userLinkTriggers";
 
 // ======= SCHEDULED =======
 import { scheduledYTDReset } from "./scheduled/scheduledReset";
@@ -33,6 +34,7 @@ export {
   onActivityWrite,
   onAssetUpdate,
   onConnectedUsersChange,
+  onUserLinkStatusChange,
 
   // ======= SCHEDULED =======
   scheduledYTDReset,
