@@ -26,6 +26,8 @@ export interface AssetDetails {
 export interface Client {
     cid: string;
     uid: string;
+    uidGrantedAccess: string[];
+    linked: boolean;
     firstName: string;
     lastName: string;
     companyName: string;
@@ -130,6 +132,8 @@ export const emptyClient: Client = {
     connectedUsers: [],
     cid: '',
     uid: '',
+    uidGrantedAccess: [],
+    linked: false,
     appEmail: '',
     initEmail: '',
     totalAssets: 0,
@@ -319,12 +323,12 @@ export class DatabaseService {
         return clients;
     };
 
-    getClientFromSnapshot = (
+    getClientFromSnapshot = async (
         clientSnapshot: DocumentSnapshot,
         generalAssetsSnapshot: DocumentSnapshot,
         agqAssetsSnapshot: DocumentSnapshot,
         ak1AssetsSnapshot: DocumentSnapshot
-    ): Client | null => {
+    ): Promise<Client | null> => {
         if (!clientSnapshot.exists()) {
             return null;
         }
@@ -351,10 +355,13 @@ export class DatabaseService {
             }
             return parsedAssets;
         };
+        
 
         const client: Client = {
             cid: clientSnapshot.id,
             uid: data?.uid ?? '',
+            uidGrantedAccess: data?.uidGrantedAccess ?? [],
+            linked: data?.linked ?? false,
             firstName: data?.name?.first ?? '',
             lastName: data?.name?.last ?? '',
             companyName: data?.name?.company ?? '',
@@ -387,6 +394,8 @@ export class DatabaseService {
                 ak1: parseAssetsData(ak1AssetsData), // Dynamically parse AK1 assets
             },
         };
+
+        
 
         return client;
     };
