@@ -23,6 +23,8 @@ import { linkNewUser } from "./callable/linkUser";
 import { isUIDLinked, checkDocumentExists, checkDocumentLinked } from "./callable/checkDocsAndUID";
 import { unlinkUser } from "./callable/unlinkUser";
 import { calculateTotalYTD, calculateYTD } from "./callable/ytd";
+import { checkUIDExists } from "./callable/checkUIDExists";
+
 import * as functions from "firebase-functions";
 
 export {
@@ -43,7 +45,8 @@ export {
   checkDocumentLinked,
   unlinkUser,
   calculateTotalYTD,
-  calculateYTD
+  calculateYTD,
+  checkUIDExists,
 }
 
 export const helloWorlddd = functions.https.onRequest((req: any, res: { send: (arg0: string) => void; }) => {

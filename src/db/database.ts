@@ -26,6 +26,8 @@ export interface AssetDetails {
 export interface Client {
     cid: string;
     uid: string;
+    uidGrantedAccess: string[];
+    linked: boolean;
     firstName: string;
     lastName: string;
     companyName: string;
@@ -130,6 +132,8 @@ export const emptyClient: Client = {
     connectedUsers: [],
     cid: '',
     uid: '',
+    uidGrantedAccess: [],
+    linked: false,
     appEmail: '',
     initEmail: '',
     totalAssets: 0,
@@ -319,12 +323,12 @@ export class DatabaseService {
         return clients;
     };
 
-    getClientFromSnapshot = (
+    getClientFromSnapshot = async (
         clientSnapshot: DocumentSnapshot,
         generalAssetsSnapshot: DocumentSnapshot,
         agqAssetsSnapshot: DocumentSnapshot,
         ak1AssetsSnapshot: DocumentSnapshot
-    ): Client | null => {
+    ): Promise<Client | null> => {
         if (!clientSnapshot.exists()) {
             return null;
         }
@@ -351,10 +355,44 @@ export class DatabaseService {
             }
             return parsedAssets;
         };
+        
+
+        // Add this method to check if any UIDs are valid
+        const checkAnyValidGrantedUIDs = async (uidList: string[]): Promise<boolean> => {
+          if (!uidList || uidList.length === 0) return false;
+          
+          // Reference to our Cloud Function
+          const checkUID = httpsCallable<{ uid: string }, { exists: boolean }>(functions, 'checkUIDExists');
+          
+          try {
+              // Check each UID concurrently
+              const results = await Promise.all(
+                  uidList.map(async (uid) => {
+                      if (!uid) return false;
+                      try {
+                          const result = await checkUID({ uid });
+                          console.log(`UID ${uid} exists:`, result.data);
+                          return result.data;
+                      } catch (error) {
+                          console.error(`Error checking UID ${uid}:`, error);
+                          return false;
+                      }
+                  })
+              );
+              
+              // Return true if any UID exists
+              return results.some(exists => exists);
+          } catch (error) {
+              console.error("Error checking UIDs:", error);
+              return false;
+          }
+        }
 
         const client: Client = {
             cid: clientSnapshot.id,
             uid: data?.uid ?? '',
+            uidGrantedAccess: data?.uidGrantedAccess ?? [],
+            linked: data?.linked,
             firstName: data?.name?.first ?? '',
             lastName: data?.name?.last ?? '',
             companyName: data?.name?.company ?? '',
@@ -387,6 +425,8 @@ export class DatabaseService {
                 ak1: parseAssetsData(ak1AssetsData), // Dynamically parse AK1 assets
             },
         };
+
+        
 
         return client;
     };
