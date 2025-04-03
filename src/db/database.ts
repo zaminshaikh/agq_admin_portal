@@ -357,42 +357,11 @@ export class DatabaseService {
         };
         
 
-        // Add this method to check if any UIDs are valid
-        const checkAnyValidGrantedUIDs = async (uidList: string[]): Promise<boolean> => {
-          if (!uidList || uidList.length === 0) return false;
-          
-          // Reference to our Cloud Function
-          const checkUID = httpsCallable<{ uid: string }, { exists: boolean }>(functions, 'checkUIDExists');
-          
-          try {
-              // Check each UID concurrently
-              const results = await Promise.all(
-                  uidList.map(async (uid) => {
-                      if (!uid) return false;
-                      try {
-                          const result = await checkUID({ uid });
-                          console.log(`UID ${uid} exists:`, result.data);
-                          return result.data;
-                      } catch (error) {
-                          console.error(`Error checking UID ${uid}:`, error);
-                          return false;
-                      }
-                  })
-              );
-              
-              // Return true if any UID exists
-              return results.some(exists => exists);
-          } catch (error) {
-              console.error("Error checking UIDs:", error);
-              return false;
-          }
-        }
-
         const client: Client = {
             cid: clientSnapshot.id,
             uid: data?.uid ?? '',
             uidGrantedAccess: data?.uidGrantedAccess ?? [],
-            linked: data?.linked,
+            linked: data?.linked ?? false,
             firstName: data?.name?.first ?? '',
             lastName: data?.name?.last ?? '',
             companyName: data?.name?.company ?? '',
