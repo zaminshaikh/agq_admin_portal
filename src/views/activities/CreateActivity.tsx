@@ -111,11 +111,11 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                   
               const [profit, withdrawal] = amortize(activityState, clientState); 
 
-              await db.scheduleActivity(profit, clientState);
-              await db.scheduleActivity(withdrawal, clientState);
-
+              await db.scheduleActivity(profit, clientState, changedAssets);
+              await db.scheduleActivity(withdrawal, clientState, changedAssets);
+              
           } else {
-              await db.scheduleActivity(activityState, clientState);
+              await db.scheduleActivity(activityState, clientState, changedAssets);
           }
           setShowModal(false);
           const activities = await db.getActivities(); // Get the new updated activities

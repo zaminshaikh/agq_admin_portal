@@ -71,7 +71,7 @@ export interface ScheduledActivity {
   id: string;
   cid: string;
   activity: Activity;
-  assetState: Assets;
+  changedAssets: Assets;
   status: string;
   scheduledTime: Date;
   usersCollectionID: string;
@@ -779,7 +779,7 @@ export class DatabaseService {
    * @param scheduledActivity - The activity data along with scheduling details.
    * @returns A promise that resolves when the scheduled activity is added.
    */
-  async scheduleActivity(activity: Activity, clientState: Client): Promise<void> {
+  async scheduleActivity(activity: Activity, clientState: Client, changedAssets: Assets | null): Promise<void> {
       delete activity.id;
       // Add the parentCollectionId field to the activity
       const activityWithParentId = {
@@ -796,14 +796,13 @@ export class DatabaseService {
           cid: clientState.cid,
           scheduledTime: filteredActivity.time,
           activity: { ...filteredActivity, parentName: clientState.firstName + ' ' + clientState.lastName },
-          clientState,
+          changedAssets,
           usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
           status: 'pending',
       };
 
-      console.log('filteredActivity', filteredActivity);
       // Add the scheduled activity to the 'scheduledActivities' collection
-      await addDoc(collection(this.db, 'scheduledActivities'),scheduledActivity);
+      await addDoc(collection(this.db, 'scheduledActivities'), scheduledActivity);
   }
 
   async updateScheduledActivity(updatedActivity: Activity, clientState: Client) {
