@@ -12,6 +12,8 @@ interface ActivityInputProps {
     clientState: Client | null,
     setClientState: (clientState: Client | null) => void,
     clientOptions: Option[],
+    initialClientState?: Client | null,
+    setInitialClientState: (clientState: Client | null) => void,
 }
 
 interface ErrorModalProps {
@@ -52,6 +54,8 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     clientState,
     setClientState,
     clientOptions,
+    initialClientState,
+    setInitialClientState
 }) => {
     
     const db = new DatabaseService();
@@ -246,6 +250,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                       const newClientState = await db.getClient(cid);
                       if (newClientState) {
                           setClientState(newClientState);
+                          setInitialClientState(newClientState);
                           // Update the recipient if needed
                           if (isRecipientSameAsClient) {
                               setActivityState({ ...activityState, recipient: client, parentDocId: cid, parentName: client });

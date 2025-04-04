@@ -68,13 +68,13 @@ export interface Activity {
 }
 
 export interface ScheduledActivity {
-id: string;
-cid: string;
-activity: Activity;
-clientState: Client;
-status: string;
-scheduledTime: Date;
-usersCollectionID: string;
+  id: string;
+  cid: string;
+  activity: Activity;
+  assetState: Assets;
+  status: string;
+  scheduledTime: Date;
+  usersCollectionID: string;
 }
 
 export interface Notification {
@@ -807,7 +807,7 @@ export class DatabaseService {
   }
 
   async updateScheduledActivity(updatedActivity: Activity, clientState: Client) {
-      const docRef = doc(this.db, 'scheduledActivities', updatedActivity.id ?? '');
+      const docRef = doc(this.db, config.SCHEDULED_ACTIVITIES_COLLECTION, updatedActivity.id ?? '');
       delete updatedActivity.id;
       const activityWithParentId = { 
           ...updatedActivity,
@@ -830,6 +830,67 @@ export class DatabaseService {
   async deleteScheduledActivity(id: string) {
       const docRef = doc(this.db, 'scheduledActivities', id);
       await deleteDoc(docRef);
+  }
+
+  /**
+   * Compares two Client objects and returns an object containing only the assets that have changed.
+   * This is useful for tracking what assets have been modified between two states of a client.
+   * 
+   * @param initialClientState - The original state of the client before changes
+   * @param clientState - The current state of the client after changes
+   * @returns An Assets object containing only the changed assets, or null if no changes
+   */
+  getChangedAssets = (initialClientState: Client, clientState: Client) => {
+    // Will store only the assets that have changed. Starts as null.
+    let changedAssets: Assets | null = null;
+
+    // Only proceed if we have both initial and current client states
+    if (initialClientState && clientState) {
+        // Loop through each fund (like 'agq', 'ak1') in the current client's assets
+        Object.keys(clientState.assets).forEach(fundKey => {
+            // Get the fund data from both initial and current states
+            // Use empty object as fallback if fund doesn't exist
+            const initialFund = initialClientState.assets[fundKey] || {};
+            const currentFund = clientState.assets[fundKey] || {};
+            
+            // Will store changes for this specific fund
+            const fundChanges: {[assetType: string]: AssetDetails} = {};
+            // Flag to track if this fund has any changes
+            let hasChanges = false;
+            
+            // Loop through each asset type (like 'personal', 'business') in the current fund
+            Object.keys(currentFund).forEach(assetType => {
+                const initialAsset = initialFund[assetType];
+                const currentAsset = currentFund[assetType];
+                
+                // Check if this is either:
+                // 1. A completely new asset (initialAsset doesn't exist)
+                // 2. An existing asset whose amount has changed
+                if (!initialAsset || initialAsset.amount !== currentAsset.amount) {
+                    fundChanges[assetType] = {
+                        ...currentAsset,
+                        // If it's a new asset, use the full amount
+                        // If it's an existing asset, calculate the difference
+                        amount: !initialAsset 
+                            ? currentAsset.amount 
+                            : (currentAsset.amount - initialAsset.amount)
+                    };
+                    hasChanges = true;
+                }
+            });
+            
+            // Only add this fund to changedAssets if it has any changes
+            if (hasChanges) {
+                // Initialize changedAssets if this is the first change we've found
+                if (!changedAssets) {
+                    changedAssets = {};
+                }
+                changedAssets[fundKey] = fundChanges;
+            }
+        });
+    }
+
+    return changedAssets;
   }
   
 }

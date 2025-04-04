@@ -1,6 +1,6 @@
 import React, { act, useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
-import { DatabaseService, Activity, emptyActivity, Client, emptyClient, ScheduledActivity } from 'src/db/database';
+import { DatabaseService, Activity, emptyActivity, Client, emptyClient, ScheduledActivity, Assets, AssetDetails } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 import { amortize } from 'src/utils/utilities';
@@ -18,23 +18,7 @@ interface EditActivityProps {
     isScheduled?: boolean; // <-- Add this
 }
 
-// const editScheduledActivity = async () => {
-//     if (activity) {
-//         try {
-//             if (isScheduled && activity.id) {
-//                 const scheduledToUpdate = { ...someScheduledActivityData, id: activity.id }; 
-//                 await db.updateScheduledActivity(scheduledToUpdate);
-//             } else {
-//                 // ...existing logic for regular activities...
-//             }
-//             // ...existing code...
-//         } catch (error) {
-//             // ...existing code...
-//         }
-//     }
-// };
-
-const handleEditActivity = async (activityState: Activity, clientState: Client, isScheduled: boolean) => {
+const handleEditActivity = async (activityState: Activity, initialClientState: Client, clientState: Client, isScheduled: boolean) => {
     const db = new DatabaseService();
 
     if (activityState.isAmortization === true && !activityState.amortizationCreated) {
@@ -57,6 +41,7 @@ const handleEditActivity = async (activityState: Activity, clientState: Client, 
         await Promise.all(promises);
         return;
     } else if (isScheduled && activityState.id) {
+        const changedAssets = db.getChangedAssets(initialClientState, clientState);
         await db.updateScheduledActivity(activityState, clientState);
         return;
     }
@@ -81,6 +66,9 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     const clientOptions = clients!
     .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: activity?.parentDocId === client.cid }))
     .sort((a, b) => a.label.localeCompare(b.label));;
+
+    const [initialClientState, setInitialClientState] = useState<Client | null>(null);
+    
     
     useEffect(() => {
         const editActivityIfOverride = async () => {
@@ -97,12 +85,13 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                     });
                 }
                 
-                if (!clientState) {
+                if (!clientState || !initialClientState) {
                     console.error("Invalid client state");
+                    alert("Invalid client state");
                     return;
                 }
                 
-                await handleEditActivity(activityState, clientState, isScheduled);
+                await handleEditActivity(activityState, initialClientState, clientState, isScheduled);
                 
                 setShowModal(false);
                 const activities = await db.getActivities(); // Get the new updated activities
@@ -121,7 +110,6 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     useEffect(() => {
         const fetchClient = async () => {
             try {
-                console.log('Fetching client:', activityState.parentDocId);
                 const client = await db.getClient(activityState.parentDocId ?? '');
                 setClientState(client);
                 
@@ -152,7 +140,9 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                     setActivityState={setActivityState}
                     clientState={clientState}
                     setClientState={setClientState}
-                    clientOptions={clientOptions}            
+                    clientOptions={clientOptions}     
+                    initialClientState={initialClientState}
+                    setInitialClientState={setInitialClientState}       
                 />
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
@@ -169,12 +159,13 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                             });
                         }
 
-                        if (!clientState) {
+                        if (!clientState || !initialClientState) {
                             console.error("Invalid client state");
+                            alert("Invalid client state");
                             return;
                         }
                         
-                        await onSubmit(activityState, clientState, isScheduled);
+                        await onSubmit(activityState, initialClientState, clientState, isScheduled);
                         
                         setShowModal(false);
 

@@ -1,7 +1,7 @@
 import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
 import { act, useEffect, useState } from "react";
 import React from "react";
-import { Activity, DatabaseService, Client, emptyActivity, emptyClient, ScheduledActivity } from '../../db/database.ts'
+import { Activity, DatabaseService, Client, emptyActivity, emptyClient, ScheduledActivity, Assets, AssetDetails } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
@@ -33,6 +33,8 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     const clientOptions = clients!
         .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: selectedClient === client.cid }))
         .sort((a, b) => a.label.localeCompare(b.label));
+
+    const [initialClientState, setInitialClientState] = useState<Client | null>(null);
     
         
     const handleCreateActivity = async () => {
@@ -47,6 +49,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
             }
             if (!clientState) {
                 console.error("Invalid client state");
+                alert("Please select a client.");
                 return;
             }
 
@@ -76,43 +79,52 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     }
 
     const handleScheduleActivity = async () => {
-        if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
-            setShowErrorModal(true);
-        } else {
-            if (override) {
-                setActivityState({
-                    ...activityState,
-                    time: new Date(),
-                });
-            }
-            if (activityState.time <= new Date()) {
-                alert("Scheduled time must be in the future.");
-                return;
-            }
 
-            if (!clientState) {
-                console.error("Invalid client state");
-                return;
-            }
-            
-            if (activityState.isAmortization === true && !activityState.amortizationCreated) {
-                    
-                const [profit, withdrawal] = amortize(activityState, clientState); 
+      if (!clientState || !initialClientState) {
+          console.error("Invalid client state");
+          alert("Please select a client.");
+          return;
+      }
 
-                await db.scheduleActivity(profit, clientState);
-                await db.scheduleActivity(withdrawal, clientState);
+      const changedAssets = db.getChangedAssets(initialClientState, clientState);
 
-            } else {
-                await db.scheduleActivity(activityState, clientState);
-            }
-            setShowModal(false);
-            const activities = await db.getActivities(); // Get the new updated activities
-            setAllActivities(activities)
-            const scheduledActivities = await db.getScheduledActivities(); // Get the new updated activities
-            setScheduledActivities(scheduledActivities);
-            // Filter by the client we just created an activity for
-            setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedClient ?? clientState.cid)));
-        }
+      if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
+          setShowErrorModal(true);
+      } else {
+          if (override) {
+              setActivityState({
+                  ...activityState,
+                  time: new Date(),
+              });
+          }
+          if (activityState.time <= new Date()) {
+              alert("Scheduled time must be in the future.");
+              return;
+          }
+
+          if (!clientState) {
+              console.error("Invalid client state");
+              return;
+          }
+          
+          if (activityState.isAmortization === true && !activityState.amortizationCreated) {
+                  
+              const [profit, withdrawal] = amortize(activityState, clientState); 
+
+              await db.scheduleActivity(profit, clientState);
+              await db.scheduleActivity(withdrawal, clientState);
+
+          } else {
+              await db.scheduleActivity(activityState, clientState);
+          }
+          setShowModal(false);
+          const activities = await db.getActivities(); // Get the new updated activities
+          setAllActivities(activities)
+          const scheduledActivities = await db.getScheduledActivities(); // Get the new updated activities
+          setScheduledActivities(scheduledActivities);
+          // Filter by the client we just created an activity for
+          setFilteredActivities(activities.filter((activities) => activities.parentDocId === (selectedClient ?? clientState.cid)));
+      }
     };
 
     useEffect(() => {
@@ -144,7 +156,9 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
                     setActivityState={setActivityState}
                     clientState={clientState}
                     setClientState={setClientState}
-                    clientOptions={clientOptions}            
+                    clientOptions={clientOptions}
+                    initialClientState={initialClientState}
+                    setInitialClientState={setInitialClientState}
                 />
                 <CModalFooter>
                     <CButton color="primary" onClick={handleCreateActivity}>
