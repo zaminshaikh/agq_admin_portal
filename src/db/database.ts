@@ -9,18 +9,6 @@ import { formatDate } from 'src/utils/utilities.ts'
 
 const functions = getFunctions();
 
-export interface AssetDetails {
-    amount: number;
-    firstDepositDate: Date | null;
-    displayTitle: string;
-    index: number;
-}
-
-export interface Assets {
-  [fundKey: string]: {
-    [assetType: string]: AssetDetails;
-  };   
-}
 /**
  * Client interface representing a client in the Firestore database.
  *  
@@ -112,6 +100,18 @@ export interface StatementData {
   // Add other necessary fields here
 }
 
+export interface AssetDetails {
+  amount: number;
+  firstDepositDate: Date | null;
+  displayTitle: string;
+  index: number;
+}
+
+export interface Assets {
+[fundKey: string]: {
+  [assetType: string]: AssetDetails;
+};   
+}
 
 export const emptyClient: Client = {
   firstName: '',
