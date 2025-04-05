@@ -17,34 +17,36 @@ const functions = getFunctions();
  * .uid - The client's UID, or the empty string if they have not signed up
  */
 export interface Client {
-  cid: string;
-  uid: string;
-  firstName: string;
-  lastName: string;
-  companyName: string;
-  address: string;
-  province: string
-  state: string
-  street: string
-  city: string
-  zip: string
-  country: string
-  dob: Date | null;
-  phoneNumber: string;
-  appEmail: string;
-  initEmail: string;
-  firstDepositDate: Date | null;
-  beneficiaries: string[];
-  connectedUsers: string[];
-  totalAssets: number;
-  ytd: number;
-  totalYTD: number;
-  _selected?: boolean;
-  lastLoggedIn?: string | null | undefined;
-  notes?: string | undefined;
-  activities?: Activity[];
-  graphPoints?: GraphPoint[];
-  assets: Assets;
+    cid: string;
+    uid: string;
+    uidGrantedAccess: string[];
+    linked: boolean;
+    firstName: string;
+    lastName: string;
+    companyName: string;
+    address: string;
+    province: string
+    state: string
+    street: string
+    city: string
+    zip: string
+    country: string
+    dob: Date | null;
+    phoneNumber: string;
+    appEmail: string;
+    initEmail: string;
+    firstDepositDate: Date | null;
+    beneficiaries: string[];
+    connectedUsers: string[];
+    totalAssets: number;
+    ytd: number;
+    totalYTD: number;
+    _selected?: boolean;
+    lastLoggedIn?: string | null | undefined;
+    notes?: string | undefined;
+    activities?: Activity[];
+    graphPoints?: GraphPoint[];
+    assets: Assets;
 }
 
 export interface Activity {
@@ -115,46 +117,48 @@ export interface Assets {
 }
 
 export const emptyClient: Client = {
-  firstName: '',
-  lastName: '',
-  companyName: '',
-  address: '',
-  province: '',
-  state: '',
-  street: '',
-  city: '',
-  zip: '',
-  country: 'US',
-  dob: null,
-  phoneNumber: '',
-  firstDepositDate: null,
-  beneficiaries: [],
-  connectedUsers: [],
-  cid: '',
-  uid: '',
-  appEmail: '',
-  initEmail: '',
-  totalAssets: 0,
-  ytd: 0,
-  totalYTD: 0,
-  assets: {
-      agq: {
-          personal: {
-              amount: 0,
-              firstDepositDate: null,
-              displayTitle: 'Personal',
-              index: 0,
-          },
-      },
-      ak1: {
-          personal: {
-              amount: 0,
-              firstDepositDate: null,
-              displayTitle: 'Personal',
-              index: 0,
-          },
-      },
-  },
+    firstName: '',
+    lastName: '',
+    companyName: '',
+    address: '',
+    province: '',
+    state: '',
+    street: '',
+    city: '',
+    zip: '',
+    country: 'US',
+    dob: null,
+    phoneNumber: '',
+    firstDepositDate: null,
+    beneficiaries: [],
+    connectedUsers: [],
+    cid: '',
+    uid: '',
+    uidGrantedAccess: [],
+    linked: false,
+    appEmail: '',
+    initEmail: '',
+    totalAssets: 0,
+    ytd: 0,
+    totalYTD: 0,
+    assets: {
+        agq: {
+            personal: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Personal',
+                index: 0,
+            },
+        },
+        ak1: {
+            personal: {
+                amount: 0,
+                firstDepositDate: null,
+                displayTitle: 'Personal',
+                index: 0,
+            },
+        },
+    },
 };
 
 export const roundToNearestHour = (date: Date): Date => {
@@ -321,15 +325,15 @@ export class DatabaseService {
       return clients;
   };
 
-  getClientFromSnapshot = (
-      clientSnapshot: DocumentSnapshot,
-      generalAssetsSnapshot: DocumentSnapshot,
-      agqAssetsSnapshot: DocumentSnapshot,
-      ak1AssetsSnapshot: DocumentSnapshot
-  ): Client | null => {
-      if (!clientSnapshot.exists()) {
-          return null;
-      }
+    getClientFromSnapshot = async (
+        clientSnapshot: DocumentSnapshot,
+        generalAssetsSnapshot: DocumentSnapshot,
+        agqAssetsSnapshot: DocumentSnapshot,
+        ak1AssetsSnapshot: DocumentSnapshot
+    ): Promise<Client | null> => {
+        if (!clientSnapshot.exists()) {
+            return null;
+        }
 
       const data = clientSnapshot.data();
       const generalAssetsData = generalAssetsSnapshot.data();
@@ -354,41 +358,45 @@ export class DatabaseService {
           return parsedAssets;
       };
 
-      const client: Client = {
-          cid: clientSnapshot.id,
-          uid: data?.uid ?? '',
-          firstName: data?.name?.first ?? '',
-          lastName: data?.name?.last ?? '',
-          companyName: data?.name?.company ?? '',
-          address: data?.address ?? '',
-          province: data?.province ?? '',
-          state: data?.state ?? '',
-          street: data?.street ?? '',
-          city: data?.city ?? '',
-          zip: data?.zip ?? '',
-          country: data?.country ?? '',
-          dob: data?.dob?.toDate() ?? null,
-          initEmail: data?.initEmail ?? data?.email ?? '',
-          appEmail: data?.appEmail ?? data?.email ?? 'Client has not logged in yet',
-          connectedUsers: data?.connectedUsers ?? [],
-          totalAssets: generalAssetsData ? generalAssetsData.total : 0,
-          ytd: generalAssetsData ? generalAssetsData.ytd : 0,
-          totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
-          phoneNumber: data?.phoneNumber ?? '',
-          firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
-          beneficiaries: data?.beneficiaries ?? [],
-          lastLoggedIn: data?.lastLoggedIn instanceof Timestamp
-              ? formatDate(data?.lastLoggedIn?.toDate()) // If the lastLoggedIn field is a valid date, format it
-              : ((data?.uid && data?.uid != '') // Else we'll check if the user has logged in before
-                  ? 'Before 01/25' // If they have, it was before we added the feature to track last login
-                  : 'N/A'), // If they haven't, we'll display N/A, because they have not linked their account
-          _selected: false,
-          notes: data?.notes ?? '',
-          assets: {
-              agq: parseAssetsData(agqAssetsData), // Dynamically parse AGQ assets
-              ak1: parseAssetsData(ak1AssetsData), // Dynamically parse AK1 assets
-          },
-      };
+        const client: Client = {
+            cid: clientSnapshot.id,
+            uid: data?.uid ?? '',
+            uidGrantedAccess: data?.uidGrantedAccess ?? [],
+            linked: data?.linked ?? false,
+            firstName: data?.name?.first ?? '',
+            lastName: data?.name?.last ?? '',
+            companyName: data?.name?.company ?? '',
+            address: data?.address ?? '',
+            province: data?.province ?? '',
+            state: data?.state ?? '',
+            street: data?.street ?? '',
+            city: data?.city ?? '',
+            zip: data?.zip ?? '',
+            country: data?.country ?? '',
+            dob: data?.dob?.toDate() ?? null,
+            initEmail: data?.initEmail ?? data?.email ?? '',
+            appEmail: data?.appEmail ?? data?.email ?? 'Client has not logged in yet',
+            connectedUsers: data?.connectedUsers ?? [],
+            totalAssets: generalAssetsData ? generalAssetsData.total : 0,
+            ytd: generalAssetsData ? generalAssetsData.ytd : 0,
+            totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
+            phoneNumber: data?.phoneNumber ?? '',
+            firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
+            beneficiaries: data?.beneficiaries ?? [],
+            lastLoggedIn: data?.lastLoggedIn instanceof Timestamp
+                ? formatDate(data?.lastLoggedIn?.toDate()) // If the lastLoggedIn field is a valid date, format it
+                : ((data?.uid && data?.uid != '') // Else we'll check if the user has logged in before
+                    ? 'Before 01/25' // If they have, it was before we added the feature to track last login
+                    : 'N/A'), // If they haven't, we'll display N/A, because they have not linked their account
+            _selected: false,
+            notes: data?.notes ?? '',
+            assets: {
+                agq: parseAssetsData(agqAssetsData), // Dynamically parse AGQ assets
+                ak1: parseAssetsData(ak1AssetsData), // Dynamically parse AK1 assets
+            },
+        };
+
+        
 
       return client;
   };

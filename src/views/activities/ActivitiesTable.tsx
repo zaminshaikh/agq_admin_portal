@@ -25,10 +25,13 @@ interface TableProps {
 }
 
 const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities, filteredActivities, setFilteredActivities, clients, setClients, selectedClient, setSelectedClient}) => {
-    const [isLoading, setIsLoading] = useState(true);
     const [isHovered, setIsHovered] = useState(false);
 
-    const [clientOptions, setClientOptions] = useState<Option[]>([]); 
+    const [clientOptions, setClientOptions] = useState<Option[]>(
+      clients
+        .map(client => ({ value: client.cid, label: client.firstName + ' ' + client.lastName }))
+          .sort((a, b) => a.label.localeCompare(b.label))
+    ); 
 
     const [showEditActivityModal, setShowEditActivityModal] = useState(false);
     const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
@@ -37,26 +40,6 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
     const [showDeleteSelectedModal, setShowDeleteSelectedModal] = useState(false);
 
     const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
-    
-    useEffect(() => {
-        const fetchActivities = async () => {
-            const db = new DatabaseService();
-            const activities = await db.getActivities();
-            const clients = await db.getClients();
-
-            setClientOptions(
-                clients!
-                    .map(client => ({ value: client.cid, label: client.firstName + ' ' + client.lastName }))
-                    .sort((a, b) => a.label.localeCompare(b.label))
-            ); 
-            setFilteredActivities(activities);
-            setAllActivities(activities); // Store the original activities
-            setClients(clients);
-
-            setIsLoading(false);
-        };
-        fetchActivities();
-    }, []);
 
     useEffect(() => {
         if (selectedActivities.length > 0) {
@@ -66,13 +49,6 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
         }
     }, [selectedActivities]);
 
-    if (isLoading) {
-        return( 
-            <div className="text-center">
-                <CSpinner color="primary"/>
-            </div>
-        )
-    }
 
     const columns = [
         {

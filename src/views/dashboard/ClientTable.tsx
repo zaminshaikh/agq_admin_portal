@@ -80,7 +80,7 @@ const ClientsTable = () => {
             _style: { width: '15%' },
         },
         {
-            key: 'uid',
+            key: 'linked',
             label: 'Linked?',
             _style: { width: '15%' },
             filter: false,
@@ -149,9 +149,9 @@ const ClientsTable = () => {
                 pagination
                 sorterValue={{ column: 'firstName', state: 'asc' }}
                 scopedColumns={{
-                    uid: (item: Client) => (
+                    linked: (item: Client) => (
                         <td className="text-center">
-                            {item.uid && item.uid.trim() !== '' ? (
+                            {item.linked ? (
                                 <CIcon icon={cilCheckCircle} className="text-success" />
                             ) : (
                                 <CIcon icon={cilXCircle} className="text-danger" />

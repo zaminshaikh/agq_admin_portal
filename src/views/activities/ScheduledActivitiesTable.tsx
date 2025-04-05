@@ -12,87 +12,65 @@ import Activities from './Activities';
 interface TableProps {
     scheduledActivities: ScheduledActivity[];
     setScheduledActivities: (activities: ScheduledActivity[]) => void;
+    clients: Client[];
+    setClients: (clients: Client[]) => void;
+
 }
 
-const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, setScheduledActivities}) => {
-    const [isLoading, setIsLoading] = useState(true);
-
-    const [clients, setClients] = useState<Client[]>([]);
+const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, setScheduledActivities, clients, setClients}) => {
     const [selectedClient, setSelectedClient] = useState<string | number | undefined>(undefined);
 
     const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
     const [showEditActivityModal, setShowEditActivityModal] = useState(false);
 
     const [currentActivity, setCurrentActivity] = useState<ScheduledActivity | undefined>(undefined);
-    
-    useEffect(() => {
-        const fetchActivities = async () => {
-            const db = new DatabaseService();
-            const newScheduledActivities = await db.getScheduledActivities();
-            const clients = await db.getClients();
-
-            setScheduledActivities(newScheduledActivities); // Store the original activities
-            setClients(clients);
-
-            setIsLoading(false);
-        };
-        fetchActivities();
-    }, []);
-
-    if (isLoading) {
-        return( 
-            <div className="text-center">
-                <CSpinner color="primary"/>
-            </div>
-        )
-    }
 
     const columns = [
-        {
-            key: 'type',
-            label: 'Type',
-            sorter: false,
-        },
-        {
-            key: 'parentName',
-            label: 'Client',
-        },
-        {   
-            label: 'Scheduled Time',
-            key: 'formattedTime',
-            _style: { width: '20%' },
-        },
-        {
-            key: 'recipient',
-            label: 'Recipient',
-        },
-        {
-            key: 'amount',
-            label: 'Amount',
-        },
-        {
-            key: 'status',
-            label: 'Status',
-            _style: { width: '8%' },
-        },
-        {
-            key: 'fund',
-            _style: { width: '7%' },
-        },
-        {
-            key: 'edit',
-            label: '',
-            _style: { width: '1%' },
-            filter: false,
-            sorter: false,
-        },
-        {
-            key: 'delete',
-            label: '',
-            _style: { width: '1%' },
-            filter: false,
-            sorter: false,
-        },
+      {
+          key: 'type',
+          label: 'Type',
+          sorter: false,
+      },
+      {
+          key: 'parentName',
+          label: 'Client',
+      },
+      {   
+          label: 'Scheduled Time',
+          key: 'formattedTime',
+          _style: { width: '20%' },
+      },
+      {
+          key: 'recipient',
+          label: 'Recipient',
+      },
+      {
+          key: 'amount',
+          label: 'Amount',
+      },
+      {
+          key: 'status',
+          label: 'Status',
+          _style: { width: '8%' },
+      },
+      {
+          key: 'fund',
+          _style: { width: '7%' },
+      },
+      {
+          key: 'edit',
+          label: '',
+          _style: { width: '1%' },
+          filter: false,
+          sorter: false,
+      },
+      {
+          key: 'delete',
+          label: '',
+          _style: { width: '1%' },
+          filter: false,
+          sorter: false,
+      },
     ]
 
     const getBadge = (status: string) => {

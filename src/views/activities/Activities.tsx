@@ -8,6 +8,8 @@ import { CreateActivity } from "./CreateActivity";
 
 const Activities = () => {
     const { t } = useTranslation()
+    const [isLoading, setIsLoading] = useState(true);
+
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
 
     const [allActivities, setAllActivities] = useState<Activity[]>([]); // New state for original activities
@@ -16,6 +18,34 @@ const Activities = () => {
     
     const [clients, setClients] = useState<Client[]>([]);
     const [selectedClient, setSelectedClient] = useState<string | number>(); 
+
+    useEffect(() => {
+      const fetchActivities = async () => {
+          const db = new DatabaseService();
+          const activities = await db.getActivities();
+          const newScheduledActivities = await db.getScheduledActivities();
+
+
+          const clients = await db.getClients();
+
+          setScheduledActivities(newScheduledActivities); // Store the original activities
+          setFilteredActivities(activities);
+          setAllActivities(activities); // Store the original activities
+          setClients(clients);
+
+          setIsLoading(false);
+      };
+      fetchActivities();
+    }, []);
+
+
+    if (isLoading) {
+      return( 
+          <div className="text-center">
+              <CSpinner color="primary"/>
+          </div>
+      )
+    }
 
     return (
         <div>
@@ -45,6 +75,8 @@ const Activities = () => {
             <ScheduledActivitiesTable 
                 scheduledActivities={scheduledActivities} 
                 setScheduledActivities={setScheduledActivities}
+                clients={clients}
+                setClients={setClients}
             />
         </div>
     );
