@@ -74,6 +74,7 @@ export interface ScheduledActivity {
   changedAssets: Assets;
   status: string;
   scheduledTime: Date;
+  formattedTime?: string;
   usersCollectionID: string;
 }
 
@@ -660,6 +661,7 @@ export class DatabaseService {
           return {
               ...data,
               id: doc.id,
+              formattedTime,
               activity: {
                   ...data.activity,
                   formattedTime,
@@ -805,9 +807,9 @@ export class DatabaseService {
       await addDoc(collection(this.db, 'scheduledActivities'), scheduledActivity);
   }
 
-  async updateScheduledActivity(updatedActivity: Activity, clientState: Client) {
-      const docRef = doc(this.db, config.SCHEDULED_ACTIVITIES_COLLECTION, updatedActivity.id ?? '');
-      delete updatedActivity.id;
+  async updateScheduledActivity(id: string | undefined, updatedActivity: Activity, clientState: Client, changedAssets: Assets | null) {
+      const docRef = doc(this.db, config.SCHEDULED_ACTIVITIES_COLLECTION, id ?? '');
+
       const activityWithParentId = { 
           ...updatedActivity,
           parentCollection: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
@@ -819,7 +821,7 @@ export class DatabaseService {
           cid: clientState.cid,
           scheduledTime: filteredActivity.time,
           activity: { ...filteredActivity, parentName: clientState.firstName + ' ' + clientState.lastName },
-          clientState,
+          changedAssets,
           usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
           status: 'pending',
       };
@@ -839,7 +841,7 @@ export class DatabaseService {
    * @param clientState - The current state of the client after changes
    * @returns An Assets object containing only the changed assets, or null if no changes
    */
-  getChangedAssets = (initialClientState: Client, clientState: Client) => {
+  getChangedAssets = (initialClientState: Client | null, clientState?: Client | null) => {
     // Will store only the assets that have changed. Starts as null.
     let changedAssets: Assets | null = null;
 
@@ -862,18 +864,8 @@ export class DatabaseService {
                 const initialAsset = initialFund[assetType];
                 const currentAsset = currentFund[assetType];
                 
-                // Check if this is either:
-                // 1. A completely new asset (initialAsset doesn't exist)
-                // 2. An existing asset whose amount has changed
-                if (!initialAsset || initialAsset.amount !== currentAsset.amount) {
-                    fundChanges[assetType] = {
-                        ...currentAsset,
-                        // If it's a new asset, use the full amount
-                        // If it's an existing asset, calculate the difference
-                        amount: !initialAsset 
-                            ? currentAsset.amount 
-                            : (currentAsset.amount - initialAsset.amount)
-                    };
+                if (initialAsset.amount !== currentAsset.amount) {
+                    fundChanges[assetType] = currentAsset; // Store the current asset details
                     hasChanges = true;
                 }
             });

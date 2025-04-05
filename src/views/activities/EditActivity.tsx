@@ -3,58 +3,24 @@ import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreu
 import { DatabaseService, Activity, emptyActivity, Client, emptyClient, ScheduledActivity, Assets, AssetDetails } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
 import { FormValidationErrorModal } from '../../components/ErrorModal';
-import { amortize } from 'src/utils/utilities';
+import { amortize, applyAssetChanges } from 'src/utils/utilities';
+import { use } from 'i18next';
+import { set } from 'date-fns';
 
 interface EditActivityProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
     clients: Client[]; 
     activity?: Activity;
+    scheduledActivity?: ScheduledActivity;
     selectedClient?: string | number;
     setAllActivities?: (activites: Activity[]) => void | undefined;
     setScheduledActivities?: (activites: ScheduledActivity[]) => void | undefined;  
     setFilteredActivities?: (activites: Activity[]) => void | undefined;
-    onSubmit?: (updatedActivity: Activity) => void;
-    isScheduled?: boolean; // <-- Add this
+    isScheduled?: boolean; 
 }
 
-const handleEditActivity = async (activityState: Activity, initialClientState: Client, clientState: Client, isScheduled: boolean) => {
-    const db = new DatabaseService();
-
-    if (activityState.isAmortization === true && !activityState.amortizationCreated) {
-
-        let promises = [];
-        const [profit, withdrawal] = amortize(activityState, clientState);
-        if (isScheduled) {
- 
-            promises.push(db.scheduleActivity(profit, clientState));
-            promises.push(db.scheduleActivity(withdrawal, clientState));
-            promises.push(db.deleteScheduledActivity(activityState.id!));
-            
-        } else {
-            promises.push(db.createActivity(profit, clientState.cid));
-            promises.push(db.createActivity(withdrawal, clientState.cid));
-            promises.push(db.deleteActivity(activityState));
-            promises.push(db.setAssets(clientState));
-        }
-
-        await Promise.all(promises);
-        return;
-    } else if (isScheduled && activityState.id) {
-        const changedAssets = db.getChangedAssets(initialClientState, clientState);
-        await db.updateScheduledActivity(activityState, clientState);
-        return;
-    }
-    
-    // Create activity with client cid
-    await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
-
-    if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
-        await db.setAssets(clientState);
-    }
-}
-
-const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, selectedClient, setAllActivities, setFilteredActivities, setScheduledActivities,onSubmit=handleEditActivity, isScheduled=false}) => {
+const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, scheduledActivity, selectedClient, setAllActivities, setFilteredActivities, setScheduledActivities, isScheduled=false}) => {
     const db = new DatabaseService();
     
     const [activityState, setActivityState] = useState<Activity>(activity ?? emptyActivity);
@@ -69,6 +35,9 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
 
     const [initialClientState, setInitialClientState] = useState<Client | null>(null);
     
+    useEffect(() => {
+      console.log("Initial Client State: ", initialClientState);
+    }, [initialClientState]);
     
     useEffect(() => {
         const editActivityIfOverride = async () => {
@@ -91,7 +60,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                     return;
                 }
                 
-                await handleEditActivity(activityState, initialClientState, clientState, isScheduled);
+                await handleEditActivity(scheduledActivity?.id ?? '', activityState, initialClientState, clientState, isScheduled);
                 
                 setShowModal(false);
                 const activities = await db.getActivities(); // Get the new updated activities
@@ -110,18 +79,69 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     useEffect(() => {
         const fetchClient = async () => {
             try {
-                const client = await db.getClient(activityState.parentDocId ?? '');
-                setClientState(client);
+                let client = await db.getClient(activityState.parentDocId ?? '');
+
+                if (!client) {
+                    console.error("Client state not found");
+                    alert("Client state not found");
+                    return;
+                }
+                setInitialClientState(client);
+                console.log("Initial Client State: ", initialClientState);
                 
+                const changedAssets = scheduledActivity?.changedAssets;
+
+                // Apply those changes to the fresh client data
+                if (changedAssets) {
+                  setClientState(applyAssetChanges(client, changedAssets));
+                }
+
             } catch (error) {
                 console.error('Failed to fetch client:', error);
             }
         };
         fetchClient();
     }, []);
-    
 
-    console.log('Activity state changed:', activityState);
+    const handleEditActivity = async (id: string | undefined, activityState: Activity, initialClientState: Client, clientState: Client, isScheduled: boolean) => {
+        const db = new DatabaseService();
+        
+        const changedAssets = db.getChangedAssets(initialClientState, clientState);
+    
+        console.log("Activity State: ", scheduledActivity);
+    
+        if (activityState.isAmortization === true && !activityState.amortizationCreated) {
+          
+          let promises = [];
+          const [profit, withdrawal] = amortize(activityState, clientState);
+          if (isScheduled) {
+            
+            promises.push(db.scheduleActivity(profit, clientState, changedAssets));
+            promises.push(db.scheduleActivity(withdrawal, clientState, changedAssets));
+            promises.push(db.deleteScheduledActivity(activityState.id!));
+            
+          } else {
+            promises.push(db.createActivity(profit, clientState.cid));
+            promises.push(db.createActivity(withdrawal, clientState.cid));
+            promises.push(db.deleteActivity(activityState));
+            promises.push(db.setAssets(clientState));
+          }
+          
+          await Promise.all(promises);
+          return;
+        } else if (isScheduled && scheduledActivity) {
+            await db.updateScheduledActivity(id, activityState, clientState, changedAssets);
+            return;
+        }
+        
+        // Create activity with client cid
+        await db.setActivity(activityState, {activityDocId: activityState.id}, clientState!.cid);
+    
+        if ((activityState.isDividend || activityState.type === 'manual-entry'|| activityState.type === 'deposit' || activityState.type === 'withdrawal') && clientState) {
+            await db.setAssets(clientState);
+        }
+    }
+  
     return (
         <>
             {showErrorModal && <FormValidationErrorModal showErrorModal={showErrorModal} setShowErrorModal={setShowErrorModal} invalidInputFields={invalidInputFields} setOverride={setOverride}/>}
@@ -140,6 +160,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                     setActivityState={setActivityState}
                     clientState={clientState}
                     setClientState={setClientState}
+                    scheduledActivity={scheduledActivity}
                     clientOptions={clientOptions}     
                     initialClientState={initialClientState}
                     setInitialClientState={setInitialClientState}       
@@ -165,7 +186,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
                             return;
                         }
                         
-                        await onSubmit(activityState, initialClientState, clientState, isScheduled);
+                        await handleEditActivity(scheduledActivity?.id, activityState, initialClientState, clientState, isScheduled);
                         
                         setShowModal(false);
 

@@ -23,7 +23,7 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
     const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
     const [showEditActivityModal, setShowEditActivityModal] = useState(false);
 
-    const [currentActivity, setCurrentActivity] = useState<Activity | undefined>(undefined);
+    const [currentActivity, setCurrentActivity] = useState<ScheduledActivity | undefined>(undefined);
     
     useEffect(() => {
         const fetchActivities = async () => {
@@ -121,8 +121,8 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
     return (
         <CContainer>
             <h1 className="pt-5 pb-2">Scheduled Activities</h1>
-            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities}/>}
-            {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities} />}
+            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity?.activity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities}/>}
+            {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity?.activity} scheduledActivity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities} />}
             <CSmartTable
                 activePage={1}
                 cleaner
@@ -130,25 +130,45 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
                 columns={columns}
                 columnFilter
                 columnSorter
-                items={scheduledActivities.map((scheduledActivity) => ({...scheduledActivity.activity, id: scheduledActivity.id, status: scheduledActivity.status}))}
+                items={scheduledActivities}
                 itemsPerPageSelect
                 itemsPerPage={20}
                 pagination
                 sorterValue={{ column: 'formattedTime', state: 'desc' }}
                 scopedColumns={{
-                    type: (item: Activity) => (
+                    type: (item: ScheduledActivity) => (
                         <td>
-                            <CBadge color={getBadge(item.type)}>{toSentenceCase(item.type)}</CBadge>
+                            <CBadge color={getBadge(item.activity.type)}>{toSentenceCase(item.activity.type)}</CBadge>
                         </td>
                     ),
-                    amount: (item: Activity) => (
+                    parentName: (item: ScheduledActivity) => (
                         <td>
-                            {formatCurrency(item.amount)}
+                            {item.activity.parentName}
+                        </td>
+                    ),
+                    scheduledTime: (item: ScheduledActivity) => (
+                        <td>
+                            {item.formattedTime}
+                        </td>
+                    ),
+                    recipient: (item: ScheduledActivity) => (
+                        <td>
+                            {item.activity.recipient}
+                        </td>
+                    ),
+                    amount: (item: ScheduledActivity) => (
+                        <td>
+                            {formatCurrency(item.activity.amount)}
                         </td>
                     ),
                     status: (item: any) => (
                         <td>
                             <CBadge color={getBadge(item.status)}>{toSentenceCase(item.status)}</CBadge>
+                        </td>
+                    ),
+                    fund: (item: ScheduledActivity) => (
+                        <td>
+                            {item.activity.fund}
                         </td>
                     ),
                     edit: (item: any) => {
@@ -163,7 +183,7 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
                             onClick={async () => {
                                 setCurrentActivity(item);
                                 setShowEditActivityModal(true);
-                                setSelectedClient(item.parentDocId);
+                                setSelectedClient(item.cid);
                             }}
                             >
                             Edit
@@ -171,7 +191,7 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
                         </td>
                         )
                     },
-                    delete: (item: Activity) => {
+                    delete: (item: ScheduledActivity) => {
                         return (
                         <td className="py-2">
                             <CButton
@@ -182,7 +202,7 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
                             onClick={() => {
                                 setCurrentActivity(item);
                                 setShowDeleteActivityModal(true);
-                                setSelectedClient(item.parentDocId);
+                                setSelectedClient(item.cid);
                             }}
                             >
                             Delete
