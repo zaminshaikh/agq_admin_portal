@@ -99,7 +99,7 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
     return (
         <CContainer>
             <h1 className="pt-5 pb-2">Scheduled Activities</h1>
-            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity?.activity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities}/>}
+            {showDeleteActivityModal && <DeleteActivity showModal={showDeleteActivityModal} setShowModal={setShowDeleteActivityModal} activity={currentActivity?.activity} scheduledActivity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities}/>}
             {showEditActivityModal && <EditActivity showModal={showEditActivityModal} setShowModal={setShowEditActivityModal} clients={clients} activity={currentActivity?.activity} scheduledActivity={currentActivity} isScheduled={true} selectedClient={selectedClient} setScheduledActivities={setScheduledActivities} />}
             <CSmartTable
                 activePage={1}

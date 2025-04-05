@@ -12,12 +12,12 @@ import config from "../../config.json";
 const db = admin.firestore();
 
 /**
- * Scheduled: Runs every 12 hours (adjust as needed) to check for scheduled activities
+ * Scheduled: Runs every 1 hour to check for scheduled activities
  * where scheduledTime <= now and status == 'pending'. 
  * 
  * For each match:
  * 1) Creates a real Activity in the user's subcollection.
- * 2) Optionally updates clientState (assets, ytd, totalYTD, etc.).
+ * 2) If changedAssets is provided, update the user's asset docs
  * 3) Marks the scheduled activity doc as 'completed'.
  */
 export const processScheduledActivities = functions.pubsub
@@ -37,101 +37,135 @@ export const processScheduledActivities = functions.pubsub
       return null;
     }
 
-    const batch = db.batch();
     console.log(`Found ${querySnapshot.size} scheduled activities to process.`);
 
-    // Process each pending doc
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const { cid, activity, clientState, usersCollectionID } = data;
+    // Process each pending activity individually (not in batch) to handle potential errors
+    for (const doc of querySnapshot.docs) {
+      try {
+        const batch = db.batch();
+        const data = doc.data();
+        const { cid, activity, changedAssets, usersCollectionID } = data;
 
-      // Validate essential fields
-      if (!cid || !activity) {
-        console.error(`Scheduled activity ${doc.id} missing 'cid' or 'activity'.`);
-        return;
-      }
+        // Validate essential fields
+        if (!cid || !activity) {
+          console.error(`Scheduled activity ${doc.id} missing 'cid' or 'activity'`);
+          continue;
+        }
 
-      // 1) Create the actual activity in user's subcollection
-      const clientRef = db.collection(usersCollectionID).doc(cid);
-      const activitiesRef = clientRef.collection(config.ACTIVITIES_SUBCOLLECTION);
-      const newActivityRef = activitiesRef.doc(); // auto-generated doc ID
+        // 1) Create the actual activity in user's subcollection
+        const clientRef = db.collection(usersCollectionID).doc(cid);
+        const activitiesRef = clientRef.collection(config.ACTIVITIES_SUBCOLLECTION);
+        const newActivityRef = activitiesRef.doc(); // auto-generated doc ID
 
-      batch.set(newActivityRef, {
-        ...activity,
-        parentCollection: usersCollectionID,
-        formattedTime: admin.firestore.FieldValue.serverTimestamp(),
-      });
+        batch.set(newActivityRef, {
+          ...activity,
+          parentCollection: usersCollectionID,
+          formattedTime: admin.firestore.FieldValue.serverTimestamp(),
+        });
 
-      // 2) If clientState is provided, we update the user's asset docs
-      if (clientState) {
-        const assetCollectionRef = clientRef.collection(config.ASSETS_SUBCOLLECTION);
-
-        // Helper to shape the doc updates
-        const prepareAssetDoc = (assets: any, fundName: string) => {
-          let total = 0;
-          const docObj: any = { fund: fundName };
-          for (const key of Object.keys(assets)) {
-            const asset = assets[key];
-            let firstDeposit;
-            if (asset.firstDepositDate) {
-              // If it's a Firestore Timestamp, just use it
-              if (asset.firstDepositDate instanceof admin.firestore.Timestamp) {
-                firstDeposit = asset.firstDepositDate;
-              } 
-              // If it's a Date, convert
-              else if (asset.firstDepositDate instanceof Date) {
-                firstDeposit = admin.firestore.Timestamp.fromDate(asset.firstDepositDate);
-              }
-              // If it's a string, parse and convert if valid
-              else {
-                const parsed = new Date(asset.firstDepositDate);
-                if (!isNaN(parsed.getTime())) {
-                  firstDeposit = admin.firestore.Timestamp.fromDate(parsed);
+        // 2) If changedAssets is provided, update the user's asset docs
+        if (changedAssets) {
+          const assetCollectionRef = clientRef.collection(config.ASSETS_SUBCOLLECTION);
+          
+          // Get current asset docs to apply changes to
+          const [agqSnapshot, ak1Snapshot, generalSnapshot] = await Promise.all([
+            assetCollectionRef.doc(config.ASSETS_AGQ_DOC_ID).get(),
+            assetCollectionRef.doc(config.ASSETS_AK1_DOC_ID).get(),
+            assetCollectionRef.doc(config.ASSETS_GENERAL_DOC_ID).get()
+          ]);
+          
+          // Function to apply changes to a fund's assets
+          const applyChangesToFund = (currentFundData: any, changes: any, fundName: string) => {
+            if (!currentFundData) {
+              // Create a new document if it doesn't exist
+              currentFundData = { fund: fundName, total: 0 };
+            }
+            
+            // Apply each changed asset
+            for (const [assetType, assetValue] of Object.entries(changes)) {
+              // Type assertion to handle the unknown type
+              const asset = assetValue as {
+                amount: number;
+                firstDepositDate?: Date | admin.firestore.Timestamp | string;
+                displayTitle?: string;
+                index?: number;
+              };
+              
+              // Handle firstDepositDate conversion for new deposits
+              let firstDeposit = currentFundData[assetType]?.firstDepositDate || null;
+              if (asset.firstDepositDate) {
+                if (asset.firstDepositDate instanceof admin.firestore.Timestamp) {
+                  firstDeposit = asset.firstDepositDate;
+                } else if (asset.firstDepositDate instanceof Date) {
+                  firstDeposit = admin.firestore.Timestamp.fromDate(asset.firstDepositDate);
+                } else {
+                  const parsed = new Date(asset.firstDepositDate);
+                  if (!isNaN(parsed.getTime())) {
+                    firstDeposit = admin.firestore.Timestamp.fromDate(parsed);
+                  }
                 }
               }
+              
+              // Update or create the asset
+              currentFundData[assetType] = {
+                amount: asset.amount,
+                firstDepositDate: firstDeposit,
+                displayTitle: asset.displayTitle,
+                index: asset.index
+              };
             }
-            docObj[key] = {
-              amount: asset.amount,
-              firstDepositDate: firstDeposit || null,
-              displayTitle: asset.displayTitle,
-              index: asset.index,
-            };
-            total += asset.amount;
-          }
-          docObj.total = total;
-          return docObj;
-        };
+            
+            // Recalculate the total
+            let total = 0;
+            for (const [key, value] of Object.entries(currentFundData)) {
+              if (key !== 'fund' && key !== 'total') {
+                total += (value as { amount: number }).amount || 0;
+              }
+            }
+            currentFundData.total = total;
+            
+            return currentFundData;
+          };
+          
+          // Apply changes to each fund
+          const updatedAgqDoc = applyChangesToFund(
+            agqSnapshot.exists ? agqSnapshot.data() : null, 
+            changedAssets.agq || {}, 
+            "AGQ"
+          );
+          
+          const updatedAk1Doc = applyChangesToFund(
+            ak1Snapshot.exists ? ak1Snapshot.data() : null, 
+            changedAssets.ak1 || {}, 
+            "AK1"
+          );
+          
+          // Create updated general doc
+          const generalData = generalSnapshot.exists ? generalSnapshot.data() : { ytd: 0, totalYTD: 0, total: 0 };
+          const updatedGeneral = {
+            ytd: generalData?.ytd || 0,
+            totalYTD: generalData?.totalYTD || 0,
+            total: updatedAgqDoc.total + updatedAk1Doc.total,
+          };
+          
+          // Update asset docs in batch
+          batch.set(assetCollectionRef.doc(config.ASSETS_AGQ_DOC_ID), updatedAgqDoc);
+          batch.set(assetCollectionRef.doc(config.ASSETS_AK1_DOC_ID), updatedAk1Doc);
+          batch.set(assetCollectionRef.doc(config.ASSETS_GENERAL_DOC_ID), updatedGeneral);
+        }
 
-        // Recreate AGQ doc, AK1 doc, and general doc
-        const agqDoc = prepareAssetDoc(clientState.assets.agq, "AGQ");
-        const ak1Doc = prepareAssetDoc(clientState.assets.ak1, "AK1");
-        const general = {
-          ytd: clientState.ytd ?? 0,
-          totalYTD: clientState.totalYTD ?? 0,
-          total: agqDoc.total + ak1Doc.total,
-        };
+        // 3) Mark this scheduled activity as 'completed'
+        const scheduledActivityRef = scheduledActivitiesRef.doc(doc.id);
+        batch.update(scheduledActivityRef, { status: "completed" });
 
-        const agqRef = assetCollectionRef.doc(config.ASSETS_AGQ_DOC_ID);
-        const ak1Ref = assetCollectionRef.doc(config.ASSETS_AK1_DOC_ID);
-        const genRef = assetCollectionRef.doc(config.ASSETS_GENERAL_DOC_ID);
-
-        batch.update(agqRef, agqDoc);
-        batch.update(ak1Ref, ak1Doc);
-        batch.update(genRef, general);
+        // Commit changes for this activity
+        await batch.commit();
+        console.log(`Processed scheduled activity ${doc.id} for client ${cid}`);
+      } catch (error) {
+        console.error(`Error processing scheduled activity ${doc.id}:`, error);
+        // Continue to next activity even if this one fails
       }
-
-      // 3) Mark this scheduled doc as 'completed'
-      const scheduledActivityRef = scheduledActivitiesRef.doc(doc.id);
-      batch.update(scheduledActivityRef, { status: "completed" });
-    });
-
-    // Commit
-    try {
-      await batch.commit();
-      console.log(`Processed ${querySnapshot.size} scheduled activities.`);
-    } catch (error) {
-      console.error("Error processing scheduled activities:", error);
     }
 
     return null;
-  });
+});
