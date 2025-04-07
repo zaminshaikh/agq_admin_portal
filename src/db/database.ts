@@ -73,7 +73,7 @@ export interface ScheduledActivity {
   id: string;
   cid: string;
   activity: Activity;
-  changedAssets: Assets;
+  changedAssets: Assets | null;
   status: string;
   scheduledTime: Date;
   formattedTime?: string;
@@ -105,7 +105,7 @@ export interface StatementData {
 
 export interface AssetDetails {
   amount: number;
-  firstDepositDate: Date | null;
+  firstDepositDate: Date | Timestamp | null;
   displayTitle: string;
   index: number;
 }
@@ -555,8 +555,11 @@ export class DatabaseService {
               const asset = assets[assetType];
               assetDoc[assetType] = {
                   amount: asset.amount,
-                  firstDepositDate: asset.firstDepositDate ? Timestamp.fromDate(asset.firstDepositDate) : null,
-                  displayTitle: asset.displayTitle,
+                  firstDepositDate: asset.firstDepositDate 
+                    ? asset.firstDepositDate instanceof Date 
+                      ? Timestamp.fromDate(asset.firstDepositDate) 
+                      : asset.firstDepositDate 
+                    : null,
                   index: asset.index,
               };
               total += asset.amount;
@@ -651,35 +654,49 @@ export class DatabaseService {
   }
 
   getScheduledActivities = async () => {
-      const scheduledActivitiesCollection = collection(this.db, config.SCHEDULED_ACTIVITIES_COLLECTION);
-      // const querySnapshot = await getDocs(scheduledActivitiesCollection);
-      const q = query(scheduledActivitiesCollection, where('usersCollectionID', '==', config.FIRESTORE_ACTIVE_USERS_COLLECTION));
-      const querySnapshot = await getDocs(q)
+    const scheduledActivitiesCollection = collection(this.db, config.SCHEDULED_ACTIVITIES_COLLECTION);
+    // const querySnapshot = await getDocs(scheduledActivitiesCollection);
+    const q = query(scheduledActivitiesCollection, where('usersCollectionID', '==', config.FIRESTORE_ACTIVE_USERS_COLLECTION));
+    const querySnapshot = await getDocs(q)
 
-      const scheduledActivities: ScheduledActivity[] = querySnapshot.docs.map((doc) => {
-          const data = doc.data() as ScheduledActivity;
+    const scheduledActivities: ScheduledActivity[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data() as ScheduledActivity;
 
-          // Format the time field
-          let formattedTime = '';
-          const time = data.activity.time instanceof Timestamp ? data.activity.time.toDate() : data.activity.time;
-          if (time instanceof Date) {
-              formattedTime = formatDate(time);
-          }
+        // Format the time field
+        let formattedTime = '';
+        const time = data.activity.time instanceof Timestamp ? data.activity.time.toDate() : data.activity.time;
+        if (time instanceof Date) {
+            formattedTime = formatDate(time);
+        }
 
-          return {
-              ...data,
-              id: doc.id,
-              formattedTime,
-              activity: {
-                  ...data.activity,
-                  formattedTime,
-                  parentDocId: data.cid,
-              },
-          };
-      });
+        // Process changed assets if they exist
+        const processedChangedAssets = data.changedAssets ? { ...data.changedAssets } : null;
+        if (processedChangedAssets) {
+            Object.keys(processedChangedAssets).forEach((fundName) => {
+                const fund = processedChangedAssets[fundName];
+                Object.keys(fund).forEach((assetType) => {
+                    if (fund[assetType].firstDepositDate && fund[assetType].firstDepositDate instanceof Timestamp) {
+                        fund[assetType].firstDepositDate = fund[assetType].firstDepositDate.toDate();
+                    }
+                });
+            });
+        }
 
-      return scheduledActivities;
-  }
+        return {
+            ...data,
+            changedAssets: processedChangedAssets,
+            id: doc.id,
+            formattedTime,
+            activity: {
+                ...data.activity,
+                formattedTime,
+                parentDocId: data.cid,
+            },
+        };
+    });
+
+    return scheduledActivities;
+}
 
   createActivity = async (activity: Activity, cid: string) => {
       // Create a reference to the client document
@@ -872,7 +889,7 @@ export class DatabaseService {
                 const initialAsset = initialFund[assetType];
                 const currentAsset = currentFund[assetType];
                 
-                if (initialAsset.amount !== currentAsset.amount) {
+                if (!initialAsset || JSON.stringify(initialAsset) !== JSON.stringify(currentAsset)) {
                     fundChanges[assetType] = currentAsset; // Store the current asset details
                     hasChanges = true;
                 }
