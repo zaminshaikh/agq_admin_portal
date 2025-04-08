@@ -7,7 +7,7 @@ import { DeleteClient } from './DeleteClient';
 import { EditClient } from './EditClient';
 import ImportClients from './ImportClients';
 import { UnlinkClient } from './UnlinkClient';
-import { cilCheckCircle, cilXCircle } from '@coreui/icons';
+import { cilCheckCircle, cilCloudDownload, cilXCircle } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 
 const ClientsTable = () => {
@@ -120,6 +120,87 @@ const ClientsTable = () => {
         // Update the state with the new details array
         setDetails(newDetails);
     }
+
+    // Function to export clients data to CSV
+    const exportToCSV = () => {
+        // Define CSV headers for all relevant client properties, excluding specified fields
+        const headers = [
+            'CID', 'First Name', 'Last Name', 'Email', 'App Email',
+            'Phone Number', 'Address', 'Date of Birth', 'First Deposit Date',
+            'Total Assets', 'YTD', 'Total YTD', 'Linked', 'Last Login',
+            'Beneficiaries', 'Notes'
+        ];
+        
+        // Helper function to properly escape and format CSV values
+        const formatCSVValue = (value: any) => {
+            if (value === null || value === undefined) {
+                return '';
+            }
+            
+            // Handle arrays by joining with semicolons
+            if (Array.isArray(value)) {
+                value = value.join('; ');
+            }
+            
+            // Convert value to string
+            const stringVal = String(value);
+            
+            // If value contains commas, quotes, or newlines, wrap in quotes and escape any quotes
+            if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n')) {
+                return `"${stringVal.replace(/"/g, '""')}"`;
+            }
+            
+            return stringVal;
+        };
+        
+        // Helper function to format dates
+        const formatDate = (date: Date | null): string => {
+            if (!date) return '';
+            return date.toLocaleDateString();
+        };
+        
+        // Sort clients by firstName before generating CSV
+        const sortedClients = [...clients].sort((a, b) => 
+            a.firstName.localeCompare(b.firstName)
+        );
+        
+        // Format client data into CSV rows with all properties except excluded ones
+        const rows = sortedClients.map(client => [
+            `="${client.cid}"`, // Preserve leading zeros in CID
+            formatCSVValue(client.firstName),
+            formatCSVValue(client.lastName),
+            formatCSVValue(client.initEmail),
+            formatCSVValue(client.appEmail),
+            formatCSVValue(client.phoneNumber),
+            formatCSVValue(client.address),
+            formatCSVValue(formatDate(client.dob)),
+            formatCSVValue(formatDate(client.firstDepositDate)),
+            formatCSVValue(client.totalAssets),
+            formatCSVValue(client.ytd),
+            formatCSVValue(client.totalYTD),
+            formatCSVValue(client.linked ? 'Yes' : 'No'),
+            formatCSVValue(client.lastLoggedIn || ''),
+            formatCSVValue(client.beneficiaries),
+            formatCSVValue(client.notes)
+        ]);
+        
+        // Combine headers and rows
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+        
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'clients-data.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
     
     return (
         <CContainer>
@@ -129,12 +210,16 @@ const ClientsTable = () => {
             {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} clients={clients} currentClient={currentClient ?? emptyClient}/>}
             {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} client={currentClient} setClients={setClients}/>}
             {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients} setClients={setClients}/>} 
-            <div className="d-grid gap-2 py-3">
-                <CButton color='secondary' onClick={() => setShowImportClientsModal(true)}>Import Clients</CButton>
-            </div> 
-            <div className="d-grid gap-2">
-                <CButton color='primary' onClick={() => setShowCreateNewClientModal(true)}>Add Client +</CButton>
-            </div> 
+            <CRow className="mb-3">
+              <CCol>
+                <CButton color='primary' onClick={() => setShowCreateNewClientModal(true)} className="w-100">+ Add Client</CButton>
+              </CCol>
+              <CCol>
+                <CButton color='success' onClick={exportToCSV} className="w-100">
+                  <CIcon icon={cilCloudDownload} className="me-2" /> Export to CSV
+                </CButton>
+              </CCol>
+            </CRow>
             <CSmartTable
                 activePage={1}
                 cleaner
