@@ -8,6 +8,7 @@ interface DeleteActivityProps {
     showModal: boolean;
     setShowModal: (show: boolean) => void;
     activity?: Activity; 
+    scheduledActivity?: ScheduledActivity;
     selectedClient?: string | number;
     setAllActivities?: (activites: Activity[]) => void | undefined;
     setFilteredActivities?: (activites: Activity[]) => void | undefined;
@@ -15,19 +16,19 @@ interface DeleteActivityProps {
     isScheduled?: boolean; // <-- Add this
 }
 
-const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, selectedClient, setScheduledActivities, setAllActivities, setFilteredActivities, isScheduled}) => {
+const DeleteActivity: React.FC<DeleteActivityProps> = ({showModal, setShowModal, activity, scheduledActivity, selectedClient, setScheduledActivities, setAllActivities, setFilteredActivities, isScheduled}) => {
     const db = new DatabaseService();
 
     const deleteActivity = async () => {
-        if (activity && activity.id) {
+        if (activity && (activity.id || scheduledActivity?.id)) {
             try {
-                if (isScheduled && setScheduledActivities) {
-                    await db.deleteScheduledActivity(activity.id);
+                if (isScheduled && setScheduledActivities && scheduledActivity) {
+                    await db.deleteScheduledActivity(scheduledActivity.id);
                     setShowModal(false);
                     const scheduledActivities = await db.getScheduledActivities(); // Get the new updated activities
                     setScheduledActivities(scheduledActivities);
                     return;
-                } else if (setAllActivities) {
+                } else if (setAllActivities && !isScheduled) {
                     await db.deleteActivity(activity);
                     await db.deleteNotification(activity);
                     setShowModal(false);
