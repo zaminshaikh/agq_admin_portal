@@ -561,6 +561,7 @@ export class DatabaseService {
                       : asset.firstDepositDate 
                     : null,
                   index: asset.index,
+                  displayTitle: asset.displayTitle,
               };
               total += asset.amount;
           });
