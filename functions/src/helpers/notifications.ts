@@ -89,7 +89,7 @@ export async function createNotif(
  * @param {string} title - Notification title to display on device.
  * @param {string} body - Notification body text to display on device.
  * @param {FirebaseFirestore.DocumentReference} userRef - Reference to the user’s Firestore document (used to retrieve tokens).
- * @returns {Promise<string[]>} A Promise resolving to an array of message IDs that were successfully sent.
+ * @return {Promise<string[]>} A Promise resolving to an array of message IDs that were successfully sent.
  * @throws {Error} If the user has no FCM tokens registered.
  */
 export async function sendNotif(
@@ -102,14 +102,31 @@ export async function sendNotif(
 
   // Check if user has token(s)
   if (userData && Array.isArray(userData.tokens) && userData.tokens.length > 0) {
-    const sendPromises = userData.tokens.map((token: string) => {
+    let tokensToRemove: string[] = [];
+    const sendPromises = userData.tokens.map(async (token: string) => {
+      console.log(`Sending notification to token: ${token}`);
       const fcmMessage = {
         token,
         notification: { title, body },
       };
-      return messaging.send(fcmMessage);
+      try {
+        const response = await messaging.send(fcmMessage);
+        console.log(`Successfully sent message to token ${token}:`, response);
+        return response; // Successfully sent message ID
+      } catch (error) {
+        console.error(`Failed to send notification to token ${token}:`, error);
+        // If sending failed due to an invalid token, remove it
+        if ((error as any).code === 'messaging/registration-token-not-registered' || (error as any).code === 'messaging/invalid-registration-token' || (error as any).code === 'messaging/invalid-argument') {
+          tokensToRemove.push(token);
+          console.log(`Removed invalid token ${token} for user ${userRef.id}`);
+        }
+        return null; // Indicate failure for this token  
+      }
     });
-    return Promise.all(sendPromises);
+    const results = await Promise.all(sendPromises);
+    await userRef.update({ tokens: userData.tokens.filter((token: string) => !tokensToRemove.includes(token)) });
+    // Filter out nulls (failed sends) and return only successful message IDs
+    return results.filter((result): result is string => result !== null);
   } else {
     throw new Error("FCM tokens not found");
   }
