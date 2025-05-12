@@ -94,7 +94,7 @@ export interface Activity {
     amount: number;
     fund?: string;
     recipient?: string;
-    time: Date;
+    time: Date | Timestamp;
     formattedTime?: string;
     type: string;
     isDividend?: boolean;
@@ -269,7 +269,7 @@ export const emptyClient: Client = {
 
 export const emptyActivity: Activity = {
     amount: 0,
-    fund: 'ARMM',
+    fund: 'AGQ',
     recipient: '',
     time: new Date(),
     type: 'profit',
