@@ -1,6 +1,6 @@
 import React, { act, useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
-import { DatabaseService, Activity, emptyActivity, Client, emptyClient, ScheduledActivity, Assets, AssetDetails } from 'src/db/database';
+import { DatabaseService, Activity, emptyActivity, Client, emptyClient, ScheduledActivity, Assets, AssetDetails, getChangedAssets } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 import { amortize, applyAssetChanges } from 'src/utils/utilities';
@@ -106,7 +106,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     const handleEditActivity = async (id: string | undefined, activityState: Activity, initialClientState: Client, clientState: Client, isScheduled: boolean) => {
         const db = new DatabaseService();
         
-        const changedAssets = db.getChangedAssets(initialClientState, clientState);
+        const changedAssets = getChangedAssets(initialClientState, clientState);
     
         console.log("Activity State: ", scheduledActivity);
     

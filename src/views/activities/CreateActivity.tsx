@@ -1,7 +1,7 @@
 import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
 import { act, useEffect, useState } from "react";
 import React from "react";
-import { Activity, DatabaseService, Client, emptyActivity, emptyClient, ScheduledActivity, Assets, AssetDetails } from '../../db/database.ts'
+import { Activity, DatabaseService, Client, emptyActivity, emptyClient, ScheduledActivity, Assets, AssetDetails, getChangedAssets } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
@@ -86,7 +86,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
           return;
       }
 
-      const changedAssets = db.getChangedAssets(initialClientState, clientState);
+      const changedAssets = getChangedAssets(initialClientState, clientState);
 
       if (!ValidateActivity(activityState, setInvalidInputFields) && !override) {
           setShowErrorModal(true);
