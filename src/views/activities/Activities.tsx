@@ -2,11 +2,11 @@ import { useTranslation } from "react-i18next";
 import ActivitiesTable from "./ActivitiesTable";
 import { useEffect, useState } from "react";
 import { DatabaseService, Client, ScheduledActivity, Activity } from "src/db/database";
-import { CButton, CSpinner } from "@coreui/react-pro";
+import { CButton, CCol, CRow, CSpinner } from "@coreui/react-pro";
 import ScheduledActivitiesTable from "./ScheduledActivitiesTable";
 import { CreateActivity } from "./CreateActivity";
 import ExportActivitiesModal from "./ExportActivitiesModal";
-import { cilFile } from "@coreui/icons";
+import { cilCloudDownload, cilFile } from "@coreui/icons";
 import CIcon from "@coreui/icons-react";
 
 const Activities = () => {
@@ -79,14 +79,17 @@ const Activities = () => {
                 clientOptions={clientOptions}
                 allActivities={allActivities}
             />}
-            
-            <div className="d-flex justify-content-between py-3">
-                <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
-                <CButton color='secondary' onClick={() => setShowExportActivitiesModal(true)}>
-                    <CIcon icon={cilFile} className="me-2" />
-                    Export to CSV
+
+            <CRow className="mb-3">
+              <CCol>
+                <CButton color='primary' onClick={() => setShowCreateActivityModal(true)} className="w-100">Add Activity +</CButton>
+              </CCol>
+              <CCol>
+                <CButton color='success' onClick={() => setShowExportActivitiesModal(true)} className="w-100">
+                  <CIcon icon={cilCloudDownload} className="me-2" /> Export to CSV
                 </CButton>
-            </div> 
+              </CCol>
+            </CRow>
             <ActivitiesTable 
                 allActivities={allActivities}
                 setAllActivities={setAllActivities}
