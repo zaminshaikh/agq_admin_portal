@@ -2,15 +2,19 @@ import { useTranslation } from "react-i18next";
 import ActivitiesTable from "./ActivitiesTable";
 import { useEffect, useState } from "react";
 import { DatabaseService, Client, ScheduledActivity, Activity } from "src/db/database";
-import { CButton, CSpinner } from "@coreui/react-pro";
+import { CButton, CCol, CRow, CSpinner } from "@coreui/react-pro";
 import ScheduledActivitiesTable from "./ScheduledActivitiesTable";
 import { CreateActivity } from "./CreateActivity";
+import ExportActivitiesModal from "./ExportActivitiesModal";
+import { cilCloudDownload, cilFile } from "@coreui/icons";
+import CIcon from "@coreui/icons-react";
 
 const Activities = () => {
-    const { t } = useTranslation()
+    useTranslation();
     const [isLoading, setIsLoading] = useState(true);
 
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
+    const [showExportActivitiesModal, setShowExportActivitiesModal] = useState(false);
 
     const [allActivities, setAllActivities] = useState<Activity[]>([]); // New state for original activities
     const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
@@ -18,6 +22,7 @@ const Activities = () => {
     
     const [clients, setClients] = useState<Client[]>([]);
     const [selectedClient, setSelectedClient] = useState<string | number>(); 
+    const [clientOptions, setClientOptions] = useState<{ label: string; value: string }[]>([]);
 
     useEffect(() => {
       const fetchActivities = async () => {
@@ -32,6 +37,13 @@ const Activities = () => {
           setFilteredActivities(activities);
           setAllActivities(activities); // Store the original activities
           setClients(clients);
+          
+          // Create client options for the export modal
+          const options = clients.map(client => ({
+            label: `${client.firstName} ${client.lastName}`,
+            value: client.cid
+          }));
+          setClientOptions(options);
 
           setIsLoading(false);
       };
@@ -59,9 +71,25 @@ const Activities = () => {
                 setFilteredActivities={setFilteredActivities}
                 setScheduledActivities={setScheduledActivities}
             />}
-            <div className="d-grid gap-2 py-3">
-                <CButton color='primary' onClick={() => setShowCreateActivityModal(true)}>Add Activity +</CButton>
-            </div> 
+            
+            {showExportActivitiesModal && 
+            <ExportActivitiesModal 
+                showModal={showExportActivitiesModal} 
+                setShowModal={setShowExportActivitiesModal}
+                clientOptions={clientOptions}
+                allActivities={allActivities}
+            />}
+
+            <CRow className="mb-3">
+              <CCol>
+                <CButton color='primary' onClick={() => setShowCreateActivityModal(true)} className="w-100">Add Activity +</CButton>
+              </CCol>
+              <CCol>
+                <CButton color='success' onClick={() => setShowExportActivitiesModal(true)} className="w-100">
+                  <CIcon icon={cilCloudDownload} className="me-2" /> Export to CSV
+                </CButton>
+              </CCol>
+            </CRow>
             <ActivitiesTable 
                 allActivities={allActivities}
                 setAllActivities={setAllActivities}
