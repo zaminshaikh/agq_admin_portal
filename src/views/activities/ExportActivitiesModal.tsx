@@ -117,12 +117,44 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
       }
       
       // Filter by date range
-      if (startDate && endDate) {
+      if (startDate) {
+        // If end date is not specified, use the current date
+        const effectiveEndDate = endDate || new Date();
+        
         filteredActivities = filteredActivities.filter(activity => {
           const activityDate = activity.time instanceof Date 
             ? activity.time 
-            : new Date(activity.time);
-          return activityDate >= startDate && activityDate <= endDate;
+            : (activity.time as any).toDate();
+
+          console.log('Activity Date:', activityDate);
+          console.log('Start Date:', startDate);
+          console.log('End Date:', effectiveEndDate);
+          
+          // Set hours, minutes, seconds and milliseconds to 0 for date comparison
+          const activityDateOnly = new Date(
+            activityDate.getFullYear(),
+            activityDate.getMonth(), 
+            activityDate.getDate()
+          );
+          
+          const startDateOnly = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate()
+          );
+          
+          const endDateOnly = new Date(
+            effectiveEndDate.getFullYear(),
+            effectiveEndDate.getMonth(),
+            effectiveEndDate.getDate()
+          );
+          
+          console.log('Activity Date Only:', activityDateOnly);
+          console.log('Start Date Only:', startDateOnly);
+          console.log('End Date Only:', endDateOnly);
+
+          // Compare dates without time components
+          return activityDateOnly >= startDateOnly && activityDateOnly <= endDateOnly;
         });
       }
       
@@ -146,7 +178,7 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
         // Get timestamp for sorting
         const timestamp = activity.time instanceof Date 
           ? activity.time.getTime() 
-          : new Date(activity.time).getTime();
+          : (activity.time as any).toDate().getTime();
           
         return [
           activity.parentName || '',
@@ -283,12 +315,17 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
                 setStartDate(date);
               }}
             />
-            <CInputGroupText>End Date</CInputGroupText>
+            <CInputGroupText>End Date (Optional)</CInputGroupText>
             <CFormInput 
               type='date' 
+              placeholder="If not specified, current date will be used"
               onChange={(e) => {
-                const date = new Date(e.target.value);
-                setEndDate(date);
+                if (e.target.value) {
+                  const date = new Date(e.target.value);
+                  setEndDate(date);
+                } else {
+                  setEndDate(null);
+                }
               }}
             />
           </CInputGroup>
@@ -296,6 +333,11 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
           {startDate && endDate && startDate > endDate && (
             <div className="text-danger mt-2">
               Start date must be before end date.
+            </div>
+          )}
+          {!endDate && (
+            <div className="text-muted mt-2">
+              <small>If end date is not specified, the current date will be used.</small>
             </div>
           )}
         </>
