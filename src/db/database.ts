@@ -5,7 +5,28 @@ import config from '../../config.json'
 import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { formatDate } from 'src/utils/utilities.ts'
+import { formatDate, toSentenceCase } from 'src/utils/utilities.ts'
+
+
+// With these lines instead:
+import * as pdfMakeModule from 'pdfmake/build/pdfmake';
+import * as pdfFontsModule from 'pdfmake/build/vfs_fonts';
+import { format } from 'path';
+
+// Get the correct reference to pdfMake
+const pdfMake = (pdfMakeModule as any).default || pdfMakeModule as any;
+// Properly initialize the virtual file system
+pdfMake.vfs = (pdfFontsModule as any).pdfMake?.vfs;
+
+// Add this helper function for formatting dates in the PDF
+function formatPDFDate(date: Date | null | undefined): string {
+  if (!date) return 'N/A';
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+  }).format(date);
+}
 
 const functions = getFunctions();
 
@@ -51,23 +72,23 @@ export interface Client {
 
 export interface Activity {
   id?: string;
-  notes?: string | number | string[] | undefined
-  // selected?: boolean;
+  notes?: string | number | string[] | undefined;
   parentDocId?: string;
   amount: number;
-  fund: string;
-  recipient: string;
+  fund?: string;
+  recipient?: string;
   time: Date;
   formattedTime?: string;
   type: string;
   isDividend?: boolean;
   sendNotif?: boolean;
   amortizationCreated?: boolean;
-  isAmortization?: boolean
-  principalPaid?: number | undefined
-  profitPaid?: number | undefined
-  parentName: string;
+  isAmortization?: boolean;
+  principalPaid?: number;
+  profitPaid?: number;
+  parentName?: string;
 }
+
 
 export interface ScheduledActivity {
   id: string;
@@ -92,8 +113,12 @@ export interface Notification {
 }
 
 export interface GraphPoint {
+  id?: string;
   time: Date | Timestamp | null;
-  amount: number | null;
+  type?: string;
+  amount: number;
+  cashflow: number | null;
+  account?: string;
 }
 
 export interface StatementData {
@@ -210,7 +235,6 @@ export const formatCurrency = (amount: number): string => {
 
 
 export class DatabaseService {
-
   private db: Firestore = getFirestore(app);
   private clientsCollection: CollectionReference<DocumentData, DocumentData>;
   private cidArray: string[];
@@ -909,6 +933,285 @@ export class DatabaseService {
 
     return changedAssets;
   }
+
+  /**
+   * Retrieves graph points for a specific client
+   */
+  async getClientGraphPoints(cid: string): Promise<GraphPoint[]> {
+    try {
+      const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
+      const graphPointsCollectionRef = collection(clientRef, config.GRAPHPOINTS_SUBCOLLECTION);
+      const querySnapshot = await getDocs(graphPointsCollectionRef);
+      
+      const graphPoints: GraphPoint[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        graphPoints.push({
+          id: doc.id,
+          time: data.time,
+          amount: data.amount || 0,
+          type: data.type,
+          cashflow: data.cashflow || 0,
+          account: data.account
+        });
+      });
+      
+      return graphPoints;
+    } catch (error) {
+      console.error('Error fetching graph points:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Generates a PDF Statement for a client given a start/end date.
+   * The statement includes all activities in the specified date range.
+  */
+  public async generateStatementPDF(
+    client: Client,
+    startDate: Date,
+    endDate: Date,
+    selectedAccount: string // Added selectedAccount parameter
+  ): Promise<void> {
+    // 1. Find starting balance from graph points
+    const graphPoints = await this.getClientGraphPoints(client.cid);
+    
+    // Find the last graph point before startDate with selectedAccount
+    const startingPointArray = graphPoints
+      .filter(point => {
+        const pointDate = point.time instanceof Timestamp ? point.time.toDate() : point.time;
+        return pointDate && 
+               pointDate < startDate && 
+               point.account === selectedAccount;
+      })
+      .sort((a, b) => {
+        const dateA = a.time instanceof Timestamp ? a.time.toDate() : (a.time || new Date(0));
+        const dateB = b.time instanceof Timestamp ? b.time.toDate() : (b.time || new Date(0));
+        return dateB.getTime() - dateA.getTime(); // Sort descending to get most recent first
+      });
+    
+    // Set starting balance (use the most recent point before startDate, or 0 if none exists)
+    let runningBalance = startingPointArray.length > 0 ? startingPointArray[0].amount : 0;
+    
+    // 2. Get client's activities within the date range
+    const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
+    const activitiesCollection = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION);
+    
+    let activitiesQuery;
+    if (selectedAccount === "Cumulative") {
+      activitiesQuery = query(activitiesCollection);
+    } else {
+      activitiesQuery = query(activitiesCollection, where("recipient", "==", selectedAccount));
+    }
+    const activitiesSnapshot = await getDocs(activitiesQuery);
+    
+    const activities: Activity[] = [];
+    activitiesSnapshot.forEach(doc => {
+      const data = doc.data();
+      activities.push({
+        id: doc.id,
+        time: data.time,
+        type: data.type,
+        amount: data.amount || 0,
+        parentDocId: client.cid,
+      });
+    });
+    
+    // Filter activities within date range
+    const filteredActivities = activities.filter(activity => {
+      const activityDate = activity.time instanceof Timestamp ? activity.time.toDate() : activity.time;
+      return activityDate && activityDate >= startDate && activityDate <= endDate;
+    });
+    
+    // Sort activities by date
+    filteredActivities.sort((a, b) => {
+      const dateA = a.time instanceof Timestamp ? a.time.toDate() : (a.time || new Date(0));
+      const dateB = b.time instanceof Timestamp ? b.time.toDate() : (b.time || new Date(0));
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    // Create formatted activities with running balance
+    const formattedActivities = filteredActivities.map(activity => {
+      const activityDate = activity.time instanceof Timestamp ? activity.time.toDate() : activity.time;
+      const amount = activity.amount || 0;
+      
+      // Update running balance based on activity type
+      runningBalance = runningBalance + (activity.type == 'withdrawal'
+        ? -1
+        : (activity.type == 'profit'
+          ? 0
+          : 1)) * amount;
+      
+      return {
+        date: activityDate ? formatPDFDate(activityDate) : 'N/A',
+        type: activity.type || 'Transaction',
+        amount: amount,
+        formattedCashflow: formatCurrency(amount),
+        balance: runningBalance
+      };
+    });
   
+    // 3. Build the PDF document definition
+    const docDefinition: any = {
+      pageSize: 'LETTER',
+      pageMargins: [40, 60, 40, 60],
+      footer: (currentPage: number, pageCount: number) => {
+        return {
+          columns: [
+            {
+              text: `Page ${currentPage} of ${pageCount}`,
+              alignment: 'center',
+              margin: [0, 5, 0, 0],
+            },
+          ],
+        };
+      },
+      content: [
+        // Statement Header
+        {
+          text: 'Account Statement',
+          style: 'header',
+          alignment: 'center',
+          margin: [0, 0, 0, 15],
+        },
+        
+        // Client Information Section
+        {
+          style: 'infoSection',
+          margin: [0, 0, 0, 20],
+          layout: {
+            fillColor: function(i: number) { return (i % 2 === 0) ? '#f8f8f8' : null; }
+          },
+          table: {
+            widths: ['50%', '50%'],
+            body: [
+              [
+                { text: 'Investor:', style: 'labelText' }, 
+                { text: `${client.firstName} ${client.lastName}`, style: 'valueText' }
+              ],
+              [
+                { text: 'Client Since:', style: 'labelText' }, 
+                { text: client.firstDepositDate ? formatPDFDate(client.firstDepositDate) : 'N/A', style: 'valueText' }
+              ],
+              [
+                { text: 'Statement Period:', style: 'labelText' }, 
+                { text: `${formatPDFDate(startDate)} - ${formatPDFDate(endDate)}`, style: 'valueText' }
+              ],
+            ]
+          },
+        },
+        
+        // Statement Summary
+        {
+          text: 'Statement Summary',
+          style: 'subheader',
+          margin: [0, 0, 0, 10],
+        },
+        {
+          style: 'summaryTable',
+          table: {
+            widths: ['70%', '30%'],
+            body: [
+              [
+                { text: 'Investment Account Total Balance:', style: 'labelText' }, 
+                { text: formatCurrency(client.totalAssets || 0), style: 'valueText', alignment: 'right' }
+              ],
+            ]
+          },
+          layout: 'noBorders'
+        },
+        
+        // Transaction History Table
+        {
+          text: 'Transaction History',
+          style: 'subheader',
+          margin: [0, 20, 0, 10],
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['25%', '25%', '25%', '25%'],
+            body: [
+              // Table Header
+              [
+                { text: 'Date', style: 'tableHeader', alignment: 'center' },
+                { text: 'Type', style: 'tableHeader', alignment: 'center' },
+                { text: 'Cashflow', style: 'tableHeader', alignment: 'center' },
+                { text: 'Balance', style: 'tableHeader', alignment: 'center' },
+              ],
+              // Starting Balance Row
+              [
+                { text: 'Starting Balance', alignment: 'center' },
+                { text: '', alignment: 'center' },
+                { text: '', alignment: 'center' },
+                { text: formatCurrency(startingPointArray.length > 0 ? startingPointArray[0].amount : 0), alignment: 'center' },
+              ],
+              // Table Rows
+              ...formattedActivities.map((activity) => [
+                { text: activity.date, alignment: 'center' },
+                { text: toSentenceCase(activity.type), alignment: 'center' },
+                { 
+                  text: activity.formattedCashflow, 
+                  alignment: 'center',
+                },
+                { 
+                  text: formatCurrency(activity.balance), 
+                  alignment: 'center',
+                },
+              ]),
+            ],
+          },
+          // Full border layout
+          layout: {
+            hLineWidth: function() { return 1; },
+            vLineWidth: function() { return 1; },
+            hLineColor: function() { return '#dddddd'; },
+            vLineColor: function() { return '#dddddd'; },
+          },
+          // Center the table
+          alignment: 'center',
+          margin: [0, 0, 0, 20],
+        },
+      ],
+      
+      // Styles
+      styles: {
+        header: {
+          fontSize: 22,
+          bold: true,
+          color: '#2B41B8',
+        },
+        subheader: {
+          fontSize: 16,
+          bold: true,
+          margin: [0, 5, 0, 5],
+        },
+        small: {
+          fontSize: 10,
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 12,
+          color: 'black',
+          fillColor: '#f8f8f8',
+          margin: [0, 5, 0, 5],
+        },
+        labelText: {
+          bold: true,
+          fontSize: 11,
+        },
+        valueText: {
+          fontSize: 11,
+        },
+        summaryTable: {
+          margin: [0, 0, 0, 10],
+        },
+      },
+    };
+  
+    // 4. Generate and open the PDF
+    const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+    pdfDocGenerator.open();
+  }
 }
 

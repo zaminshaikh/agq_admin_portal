@@ -72,6 +72,7 @@
   "devDependencies": {
     "@types/node": "^20.12.7",
     "@types/papaparse": "^5.3.14",
+    "@types/pdfmake": "^0.2.11",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
     "@types/react-dropzone": "^4.2.2",
@@ -87,6 +88,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.6",
     "eslint-plugin-todo": "^0.1.0",
+    "pdfmake": "^0.2.20",
     "postcss": "^8.4.38",
     "prettier": "3.2.5",
     "sass": "^1.75.0",
