@@ -256,6 +256,23 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
               }}
             />
           </CInputGroup>
+          
+          <CInputGroup className="mb-3 w-100">
+            <CInputGroupText>Funds</CInputGroupText>
+            <CMultiSelect
+              id="funds"
+              className="flex-grow-1"
+              style={{ minWidth: 0 }}
+              options={fundOptions}
+              placeholder="Select Funds"
+              selectAll={true}
+              multiple={true}
+              allowCreateOptions={true}
+              onChange={(selected) => {
+                setSelectedFunds(selected.map(option => option.value as string));
+              }}
+            />
+          </CInputGroup>
 
           <CInputGroup className='mb-3'>
             <CInputGroupText>Start Date</CInputGroupText>
