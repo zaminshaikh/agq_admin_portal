@@ -6,12 +6,10 @@ import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { formatDate, toSentenceCase } from 'src/utils/utilities.ts'
-
-
-// With these lines instead:
+import { Client, AssetDetails, Activity, ScheduledActivity, StatementData, Assets, GraphPoint} from './models.ts'
 import * as pdfMakeModule from 'pdfmake/build/pdfmake';
 import * as pdfFontsModule from 'pdfmake/build/vfs_fonts';
-import { format } from 'path';
+import { formatCurrency } from './utils.ts'
 
 // Get the correct reference to pdfMake
 const pdfMake = (pdfMakeModule as any).default || pdfMakeModule as any;
@@ -29,209 +27,6 @@ function formatPDFDate(date: Date | null | undefined): string {
 }
 
 const functions = getFunctions();
-
-/**
- * Client interface representing a client in the Firestore database.
- *  
- * .cid - The document ID of the client (the Client ID)
- * 
- * .uid - The client's UID, or the empty string if they have not signed up
- */
-export interface Client {
-    cid: string;
-    uid: string;
-    uidGrantedAccess: string[];
-    linked: boolean;
-    firstName: string;
-    lastName: string;
-    companyName: string;
-    address: string;
-    province: string
-    state: string
-    street: string
-    city: string
-    zip: string
-    country: string
-    dob: Date | null;
-    phoneNumber: string;
-    appEmail: string;
-    initEmail: string;
-    firstDepositDate: Date | null;
-    beneficiaries: string[];
-    connectedUsers: string[];
-    totalAssets: number;
-    ytd: number;
-    totalYTD: number;
-    _selected?: boolean;
-    lastLoggedIn?: string | null | undefined;
-    notes?: string | undefined;
-    activities?: Activity[];
-    graphPoints?: GraphPoint[];
-    assets: Assets;
-}
-
-export interface Activity {
-  id?: string;
-  notes?: string | number | string[] | undefined;
-  parentDocId?: string;
-  amount: number;
-  fund?: string;
-  recipient?: string;
-  time: Date;
-  formattedTime?: string;
-  type: string;
-  isDividend?: boolean;
-  sendNotif?: boolean;
-  amortizationCreated?: boolean;
-  isAmortization?: boolean;
-  principalPaid?: number;
-  profitPaid?: number;
-  parentName?: string;
-}
-
-
-export interface ScheduledActivity {
-  id: string;
-  cid: string;
-  activity: Activity;
-  changedAssets: Assets | null;
-  status: string;
-  scheduledTime: Date;
-  formattedTime?: string;
-  usersCollectionID: string;
-}
-
-export interface Notification {
-  activityId: string;
-  recipient: string;
-  title: string;
-  body: string;
-  message: string;
-  isRead: boolean;
-  type: string;
-  time: Date | Timestamp;
-}
-
-export interface GraphPoint {
-  id?: string;
-  time: Date | Timestamp | null;
-  type?: string;
-  amount: number;
-  cashflow: number | null;
-  account?: string;
-}
-
-export interface StatementData {
-  statementTitle: string;
-  downloadURL: string;
-  clientId: string;
-  // Add other necessary fields here
-}
-
-export interface AssetDetails {
-  amount: number;
-  firstDepositDate: Date | Timestamp | null;
-  displayTitle: string;
-  index: number;
-}
-
-export interface Assets {
-[fundKey: string]: {
-  [assetType: string]: AssetDetails;
-};   
-}
-
-export const emptyClient: Client = {
-    firstName: '',
-    lastName: '',
-    companyName: '',
-    address: '',
-    province: '',
-    state: '',
-    street: '',
-    city: '',
-    zip: '',
-    country: 'US',
-    dob: null,
-    phoneNumber: '',
-    firstDepositDate: null,
-    beneficiaries: [],
-    connectedUsers: [],
-    cid: '',
-    uid: '',
-    uidGrantedAccess: [],
-    linked: false,
-    appEmail: '',
-    initEmail: '',
-    totalAssets: 0,
-    ytd: 0,
-    totalYTD: 0,
-    assets: {
-        agq: {
-            personal: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'Personal',
-                index: 0,
-            },
-        },
-        ak1: {
-            personal: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'Personal',
-                index: 0,
-            },
-        },
-    },
-};
-
-export const roundToNearestHour = (date: Date): Date => {
-  const minutes = date.getMinutes();
-  const roundedDate = new Date(date);
-
-  if (minutes >= 30) {
-      roundedDate.setHours(date.getHours() + 1);
-  }
-  
-  roundedDate.setMinutes(0, 0, 0); // Reset minutes, seconds, and milliseconds to 0
-
-  return roundedDate;
-};
-
-export const emptyActivity: Activity = {
-  amount: 0,
-  fund: 'AGQ',
-  recipient: '',
-  time: roundToNearestHour(new Date()),
-  type: 'profit',
-  isDividend: false,
-  sendNotif: true,
-  isAmortization: false,
-  notes: undefined,
-  parentName: '',
-};
-
-/**
- * Formats a number as a currency string.
- *
- * This function takes a number as input and returns a string that represents
- * the number formatted as a currency in US dollars. The formatting is done
- * using the built-in `Intl.NumberFormat` object with 'en-US' locale and 'USD'
- * as the currency.
- *
- * @param amount - The number to be formatted as currency.
- * @returns The formatted currency string.
- *
- * @example
- * ```typescript
- * const amount = 1234.56;
- * const formattedAmount = formatCurrency(amount);
- * ```
- */
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-}
 
 
 export class DatabaseService {
@@ -1215,3 +1010,5 @@ export class DatabaseService {
   }
 }
 
+export * from './models.ts'
+export * from './utils.ts'
