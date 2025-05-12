@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DatabaseService, Client, ScheduledActivity, Activity } from "src/db/database";
 import { CButton, CSpinner } from "@coreui/react-pro";
 import ScheduledActivitiesTable from "./ScheduledActivitiesTable";
+import { CreateActivity } from "./CreateActivity";
 import ExportActivitiesModal from "./ExportActivitiesModal";
 import { cilFile } from "@coreui/icons";
 import CIcon from "@coreui/icons-react";
