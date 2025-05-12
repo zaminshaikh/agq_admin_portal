@@ -21,6 +21,7 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['profit', 'deposit', 'withdrawal']);
+  const [selectedFunds, setSelectedFunds] = useState<string[]>(['AGQ', 'AK1']);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,10 +81,17 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
     { label: 'Withdrawal', value: 'withdrawal' , selected: true },
   ], []);
   
-  // Ensure all activity types are selected by default when the modal opens
+  // Fund options
+  const fundOptions = useMemo(() => [
+    { label: 'AGQ', value: 'AGQ', selected: true },
+    { label: 'AK1', value: 'AK1', selected: true },
+  ], []);
+  
+  // Ensure all activity types and funds are selected by default when the modal opens
   useEffect(() => {
     if (showModal) {
       setSelectedTypes(['profit', 'deposit', 'withdrawal']);
+      setSelectedFunds(['AGQ', 'AK1']);
     }
   }, [showModal]);
 
@@ -122,6 +130,13 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
       if (selectedTypes.length > 0) {
         filteredActivities = filteredActivities.filter(activity => 
           selectedTypes.includes(activity.type || '')
+        );
+      }
+      
+      // Filter by funds
+      if (selectedFunds.length > 0) {
+        filteredActivities = filteredActivities.filter(activity => 
+          selectedFunds.includes(activity.fund || '')
         );
       }
       
