@@ -1,11 +1,10 @@
-import { CButton, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
-import { act, useEffect, useState } from "react";
+import { CButton, CModal, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
+import { useEffect, useState } from "react";
 import React from "react";
-import { Activity, DatabaseService, Client, emptyActivity, emptyClient, ScheduledActivity, Assets, AssetDetails, getChangedAssets } from '../../db/database.ts'
+import { Activity, DatabaseService, Client, emptyActivity, ScheduledActivity, getChangedAssets } from '../../db/database.ts'
 import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 import { ValidateActivity } from "./ActivityInputModalBody.tsx";
 import { FormValidationErrorModal } from '../../components/ErrorModal';
-import Activities from './Activities';
 import CIcon from '@coreui/icons-react';
 import { cilCalendar, cilPlus, cilTrash } from '@coreui/icons';
 import { amortize } from "src/utils/utilities.ts";

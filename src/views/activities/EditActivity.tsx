@@ -1,11 +1,9 @@
-import React, { act, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
-import { DatabaseService, Activity, emptyActivity, Client, emptyClient, ScheduledActivity, Assets, AssetDetails, getChangedAssets } from 'src/db/database';
+import { DatabaseService, Activity, emptyActivity, Client, emptyClient, ScheduledActivity, getChangedAssets } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 import { amortize, applyAssetChanges } from 'src/utils/utilities';
-import { use } from 'i18next';
-import { set } from 'date-fns';
 
 interface EditActivityProps {
     showModal: boolean;
