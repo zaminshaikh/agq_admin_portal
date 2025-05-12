@@ -1,6 +1,6 @@
 import { CModal, CModalHeader, CModalTitle, CModalBody, CMultiSelect, CFormInput, CModalFooter, CButton, CInputGroup, CInputGroupText, CLoadingButton } from '@coreui/react-pro';
 import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Activity, Client, DatabaseService } from 'src/db/database';
 import { cilFile } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
@@ -20,6 +20,7 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
 }) => {
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(['profit', 'deposit', 'withdrawal']);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,9 +66,26 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
       }
     });
     
+    // Convert to array and remove duplicates
     const arr = [...titles];
-    return arr.map((title) => ({ label: title, value: title }));
+    return arr
+      .filter((value, index, self) => self.indexOf(value) === index) // ensure uniqueness
+      .map((title) => ({ label: title, value: title }));
   }, [selectedClients, clients]);
+  
+  // Activity type options
+  const activityTypeOptions = useMemo(() => [
+    { label: 'Profit', value: 'profit' , selected: true },
+    { label: 'Deposit', value: 'deposit', selected: true },
+    { label: 'Withdrawal', value: 'withdrawal' , selected: true },
+  ], []);
+  
+  // Ensure all activity types are selected by default when the modal opens
+  useEffect(() => {
+    if (showModal) {
+      setSelectedTypes(['profit', 'deposit', 'withdrawal']);
+    }
+  }, [showModal]);
 
   const handleExportCSV = () => {
     setIsLoading(true);
@@ -100,20 +118,48 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
         });
       }
       
-      // Convert to CSV
-      const headers = ["Client", "Type", "Time", "Recipient", "Amount", "Fund"];
-      const rows = filteredActivities.map(activity => [
-        activity.parentName || '',
-        activity.type || '',
-        activity.formattedTime || '',
-        activity.recipient || '',
-        activity.amount?.toString() || '',
-        activity.fund || ''
-      ]);
+      // Filter by activity types
+      if (selectedTypes.length > 0) {
+        filteredActivities = filteredActivities.filter(activity => 
+          selectedTypes.includes(activity.type || '')
+        );
+      }
+      
+      // Map activities to CSV rows
+      const headers = ["Client", "Type", "Time", "Recipient", "Amount", "Fund", "Notes", "Timestamp"];
+      const rows = filteredActivities.map(activity => {
+        // Get timestamp for sorting
+        const timestamp = activity.time instanceof Date 
+          ? activity.time.getTime() 
+          : new Date(activity.time).getTime();
+          
+        return [
+          activity.parentName || '',
+          activity.type || '',
+          activity.formattedTime || '',
+          activity.recipient || '',
+          activity.amount?.toString() || '',
+          activity.fund || '',
+          // Handle different types of notes (string, number, string array)
+          Array.isArray(activity.notes) 
+            ? activity.notes.join('; ').replace(/,/g, ';') 
+            : (activity.notes?.toString() || '').replace(/,/g, ';'),
+          timestamp.toString() // Add timestamp for sorting
+        ];
+      });
+      
+      // Sort rows by timestamp (newest first) within the CSV
+      rows.sort((a, b) => {
+        return parseInt(b[7]) - parseInt(a[7]);
+      });
+      
+      // Remove the timestamp column from the output
+      const visibleHeaders = headers.slice(0, -1);
+      const visibleRows = rows.map(row => row.slice(0, -1));
       
       const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.join(','))
+        visibleHeaders.join(','),
+        ...visibleRows.map(row => row.join(','))
       ].join('\n');
       
       // Create and download the CSV file
@@ -175,6 +221,23 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
               allowCreateOptions={false}
               onChange={(selected) => {
                 setSelectedAccounts(selected.map(option => option.value as string));
+              }}
+            />
+          </CInputGroup>
+
+          <CInputGroup className="mb-3 w-100">
+            <CInputGroupText>Activity Types</CInputGroupText>
+            <CMultiSelect
+              id="activityTypes"
+              className="flex-grow-1"
+              style={{ minWidth: 0 }}
+              options={activityTypeOptions}
+              placeholder="Select Activity Types"
+              selectAll={true}
+              multiple={true}
+              allowCreateOptions={false}
+              onChange={(selected) => {
+                setSelectedTypes(selected.map(option => option.value as string));
               }}
             />
           </CInputGroup>
