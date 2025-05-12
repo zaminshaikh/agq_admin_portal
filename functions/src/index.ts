@@ -14,6 +14,7 @@ import { handleActivity, onActivityWrite } from "./triggers/activityTriggers";
 import { onAssetUpdate } from "./triggers/assetTriggers";
 import { onConnectedUsersChange } from "./triggers/connectedUsersTriggers";
 import { onUserLinkStatusChange } from "./triggers/userLinkTriggers";
+import { handleStorageDocumentUpload } from "./triggers/documentTriggers";
 
 // ======= SCHEDULED =======
 import { scheduledYTDReset } from "./scheduled/scheduledReset";
@@ -26,8 +27,6 @@ import { unlinkUser } from "./callable/unlinkUser";
 import { calculateTotalYTD, calculateYTD } from "./callable/ytd";
 import { checkUIDExists } from "./callable/checkUIDExists";
 
-import * as functions from "firebase-functions";
-
 export {
   // ======= TRIGGERS =======
   handleActivity,
@@ -35,6 +34,7 @@ export {
   onAssetUpdate,
   onConnectedUsersChange,
   onUserLinkStatusChange,
+  handleStorageDocumentUpload,
 
   // ======= SCHEDULED =======
   scheduledYTDReset,
@@ -50,7 +50,3 @@ export {
   calculateYTD,
   checkUIDExists,
 }
-
-export const helloWorlddd = functions.https.onRequest((req: any, res: { send: (arg0: string) => void; }) => {
-  res.send("Hello from Firebase!");
-});
