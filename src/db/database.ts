@@ -879,6 +879,7 @@ export class DatabaseService {
               type: data.type,
               amount: data.amount || 0,
               parentDocId: client.cid,
+              isDividend: data.isDividend || false,
           });
       });
       
@@ -903,7 +904,7 @@ export class DatabaseService {
           // Update running balance based on activity type
           runningBalance = runningBalance + (activity.type == 'withdrawal'
               ? -1
-              : (activity.type == 'profit'
+              : (activity.type == 'profit' && !activity.isDividend
                   ? 0
                   : 1)) * amount;
           
@@ -922,15 +923,63 @@ export class DatabaseService {
           pageMargins: [40, 60, 40, 60],
           footer: (currentPage: number, pageCount: number) => {
               return {
-                  columns: [
-                      {
-                          text: `Page ${currentPage} of ${pageCount}`,
-                          alignment: 'center',
-                          margin: [0, 5, 0, 0],
-                      },
-                  ],
+                  image: agqWatermark,
+                  width: wmWidth,
+                  opacity: 0.1,
+                  absolutePosition: {
+                      x: (pageSize.width  - wmWidth)  / 2,
+                      y: (pageSize.height - wmHeight) / 2
+                  }
               };
           },
+          footer: (currentPage: number, pageCount: number) => ({
+            stack: [
+              // ─── split top line ───────────────────────────────────────────
+              {
+                canvas: [
+                  { type: 'line', x1: 0, y1: 0, x2: 270, y2: 0, lineWidth: 10, color: '#0a3464' },
+                  { type: 'line', x1: 345, y1: 0, x2: 700, y2: 0, lineWidth: 10, color: '#0a3464' },
+                ],
+                margin: [0, 10, 0, -20],  // was [0, 0, 0, 6]
+              },
+
+              // Centered AGQ logo
+              { image: agqFooterLogo, width: 60, alignment: 'center', margin: [0, -5, 0, 10] },
+
+              // Contact row
+              {
+                margin: [40, 0, 40, 4],        // align with page side‑margins
+                table: {
+                  widths: ['*', '*', '*', '*'],
+                  body: [
+                    // Row 1 – icons
+                    [
+                      { alignment: 'center', image: phoneIcon,    width: 10 },
+                      { alignment: 'center', image: emailIcon,    width: 10 },
+                      { alignment: 'center', image: webIcon,      width: 10 },
+                      { alignment: 'center', image: locationIcon, width: 10 }
+                    ],
+                    // Row 2 – text
+                    [
+                      { alignment: 'center', text: '973.610.4916', fontSize: 9, margin: [0, 2, 0, 0] },
+                      { alignment: 'center', text: 'management@agqconsulting.com', fontSize: 9, margin: [0, 2, 0, 0] },
+                      { alignment: 'center', text: 'www.agqconsulting.com', fontSize: 9, margin: [0, 2, 0, 0] },
+                      { alignment: 'center', text: '195 International Parkway\nSuite 103, Lake Mary, FL 32746', fontSize: 9, margin: [0, 2, 0, 0] }
+                    ]
+                  ]
+                },
+                layout: 'noBorders'
+              },
+
+              // Page number
+              {
+                text: `Page ${currentPage} of ${pageCount}`,
+                alignment: 'right',
+                margin: [0, 4, 40, 0],
+                fontSize: 9,
+              },
+            ],
+          }),
           content: [
               // Statement Header
               {
