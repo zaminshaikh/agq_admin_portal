@@ -10,6 +10,7 @@ import { Client, AssetDetails, Activity, ScheduledActivity, Assets, GraphPoint} 
 import * as pdfMakeModule from 'pdfmake/build/pdfmake';
 import * as pdfFontsModule from 'pdfmake/build/vfs_fonts';
 import { formatCurrency, formatPDFDate } from './utils.ts'
+import { agqTopLogo, agqWatermarkLogo } from './logos.ts'
 
 /**
  * DatabaseService
@@ -900,7 +901,7 @@ export class DatabaseService {
       const formattedActivities = filteredActivities.map(activity => {
           const activityDate = activity.time instanceof Timestamp ? activity.time.toDate() : activity.time;
           const amount = activity.amount || 0;
-          
+
           // Update running balance based on activity type
           runningBalance = runningBalance + (activity.type == 'withdrawal'
               ? -1
@@ -912,76 +913,74 @@ export class DatabaseService {
               date: activityDate ? formatPDFDate(activityDate) : 'N/A',
               type: activity.type || 'Transaction',
               amount: amount,
-              formattedCashflow: formatCurrency(amount),
+              formattedCashflow: (activity.type === 'withdrawal' ? '-' : '') + formatCurrency(amount),
               balance: runningBalance
           };
       });
+
+      // Find the last graph point before or at endDate with selectedAccount
+      const endingPointArray = graphPoints
+          .filter(point => {
+              const pointDate = point.time instanceof Timestamp ? point.time.toDate() : point.time;
+              return pointDate && 
+                    pointDate <= endDate && 
+                    point.account === selectedAccount;
+          })
+          .sort((a, b) => {
+              const dateA = a.time instanceof Timestamp ? a.time.toDate() : (a.time || new Date(0));
+              const dateB = b.time instanceof Timestamp ? b.time.toDate() : (b.time || new Date(0));
+              return dateB.getTime() - dateA.getTime(); // Sort descending to get most recent first
+          });
+      const endingBalance = endingPointArray.length > 0
+          ? endingPointArray[0].amount
+          : (formattedActivities.length > 0 ? formattedActivities[formattedActivities.length - 1].balance : runningBalance);
   
       // 3. Build the PDF document definition
       const docDefinition: any = {
           pageSize: 'LETTER',
-          pageMargins: [40, 60, 40, 60],
-          footer: (currentPage: number, pageCount: number) => {
-              return {
-                  image: agqWatermark,
-                  width: wmWidth,
-                  opacity: 0.1,
-                  absolutePosition: {
-                      x: (pageSize.width  - wmWidth)  / 2,
-                      y: (pageSize.height - wmHeight) / 2
-                  }
-              };
-          },
-          footer: (currentPage: number, pageCount: number) => ({
-            stack: [
-              // ─── split top line ───────────────────────────────────────────
-              {
-                canvas: [
-                  { type: 'line', x1: 0, y1: 0, x2: 270, y2: 0, lineWidth: 10, color: '#0a3464' },
-                  { type: 'line', x1: 345, y1: 0, x2: 700, y2: 0, lineWidth: 10, color: '#0a3464' },
-                ],
-                margin: [0, 10, 0, -20],  // was [0, 0, 0, 6]
-              },
+      pageMargins: [40, 60, 40, 60],
+      background: function (_currentPage: number, pageSize: any) {
+          /*
+            * Watermark: 110 % page width, rotated –45 °, and **truly centered**.
+            * Original logo aspect ratio ≈ 28 : 16 (width : height).
+            */
+          const wmWidth  = pageSize.width * 0.7;
+          const wmRatio  = 16 / 28;                 // height / width
+          const wmHeight = wmWidth * wmRatio;
 
-              // Centered AGQ logo
-              { image: agqFooterLogo, width: 60, alignment: 'center', margin: [0, -5, 0, 10] },
-
-              // Contact row
-              {
-                margin: [40, 0, 40, 4],        // align with page side‑margins
-                table: {
-                  widths: ['*', '*', '*', '*'],
-                  body: [
-                    // Row 1 – icons
-                    [
-                      { alignment: 'center', image: phoneIcon,    width: 10 },
-                      { alignment: 'center', image: emailIcon,    width: 10 },
-                      { alignment: 'center', image: webIcon,      width: 10 },
-                      { alignment: 'center', image: locationIcon, width: 10 }
-                    ],
-                    // Row 2 – text
-                    [
-                      { alignment: 'center', text: '973.610.4916', fontSize: 9, margin: [0, 2, 0, 0] },
-                      { alignment: 'center', text: 'management@agqconsulting.com', fontSize: 9, margin: [0, 2, 0, 0] },
-                      { alignment: 'center', text: 'www.agqconsulting.com', fontSize: 9, margin: [0, 2, 0, 0] },
-                      { alignment: 'center', text: '195 International Parkway\nSuite 103, Lake Mary, FL 32746', fontSize: 9, margin: [0, 2, 0, 0] }
-                    ]
-                  ]
-                },
-                layout: 'noBorders'
-              },
-
-              // Page number
-              {
-                text: `Page ${currentPage} of ${pageCount}`,
-                alignment: 'right',
-                margin: [0, 4, 40, 0],
-                fontSize: 9,
-              },
-            ],
-          }),
-          content: [
-              // Statement Header
+          return {
+              image: agqWatermarkLogo,
+              width: wmWidth,
+              opacity: 0.1,
+              absolutePosition: {
+                  x: (pageSize.width  - wmWidth)  / 2,
+                  y: (pageSize.height - wmHeight) / 2
+              }
+          };
+      },
+      footer: (_currentPage: number, _pageCount: number) => {
+        return {
+          columns: [
+            {
+              text: [
+                { text: '195 International Parkway, Suite 103, Lake Mary, FL 32746\n', style: 'footerText' },
+                { text: 'Contact: management@agqconsulting.com', style: 'footerText' }
+              ],
+              alignment: 'center',
+              margin: [0, 20, 0, 0], // Increased top margin for better spacing
+            },
+          ],
+        };
+      },
+      content: [
+        // AGQ Letterhead Logo
+        {
+          image: agqTopLogo,
+          width: 110,
+          alignment: 'center',
+          margin: [0, 0, 0, 20],
+        },
+        // Statement Header
               {
                   text: 'Account Statement',
                   style: 'header',
@@ -1028,7 +1027,7 @@ export class DatabaseService {
                       body: [
                           [
                               { text: 'Investment Account Total Balance:', style: 'labelText' }, 
-                              { text: formatCurrency(client.totalAssets || 0), style: 'valueText', alignment: 'right' }
+                              { text: formatCurrency(endingBalance), style: 'valueText', alignment: 'right' }
                           ],
                       ]
                   },
@@ -1093,7 +1092,7 @@ export class DatabaseService {
               header: {
                   fontSize: 22,
                   bold: true,
-                  color: '#2B41B8',
+                  color: '#0A3464',
               },
               subheader: {
                   fontSize: 16,
@@ -1120,6 +1119,15 @@ export class DatabaseService {
               summaryTable: {
                   margin: [0, 0, 0, 10],
               },
+              footerText: { // Style for the address and contact info
+                  fontSize: 10,
+                  color: '#0A3464', // Blue color like the header
+                  italics: true,
+              },
+              footerPageNum: { // Style for the page number
+                  fontSize: 10,
+                  color: '#0A3464',
+              }
           },
       };
   
