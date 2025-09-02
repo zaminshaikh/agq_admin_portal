@@ -37,7 +37,7 @@ export const unlinkUser = functions.https.onCall(async (data, context) => {
     }
 
     // Clear Firestore fields
-    await userRef.update({ appEmail: "", uid: "" });
+    await userRef.update({ appEmail: "", uid: "", linked: false});
     console.log(`Cleared Firestore fields for cid ${cid}`);
 
     // Delete from Firebase Auth
