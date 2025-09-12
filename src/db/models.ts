@@ -135,6 +135,10 @@ export interface ScheduledActivity {
     scheduledTime: Date;
     formattedTime?: string;
     usersCollectionID: string;
+    createdAt?: Date;
+    createdBy?: string;
+    updatedAt?: Date;
+    updatedBy?: string;
 }
 
 /**

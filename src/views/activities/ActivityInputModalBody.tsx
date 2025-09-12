@@ -433,49 +433,56 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             </CContainer>
 
             {/* Audit Trail Information */}
-            {(activityState.createdAt || activityState.updatedAt) && (
-                <CContainer className="py-3 px-3">
-                    <h6 className="text-muted mb-3">Audit Information</h6>
-                    <CRow>
-                        {activityState.createdAt && (
-                            <CCol md={6}>
-                                <CInputGroup className="mb-2">
-                                    <CInputGroupText>Created</CInputGroupText>
-                                    <CFormInput
-                                        value={formatDate(activityState.createdAt)}
-                                        disabled
-                                        readOnly
-                                    />
-                                </CInputGroup>
-                                {activityState.createdBy && (
+            {(() => {
+                // For scheduled activities, check the scheduledActivity object for audit trail
+                // For regular activities, check the activityState object
+                const auditSource = scheduledActivity || activityState;
+                const hasAuditTrail = auditSource.createdAt || auditSource.updatedAt;
+                
+                return hasAuditTrail && (
+                    <CContainer className="py-3 px-3">
+                        <h6 className="text-muted mb-3">Audit Information</h6>
+                        <CRow>
+                            {auditSource.createdAt && (
+                                <CCol md={6}>
                                     <CInputGroup className="mb-2">
-                                        <CInputGroupText>Created By</CInputGroupText>
-                                        <CFormInput value={activityState.createdBy} disabled readOnly />
+                                        <CInputGroupText>Created</CInputGroupText>
+                                        <CFormInput
+                                            value={formatDate(auditSource.createdAt)}
+                                            disabled
+                                            readOnly
+                                        />
                                     </CInputGroup>
-                                )}
-                            </CCol>
-                        )}
-                        {activityState.updatedAt && (
-                            <CCol md={6}>
-                                <CInputGroup className="mb-2">
-                                    <CInputGroupText>Last Updated</CInputGroupText>
-                                    <CFormInput
-                                        value={formatDate(activityState.updatedAt)}
-                                        disabled
-                                        readOnly
-                                    />
-                                </CInputGroup>
-                                {activityState.updatedBy && (
+                                    {auditSource.createdBy && (
+                                        <CInputGroup className="mb-2">
+                                            <CInputGroupText>Created By</CInputGroupText>
+                                            <CFormInput value={auditSource.createdBy} disabled readOnly />
+                                        </CInputGroup>
+                                    )}
+                                </CCol>
+                            )}
+                            {auditSource.updatedAt && (
+                                <CCol md={6}>
                                     <CInputGroup className="mb-2">
-                                        <CInputGroupText>Updated By</CInputGroupText>
-                                        <CFormInput value={activityState.updatedBy} disabled readOnly />
+                                        <CInputGroupText>Last Updated</CInputGroupText>
+                                        <CFormInput
+                                            value={formatDate(auditSource.updatedAt)}
+                                            disabled
+                                            readOnly
+                                        />
                                     </CInputGroup>
-                                )}
-                            </CCol>
-                        )}
-                    </CRow>
-                </CContainer>
-            )}
+                                    {auditSource.updatedBy && (
+                                        <CInputGroup className="mb-2">
+                                            <CInputGroupText>Updated By</CInputGroupText>
+                                            <CFormInput value={auditSource.updatedBy} disabled readOnly />
+                                        </CInputGroup>
+                                    )}
+                                </CCol>
+                            )}
+                        </CRow>
+                    </CContainer>
+                );
+            })()}
             
         </CModalBody>
     )
