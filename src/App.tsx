@@ -16,6 +16,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from 'firebase/auth'
 import ProtectedRoute from './ProtectedRoute'
+import { PermissionProvider } from './contexts/PermissionContext'
 // import 'firebase/auth'
 // import 'firebase/firestore'
 // import {useAuthState} from 'react-firebase-hooks/auth'
@@ -94,7 +95,7 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/404" element={<Page404 />} />
           <Route path="/500" element={<Page500 />} />
-          <Route path="*" element={<ProtectedRoute><DefaultLayout /></ProtectedRoute>}/>
+          <Route path="*" element={<PermissionProvider><ProtectedRoute><DefaultLayout /></ProtectedRoute></PermissionProvider>}/>
           {/* <Route path="*" element={<DefaultLayout />} /> */}
         </Routes>
       </Suspense>

@@ -17,6 +17,7 @@ import config from '../../../../config.json';
 // Import CoreUI Icons
 import CIcon from '@coreui/icons-react';
 import { cilTrash, cilSearch } from '@coreui/icons';
+import { usePermissions } from '../../../contexts/PermissionContext';
 
 interface Document {
   clientName: string;
@@ -27,6 +28,7 @@ interface Document {
 }
 
 const ClientStatementsPage = () => {
+  const { canWrite } = usePermissions();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
@@ -145,7 +147,7 @@ const ClientStatementsPage = () => {
     { key: 'clientName', label: 'Client', _style: { width: '20%' } },
     { key: 'documentTitle', label: 'Document Title', _style: { width: '40%' } },
     { key: 'dateAdded', label: 'Date Added', _style: { width: '15%' }, sorter: true },
-    { key: 'actions', label: 'Quick Actions', _style: { width: '10%' }, filter: false },
+    { key: 'actions', label: canWrite ? 'Quick Actions' : 'Actions', _style: { width: '10%' }, filter: false },
   ];
 
   const items = documents.map((document) => ({
@@ -176,14 +178,16 @@ const ClientStatementsPage = () => {
               >
                 <CIcon icon={cilSearch} size="lg" />
               </CButton>
-              <CButton
-                color="danger"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(item)}
-              >
-                <CIcon icon={cilTrash} size="lg" />
-              </CButton>
+              {canWrite && (
+                <CButton
+                  color="danger"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(item)}
+                >
+                  <CIcon icon={cilTrash} size="lg" />
+                </CButton>
+              )}
             </td>
           ),
         }}

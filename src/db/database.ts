@@ -11,6 +11,7 @@ import * as pdfMakeModule from 'pdfmake/build/pdfmake';
 import * as pdfFontsModule from 'pdfmake/build/vfs_fonts';
 import { formatCurrency, formatPDFDate } from './utils.ts'
 import { agqTopLogo, agqWatermarkLogo } from './logos.ts'
+import { Admin } from './adminService'
 
 /**
  * DatabaseService
@@ -52,6 +53,11 @@ export class DatabaseService {
   private cidArray: string[];
 
   /**
+   * Current admin user for audit trail
+   */
+  private currentAdmin: Admin | null = null;
+
+  /**
    * Initializes the DatabaseService with references to Firestore.
    * Sets up the clients collection reference and initializes the CID array.
    */
@@ -59,6 +65,31 @@ export class DatabaseService {
       this.clientsCollection = collection(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION);
       this.cidArray = [];
       this.initCIDArray();
+  }
+
+  /**
+   * Set the current admin for audit trail
+   */
+  setCurrentAdmin(admin: Admin | null) {
+      this.currentAdmin = admin;
+  }
+
+  /**
+   * Add audit trail fields to document data
+   */
+  private addAuditTrail(data: DocumentData, isUpdate: boolean = false): DocumentData {
+      const auditData: DocumentData = {
+          ...data,
+          updatedAt: new Date(),
+          updatedBy: this.currentAdmin?.name || 'Unknown Admin'
+      };
+
+      if (!isUpdate) {
+          auditData.createdAt = new Date();
+          auditData.createdBy = this.currentAdmin?.name || 'Unknown Admin';
+      }
+
+      return auditData;
   }
 
   /*=============================================================================
@@ -257,6 +288,10 @@ export class DatabaseService {
               agq: parseAssetsData(agqAssetsData), // Dynamically parse AGQ assets
               ak1: parseAssetsData(ak1AssetsData), // Dynamically parse AK1 assets
           },
+          updatedAt: data?.updatedAt?.toDate() ?? null,
+          updatedBy: data?.updatedBy ?? '',
+          createdAt: data?.createdAt?.toDate() ?? null,
+          createdBy: data?.createdBy ?? '', 
       };
 
       return client;
@@ -332,6 +367,9 @@ export class DatabaseService {
       newClientDocData = Object.fromEntries(
           Object.entries(newClientDocData).filter(([_, value]) => value !== undefined)
       );
+
+      // Add audit trail
+      newClientDocData = this.addAuditTrail(newClientDocData, true);
 
       // Create a reference with the CID.
       const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, client.cid);
@@ -435,10 +473,14 @@ export class DatabaseService {
       const ak1Ref = doc(assetCollectionRef, config.ASSETS_AK1_DOC_ID);
       const genRef = doc(assetCollectionRef, config.ASSETS_GENERAL_DOC_ID);
 
-      // Write the asset documents
+      // Write the asset documents without audit trail
       await setDoc(agqRef, agqDoc);
       await setDoc(ak1Ref, ak1Doc);
       await setDoc(genRef, general);
+
+      // Update the parent client document with audit trail for asset changes
+      const auditUpdate = this.addAuditTrail({}, true);
+      await setDoc(clientRef, auditUpdate, { merge: true });
   }
 
   /**
@@ -592,10 +634,13 @@ export class DatabaseService {
         Object.entries(activityWithParentId).filter(([_, v]) => v !== undefined)
       );
 
-      console.log('Filtered Activity:', filteredActivity);
+      // Add audit trail
+      const activityWithAudit = this.addAuditTrail(filteredActivity, false);
+
+      console.log('Filtered Activity:', activityWithAudit);
       
       // Add the activity to the subcollection
-      await addDoc(activityCollectionRef, filteredActivity);
+      await addDoc(activityCollectionRef, activityWithAudit);
   }
 
   /**
@@ -612,8 +657,10 @@ export class DatabaseService {
       const activityCollectionRef = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION);
       // Create a reference to the activity document
       const activityRef = doc(activityCollectionRef, activityDocId);
+      // Add audit trail
+      const activityWithAudit = this.addAuditTrail(activity, true);
       // Set the activity document with new data
-      await setDoc(activityRef, activity);
+      await setDoc(activityRef, activityWithAudit);
   }
 
   /**
@@ -744,8 +791,11 @@ export class DatabaseService {
           status: 'pending',
       };
 
+      // Add audit trail
+      const scheduledActivityWithAudit = this.addAuditTrail(scheduledActivity, false);
+
       // Add the scheduled activity to the 'scheduledActivities' collection
-      await addDoc(collection(this.db, 'scheduledActivities'), scheduledActivity);
+      await addDoc(collection(this.db, 'scheduledActivities'), scheduledActivityWithAudit);
   }
 
   /**
@@ -774,7 +824,11 @@ export class DatabaseService {
           usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION,
           status: 'pending',
       };
-      await setDoc(docRef, updatedScheduledActivity, { merge: true });
+
+      // Add audit trail
+      const updatedScheduledActivityWithAudit = this.addAuditTrail(updatedScheduledActivity, true);
+
+      await setDoc(docRef, updatedScheduledActivityWithAudit, { merge: true });
   }
   
   /**

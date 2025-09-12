@@ -65,6 +65,10 @@ export interface Client {
     activities?: Activity[];
     graphPoints?: GraphPoint[];
     assets: Assets;
+    createdAt?: Date;
+    createdBy?: string;
+    updatedAt?: Date;
+    updatedBy?: string;
 }
 
 /**
@@ -104,6 +108,10 @@ export interface Activity {
     principalPaid?: number;
     profitPaid?: number;
     parentName?: string;
+    createdAt?: Date;
+    createdBy?: string;
+    updatedAt?: Date;
+    updatedBy?: string;
 }
 
 /**

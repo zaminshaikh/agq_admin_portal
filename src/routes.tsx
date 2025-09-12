@@ -12,6 +12,7 @@ export type Route = {
 const Activities = React.lazy(() => import('./views/activities/Activities'))
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Statements = React.lazy(() => import('./views/statements/Statements'))
+const AdminManagement = React.lazy(() => import('./views/admin/AdminManagement'))
 
 const routes: Route[] = [
   { path: '/', exact: true, name: <Translation>{(t) => t('home')}</Translation> },
@@ -29,6 +30,11 @@ const routes: Route[] = [
     path: '/statements',
     name: <Translation>{(t) => t('statements')}</Translation>,
     element: Statements,
+  },
+  {
+    path: '/admin-management',
+    name: 'Admin Management',
+    element: AdminManagement,
   },
 ]
 

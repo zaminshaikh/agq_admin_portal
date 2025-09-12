@@ -18,7 +18,7 @@ import { logo } from './../assets/brand/logo'
 import { sygnet } from './../assets/brand/sygnet'
 
 // sidebar nav config
-import navigation from '../_nav'
+import { useConditionalNav } from './ConditionalNav'
 
 import type { State } from '../store'
 
@@ -26,6 +26,7 @@ const AppSidebar = () => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state: State) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state: State) => state.sidebarShow)
+  const navigation = useConditionalNav()
 
   return (
     <CSidebar

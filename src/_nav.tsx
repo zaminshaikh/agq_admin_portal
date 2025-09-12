@@ -61,6 +61,12 @@ const _nav: NavItem[] = [
     to: '/statements',
     icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   },
+  {
+    component: CNavItem,
+    name: "Admin Management",
+    to: '/admin-management',
+    icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
+  },
 ]
 
 export default _nav

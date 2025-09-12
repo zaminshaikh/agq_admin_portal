@@ -12,6 +12,7 @@ import { faExclamationTriangle, faTrash } from "@fortawesome/free-solid-svg-icon
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DeleteSelectedActivities from './DeleteSelectedActivities';
 import { toSentenceCase } from "src/utils/utilities";
+import { usePermissions } from "../../contexts/PermissionContext";
 
 interface TableProps {
     allActivities: Activity[];
@@ -25,6 +26,7 @@ interface TableProps {
 }
 
 const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities, filteredActivities, setFilteredActivities, clients, setClients, selectedClient, setSelectedClient}) => {
+    const { canWrite } = usePermissions();
     const [isHovered, setIsHovered] = useState(false);
 
     const [clientOptions, setClientOptions] = useState<Option[]>(
@@ -50,7 +52,7 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
     }, [selectedActivities]);
 
 
-    const columns = [
+    const baseColumns = [
         {
             key: 'type',
             label: 'Type',
@@ -77,6 +79,9 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
             key: 'fund',
             _style: { width: '10%' },
         },
+    ]
+
+    const writeColumns = [
         {
             key: 'edit',
             label: '',
@@ -92,6 +97,8 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
             sorter: false,
         },
     ]
+
+    const columns = canWrite ? [...baseColumns, ...writeColumns] : baseColumns
 
     const getBadge = (status: string) => {
         switch (status.toLowerCase()) {
@@ -128,7 +135,7 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                     selectedClient={selectedClient}
                 />
             )}
-            {showDeleteSelectedButton && <div
+            {showDeleteSelectedButton && canWrite && <div
                 style={{
                     position: 'fixed',
                     bottom: '20px',
@@ -217,10 +224,12 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                 itemsPerPage={20}
                 pagination
                 sorterValue={{ column: 'formattedTime', state: 'desc' }}
-                selectable
-                selected={selectedActivities} 
+                selectable={canWrite}
+                selected={canWrite ? selectedActivities : []} 
                 onSelectedItemsChange={(items) => {
-                    setSelectedActivities(items as Activity[]);
+                    if (canWrite) {
+                        setSelectedActivities(items as Activity[]);
+                    }
                 }}
                 scopedColumns={{
                     type: (item: Activity) => (
@@ -233,44 +242,46 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                             {formatCurrency(item.amount)}
                         </td>
                     ),
-                    edit: (item: Activity) => {
-                        return (
-                        <td className="py-2">
-                            <CButton
-                            color="warning"
-                            variant="outline"
-                            shape="square"
-                            size="sm"
-                            onClick={async () => {
-                                setCurrentActivity(item);
-                                setShowEditActivityModal(true);
-                            }}
-                            >
-                            Edit
-                            </CButton>
-                        </td>
-                        )
-                    },
-                    delete: (item: Activity) => {
-                        return (
-                        <td className="py-2">
-                            <CButton
-                            color="danger"
-                            variant="outline"
-                            shape="square"
-                            size="sm"
-                            onClick={() => {
-                                setCurrentActivity(item);
-                                setShowDeleteActivityModal(true);
-                            }}
-                            >
-                            Delete
-                            </CButton>
-                            {/* <CToaster className="p-3" placement="top-end" push={toast} ref={toaster} /> */}
-                        </td>
-                        )
-                    },
-            }} />
+                    ...(canWrite && {
+                        edit: (item: Activity) => {
+                            return (
+                            <td className="py-2">
+                                <CButton
+                                color="warning"
+                                variant="outline"
+                                shape="square"
+                                size="sm"
+                                onClick={async () => {
+                                    setCurrentActivity(item);
+                                    setShowEditActivityModal(true);
+                                }}
+                                >
+                                Edit
+                                </CButton>
+                            </td>
+                            )
+                        },
+                        delete: (item: Activity) => {
+                            return (
+                            <td className="py-2">
+                                <CButton
+                                color="danger"
+                                variant="outline"
+                                shape="square"
+                                size="sm"
+                                onClick={() => {
+                                    setCurrentActivity(item);
+                                    setShowDeleteActivityModal(true);
+                                }}
+                                >
+                                Delete
+                                </CButton>
+                                {/* <CToaster className="p-3" placement="top-end" push={toast} ref={toaster} /> */}
+                            </td>
+                            )
+                        },
+                    })
+                }} />
         </CContainer>
     );
 }

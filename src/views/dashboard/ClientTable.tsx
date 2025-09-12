@@ -9,8 +9,10 @@ import ImportClients from './ImportClients';
 import { UnlinkClient } from './UnlinkClient';
 import { cilCheckCircle, cilCloudDownload, cilXCircle } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
+import { usePermissions } from '../../contexts/PermissionContext';
 
 const ClientsTable = () => {
+    const { canWrite, admin, adminService } = usePermissions();
     const [showUnlinkClientModal, setShowUnlinkClientModal] = useState(false);
     const [showImportClientsModal, setShowImportClientsModal] = useState(false);
     const [showCreateNewClientModal, setShowCreateNewClientModal] = useState(false);
@@ -21,6 +23,14 @@ const ClientsTable = () => {
     const [currentClient, setCurrentClient] = useState<Client | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState<string[]>([])
+
+    // Initialize database service with current admin
+    useEffect(() => {
+        if (admin) {
+            const db = new DatabaseService();
+            db.setCurrentAdmin(admin);
+        }
+    }, [admin]);
 
     // useEffect hook to fetch clients when the component mounts
     useEffect(() => {
@@ -212,7 +222,14 @@ const ClientsTable = () => {
             {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients} setClients={setClients}/>} 
             <CRow className="mb-3">
               <CCol>
-                <CButton color='primary' onClick={() => setShowCreateNewClientModal(true)} className="w-100">+ Add Client</CButton>
+                <CButton 
+                    color='primary' 
+                    onClick={() => setShowCreateNewClientModal(true)} 
+                    className="w-100"
+                    disabled={!canWrite}
+                >
+                    + Add Client
+                </CButton>
               </CCol>
               <CCol>
                 <CButton color='success' onClick={exportToCSV} className="w-100">
@@ -272,7 +289,12 @@ const ClientsTable = () => {
                         <CCardBody className="p-3">
                             <CRow>
                                 <CCol className="text-center">
-                                    <CButton size="sm" color="danger" className="ml-1" variant="outline" 
+                                    <CButton 
+                                        size="sm" 
+                                        color="danger" 
+                                        className="ml-1" 
+                                        variant="outline"
+                                        disabled={!canWrite}
                                         onClick={() => {
                                             setShowDeleteClientModal(true);
                                             setCurrentClient(clients.find(client => client.cid === item.cid))
@@ -281,11 +303,16 @@ const ClientsTable = () => {
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
-                                    <CButton size="sm" color="primary" className="ml-1" variant="outline"
-                                    onClick={() => {
-                                        setShowUnlinkClientModal(true);
-                                        setCurrentClient(clients.find(client => client.cid === item.cid))
-                                    }}>
+                                    <CButton 
+                                        size="sm" 
+                                        color="primary" 
+                                        className="ml-1" 
+                                        variant="outline"
+                                        disabled={!canWrite}
+                                        onClick={() => {
+                                            setShowUnlinkClientModal(true);
+                                            setCurrentClient(clients.find(client => client.cid === item.cid))
+                                        }}>
                                         Unlink Client 
                                     </CButton>
                                 </CCol>
@@ -299,11 +326,16 @@ const ClientsTable = () => {
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
-                                    <CButton size="sm" color="warning" className="ml-1" variant="outline"
-                                    onClick={() => {
-                                        setShowEditClientModal(true);
-                                        setCurrentClient(clients.find(client => client.cid === item.cid))
-                                    }}>
+                                    <CButton 
+                                        size="sm" 
+                                        color="warning" 
+                                        className="ml-1" 
+                                        variant="outline"
+                                        disabled={!canWrite}
+                                        onClick={() => {
+                                            setShowEditClientModal(true);
+                                            setCurrentClient(clients.find(client => client.cid === item.cid))
+                                        }}>
                                         Edit Client 
                                     </CButton>
                                 </CCol>

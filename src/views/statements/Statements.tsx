@@ -9,8 +9,10 @@ import GenerateStatementModal from './components/GenerateStatementModal';
 import { DatabaseService } from 'src/db/database';
 import { cilFile } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
+import { usePermissions } from '../../contexts/PermissionContext';
 
 const Statements: React.FC = () => {
+  const { canWrite } = usePermissions();
   const [clients, setClients] = useState<any[]>([]);
   const [clientOptions, setClientOptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,13 +53,21 @@ const Statements: React.FC = () => {
 
       <CRow className="mb-3 mx-1">
         <CCol>
-          <CButton color='primary' onClick={() => setIsAddModalVisible(true)} className="w-100">+ Add Statement</CButton>
+          <CButton 
+            color='primary' 
+            onClick={() => setIsAddModalVisible(true)} 
+            className="w-100"
+            disabled={!canWrite}
+          >
+            + Add Statement
+          </CButton>
         </CCol>
         <CCol>
           <CButton
             color="info"
             onClick={() => setShowGenerateStatementModal(true)}
             className="w-100 d-flex align-items-center justify-content-center"
+            disabled={!canWrite}
           >
             <CIcon icon={cilFile} className="me-2" />
             Generate Statement

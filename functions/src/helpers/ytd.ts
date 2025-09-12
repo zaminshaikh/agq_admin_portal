@@ -118,6 +118,13 @@ export async function updateYTD(cid: string, usersCollectionID: string): Promise
 
     await userGeneralAssetRef.update({ ytd, totalYTD });
 
+    // Update parent client document with audit trail
+    const userDocRef = admin.firestore().collection(usersCollectionID).doc(cid);
+    await userDocRef.update({ 
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: "System" 
+    });
+
     // 3. Find all parent users (those who have 'cid' in their connectedUsers array)
     const usersCollectionRef = admin.firestore().collection(usersCollectionID);
     const parentUsersSnapshot = await usersCollectionRef
@@ -137,6 +144,13 @@ export async function updateYTD(cid: string, usersCollectionID: string): Promise
         .doc(config.ASSETS_GENERAL_DOC_ID);
 
       await parentUserGeneralAssetRef.update({ totalYTD: parentUserTotalYTD });
+
+      // Update parent client document with audit trail
+      const parentUserDocRef = admin.firestore().collection(usersCollectionID).doc(parentUserCID);
+      await parentUserDocRef.update({ 
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: "System" 
+      });
     });
 
     await Promise.all(updatePromises);

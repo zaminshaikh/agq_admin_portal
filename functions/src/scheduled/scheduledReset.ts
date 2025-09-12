@@ -43,6 +43,14 @@ export const scheduledYTDReset = functions.pubsub
         batch.update(assetsGeneralRef, { ytd: 0, totalYTD: 0 });
         operationsCount++;
 
+        // Update parent client document with audit trail
+        const userDocRef = db.collection(userCollection).doc(userId);
+        batch.update(userDocRef, { 
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: "System" 
+        });
+        operationsCount++;
+
         // If batch hits limit, commit and start new
         if (operationsCount === maxBatchSize) {
           await batch.commit();

@@ -7,6 +7,22 @@ import { Timestamp } from 'firebase/firestore';
 import { applyAssetChanges } from "src/utils/utilities";
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 
+// Helper function to safely format dates from either Date objects or Firestore Timestamps
+const formatDate = (date: Date | Timestamp | undefined | null): string => {
+    if (!date) return '';
+    
+    let jsDate: Date;
+    if (date instanceof Timestamp) {
+        jsDate = date.toDate();
+    } else if (date instanceof Date) {
+        jsDate = date;
+    } else {
+        return '';
+    }
+    
+    return `${jsDate.toLocaleDateString()} ${jsDate.toLocaleTimeString()}`;
+};
+
 interface ActivityInputProps {
     activityState: Activity,
     setActivityState: (clientState: Activity) => void,
@@ -415,6 +431,51 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     </CCol>
                 </CRow>
             </CContainer>
+
+            {/* Audit Trail Information */}
+            {(activityState.createdAt || activityState.updatedAt) && (
+                <CContainer className="py-3 px-3">
+                    <h6 className="text-muted mb-3">Audit Information</h6>
+                    <CRow>
+                        {activityState.createdAt && (
+                            <CCol md={6}>
+                                <CInputGroup className="mb-2">
+                                    <CInputGroupText>Created</CInputGroupText>
+                                    <CFormInput
+                                        value={formatDate(activityState.createdAt)}
+                                        disabled
+                                        readOnly
+                                    />
+                                </CInputGroup>
+                                {activityState.createdBy && (
+                                    <CInputGroup className="mb-2">
+                                        <CInputGroupText>Created By</CInputGroupText>
+                                        <CFormInput value={activityState.createdBy} disabled readOnly />
+                                    </CInputGroup>
+                                )}
+                            </CCol>
+                        )}
+                        {activityState.updatedAt && (
+                            <CCol md={6}>
+                                <CInputGroup className="mb-2">
+                                    <CInputGroupText>Last Updated</CInputGroupText>
+                                    <CFormInput
+                                        value={formatDate(activityState.updatedAt)}
+                                        disabled
+                                        readOnly
+                                    />
+                                </CInputGroup>
+                                {activityState.updatedBy && (
+                                    <CInputGroup className="mb-2">
+                                        <CInputGroupText>Updated By</CInputGroupText>
+                                        <CFormInput value={activityState.updatedBy} disabled readOnly />
+                                    </CInputGroup>
+                                )}
+                            </CCol>
+                        )}
+                    </CRow>
+                </CContainer>
+            )}
             
         </CModalBody>
     )
