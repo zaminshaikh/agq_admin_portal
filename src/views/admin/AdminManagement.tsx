@@ -26,9 +26,11 @@ import {
   CSpinner,
 } from '@coreui/react-pro'
 import { useCurrentAdmin, Admin } from '../../db/adminService'
+import { usePermissions } from '../../contexts/PermissionContext'
 
 const AdminManagement: React.FC = () => {
   const { admin: currentAdmin, adminService } = useCurrentAdmin()
+  const { isAdmin, loading: permissionLoading } = usePermissions()
   const [admins, setAdmins] = useState<Admin[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -149,8 +151,18 @@ const AdminManagement: React.FC = () => {
     )
   }
 
+  // Show loading spinner while permissions are being checked
+  if (permissionLoading) {
+    return (
+      <div className="text-center mt-5">
+        <CSpinner color="primary" />
+        <p className="mt-3 text-muted">Loading admin panel...</p>
+      </div>
+    )
+  }
+
   // Check if current user has admin permissions
-  if (!currentAdmin || !adminService.hasPermission(currentAdmin, 'admin')) {
+  if (!isAdmin) {
     return (
       <CRow>
         <CCol xs={12}>

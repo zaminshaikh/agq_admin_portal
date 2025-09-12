@@ -49,12 +49,12 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({ children
     )
   } catch (error) {
     console.error('Error in PermissionProvider:', error)
-    // Provide fallback context with default values
+    // Provide fallback context with loading state to prevent flash
     const fallbackAdminService = new AdminService()
     return (
       <PermissionContext.Provider value={{
         admin: null,
-        loading: false,
+        loading: true, // Keep loading true to prevent access denied flash
         hasPermission: () => false,
         canWrite: false,
         canRead: false,

@@ -7,11 +7,11 @@ import {
 } from '@coreui/icons'
 import { CNavItem } from '@coreui/react-pro'
 import { Translation } from 'react-i18next'
-import { useCurrentAdmin } from '../db/adminService'
+import { usePermissions } from '../contexts/PermissionContext'
 import { NavItem } from '../_nav'
 
 export const useConditionalNav = (): NavItem[] => {
-  const { admin, adminService } = useCurrentAdmin()
+  const { isAdmin } = usePermissions()
 
   const baseNav: NavItem[] = [
     {
@@ -39,7 +39,7 @@ export const useConditionalNav = (): NavItem[] => {
   ]
 
   // Add Admin Management tab only for users with admin permissions
-  if (admin && adminService.hasPermission(admin, 'admin')) {
+  if (isAdmin) {
     baseNav.push({
       component: CNavItem,
       name: "Admin Management",

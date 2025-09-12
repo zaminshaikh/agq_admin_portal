@@ -13,9 +13,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
 
     if (loading || adminLoading) {
-        return (<div className="text-center">
-            <CSpinner color="primary"/>
-        </div>);
+        return (
+            <div className="text-center mt-5">
+                <CSpinner color="primary" />
+                <p className="mt-3 text-muted">Loading...</p>
+            </div>
+        );
     }
 
     if (error) {
