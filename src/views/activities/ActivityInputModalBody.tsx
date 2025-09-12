@@ -5,6 +5,7 @@ import { Activity, AssetDetails, Client, DatabaseService, roundToNearestHour, Sc
 import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { Timestamp } from 'firebase/firestore';
 import { applyAssetChanges } from "src/utils/utilities";
+import { usePermissions } from "../../contexts/PermissionContext";
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
 
 // Helper function to safely format dates from either Date objects or Firestore Timestamps
@@ -76,8 +77,15 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     initialClientState,
     setInitialClientState
 }) => {
-    
+    const { admin } = usePermissions();
     const db = new DatabaseService();
+    
+    // Initialize database service with current admin
+    useEffect(() => {
+        if (admin) {
+            db.setCurrentAdmin(admin);
+        }
+    }, [admin, db]);
 
     // Convert and round the date to the nearest hour
     const initialDate = activityState.time instanceof Timestamp

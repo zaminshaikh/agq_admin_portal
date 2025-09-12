@@ -37,6 +37,9 @@ const Activities = () => {
     useEffect(() => {
       const fetchActivities = async () => {
           const db = new DatabaseService();
+          if (admin) {
+              db.setCurrentAdmin(admin);
+          }
           const activities = await db.getActivities();
           const newScheduledActivities = await db.getScheduledActivities();
 
@@ -58,7 +61,7 @@ const Activities = () => {
           setIsLoading(false);
       };
       fetchActivities();
-    }, []);
+    }, [admin]);
 
 
     if (isLoading) {

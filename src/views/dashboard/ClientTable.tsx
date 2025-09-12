@@ -37,6 +37,9 @@ const ClientsTable = () => {
         const fetchClients = async () => {
             // Create an instance of the DatabaseService
             const db = new DatabaseService();
+            if (admin) {
+                db.setCurrentAdmin(admin);
+            }
             
             // Fetch clients from the database
             let clients = await db.getClients();
@@ -51,7 +54,7 @@ const ClientsTable = () => {
         
         // Call the fetchClients function
         fetchClients();
-    }, []); // Empty dependency array ensures this runs only once when the component mounts
+    }, [admin]); // Re-run when admin changes to ensure proper audit trail
 
     // If data is still loading, display a spinner
     if (isLoading) {
