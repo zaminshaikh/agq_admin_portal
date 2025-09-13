@@ -94,8 +94,8 @@ const AdminSignup: React.FC = () => {
   if (success) {
     return (
       <CContainer className="d-flex justify-content-center align-items-center min-vh-100">
-        <CRow>
-          <CCol md={8}>
+        <CRow className="w-100 justify-content-center">
+          <CCol xs={12} sm={10} md={8} lg={8} xl={6}>
             <CCard>
               <CCardHeader className="text-center">
                 <h2>Account Created Successfully</h2>
@@ -132,8 +132,8 @@ const AdminSignup: React.FC = () => {
 
   return (
     <CContainer className="d-flex justify-content-center align-items-center min-vh-100">
-      <CRow>
-        <CCol md={6}>
+      <CRow className="w-100 justify-content-center">
+        <CCol xs={12} sm={10} md={8} lg={8} xl={6}>
           <CCard>
             <CCardHeader className="text-center">
               <h3>Create Admin Account</h3>
