@@ -9,14 +9,25 @@ import { usePermissions } from './contexts/PermissionContext';
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     // auth.signOut();
     const [user, loading, error] = useAuthState(auth);
-    const { admin, loading: adminLoading } = usePermissions();
+    const { admin, permissions, loading: adminLoading } = usePermissions();
     const location = useLocation();
     const [showAccessDenied, setShowAccessDenied] = useState(false);
 
     // Timer for showing access denied after 3 seconds
     useEffect(() => {
-        if (!loading && !adminLoading && user && (!admin || !admin.permissions)) {
+        console.log('🔍 ProtectedRoute Debug:', {
+            loading,
+            adminLoading,
+            user: user ? { uid: user.uid, email: user.email } : null,
+            admin,
+            permissions,
+            showAccessDenied
+        });
+
+        if (!loading && !adminLoading && user && (!admin || permissions === 'none')) {
+            console.log('⏰ Starting 3-second timer for access denied');
             const timer = setTimeout(() => {
+                console.log('🚫 Showing access denied after timeout');
                 setShowAccessDenied(true);
             }, 3000);
 
@@ -24,7 +35,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         } else {
             setShowAccessDenied(false);
         }
-    }, [loading, adminLoading, user, admin]);
+    }, [loading, adminLoading, user, admin, permissions]);
 
     if (loading || adminLoading) {
         return (
@@ -45,7 +56,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
 
     // Check if user is an admin with permissions - show spinner for 3 seconds before access denied
-    if (!admin || !admin.permissions) {
+    if (!admin || permissions === 'none') {
         if (!showAccessDenied) {
             return (
                 <div className="text-center mt-5">

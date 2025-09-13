@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   CButton,
   CCard,
@@ -110,6 +110,15 @@ const handleLogin = async (e: React.FormEvent) => {
                         </CCol>
                     </CRow>
                   </CForm>
+                  
+                  <div className="text-center mt-3">
+                    <small className="text-muted">
+                      Need admin access?{' '}
+                      <Link to="/admin-signup" className="text-decoration-none">
+                        Create Admin Account
+                      </Link>
+                    </small>
+                  </div>
                 </CCardBody>
               </CCard>
               {/* <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>

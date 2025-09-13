@@ -1,10 +1,11 @@
 import React, { createContext, useContext, ReactNode } from 'react'
-import { useCurrentAdmin, Admin, AdminService } from '../db/adminService'
+import { useCurrentAdmin, Admin, AdminService, AdminPermission } from '../db/adminService'
 
 interface PermissionContextType {
   admin: Admin | null
+  permissions: AdminPermission
   loading: boolean
-  hasPermission: (permission: 'read' | 'write' | 'admin') => boolean
+  hasPermission: (permission: AdminPermission) => boolean
   canWrite: boolean
   canRead: boolean
   isAdmin: boolean
@@ -19,11 +20,11 @@ interface PermissionProviderProps {
 
 export const PermissionProvider: React.FC<PermissionProviderProps> = ({ children }) => {
   try {
-    const { admin, loading, adminService } = useCurrentAdmin()
+    const { admin, permissions, loading, adminService } = useCurrentAdmin()
 
-    const hasPermission = (permission: 'read' | 'write' | 'admin'): boolean => {
+    const hasPermission = (permission: AdminPermission): boolean => {
       try {
-        return adminService.hasPermission(admin, permission)
+        return adminService.hasPermission(permissions, permission)
       } catch (error) {
         console.error('Error checking permissions:', error)
         return false
@@ -37,6 +38,7 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({ children
     return (
       <PermissionContext.Provider value={{
         admin,
+        permissions,
         loading,
         hasPermission,
         canWrite,
@@ -54,6 +56,7 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({ children
     return (
       <PermissionContext.Provider value={{
         admin: null,
+        permissions: 'none',
         loading: true, // Keep loading true to prevent access denied flash
         hasPermission: () => false,
         canWrite: false,

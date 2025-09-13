@@ -25,20 +25,18 @@ import {
   CBadge,
   CSpinner,
 } from '@coreui/react-pro'
-import { useCurrentAdmin, Admin } from '../../db/adminService'
+import { useCurrentAdmin, Admin, AdminPermission } from '../../db/adminService'
 import { usePermissions } from '../../contexts/PermissionContext'
 
 const AdminManagement: React.FC = () => {
   const { admin: currentAdmin, adminService } = useCurrentAdmin()
   const { isAdmin, loading: permissionLoading } = usePermissions()
-  const [admins, setAdmins] = useState<Admin[]>([])
+  const [admins, setAdmins] = useState<(Admin & { permissions: AdminPermission })[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null)
+  const [editingAdmin, setEditingAdmin] = useState<(Admin & { permissions: AdminPermission }) | null>(null)
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    permissions: 'read' as ('read' | 'write' | 'admin')
+    permissions: 'none' as AdminPermission
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -61,25 +59,16 @@ const AdminManagement: React.FC = () => {
     }
   }
 
-  const handleCreateAdmin = () => {
-    setEditingAdmin(null)
-    setFormData({ name: '', email: '', permissions: 'read' })
-    setShowModal(true)
-    setError('')
-    setSuccess('')
-  }
-
-  const handleEditAdmin = (admin: Admin) => {
+  const handleEditAdmin = (admin: Admin & { permissions: AdminPermission }) => {
     setEditingAdmin(admin)
     setFormData({
-      name: admin.name,
-      email: admin.email,
       permissions: admin.permissions
     })
     setShowModal(true)
     setError('')
     setSuccess('')
   }
+
 
   const handleSaveAdmin = async () => {
     try {
@@ -88,25 +77,17 @@ const AdminManagement: React.FC = () => {
         return
       }
 
-      if (!formData.name || !formData.email || !formData.permissions) {
-        setError('Please fill in all fields')
+      if (!formData.permissions) {
+        setError('Please select permissions')
         return
       }
 
       if (editingAdmin) {
-        await adminService.updateAdmin(editingAdmin.id, {
-          name: formData.name,
-          email: formData.email,
-          permissions: formData.permissions
-        }, currentAdmin)
-        setSuccess('Admin updated successfully')
+        await adminService.updateAdminPermissions(editingAdmin.id, formData.permissions)
+        setSuccess('Admin permissions updated successfully')
       } else {
-        await adminService.createAdmin({
-          name: formData.name,
-          email: formData.email,
-          permissions: formData.permissions
-        }, currentAdmin)
-        setSuccess('Admin created successfully')
+        setError('Creating new admins is done through the signup page')
+        return
       }
 
       setShowModal(false)
@@ -141,9 +122,19 @@ const AdminManagement: React.FC = () => {
   }
 
   const getPermissionBadges = (permissions: string) => {
+    const getColor = (perm: string) => {
+      switch (perm) {
+        case 'admin': return 'danger'
+        case 'write': return 'warning'
+        case 'read': return 'info'
+        case 'none': return 'secondary'
+        default: return 'secondary'
+      }
+    }
+
     return (
       <CBadge
-        color={permissions === 'admin' ? 'danger' : permissions === 'write' ? 'warning' : 'info'}
+        color={getColor(permissions)}
         className="me-1"
       >
         {permissions.charAt(0).toUpperCase() + permissions.slice(1)}
@@ -182,9 +173,11 @@ const AdminManagement: React.FC = () => {
           <CCardHeader>
             <div className="d-flex justify-content-between align-items-center">
               <h4>Admin Management</h4>
-              <CButton color="primary" onClick={handleCreateAdmin}>
-                Add New Admin
-              </CButton>
+              <div>
+                <small className="text-muted">
+                  New admins can create accounts at <strong>/admin-signup</strong>
+                </small>
+              </div>
             </div>
           </CCardHeader>
           <CCardBody>
@@ -252,32 +245,27 @@ const AdminManagement: React.FC = () => {
         </CCard>
       </CCol>
 
-      {/* Create/Edit Admin Modal */}
+      {/* Edit Admin Permissions Modal */}
       <CModal visible={showModal} onClose={() => setShowModal(false)} size="lg">
         <CModalHeader>
-          <CModalTitle>{editingAdmin ? 'Edit Admin' : 'Create New Admin'}</CModalTitle>
+          <CModalTitle>Edit Admin Permissions</CModalTitle>
         </CModalHeader>
         <CModalBody>
           {error && <CAlert color="danger">{error}</CAlert>}
           
-          <CInputGroup className="mb-3">
-            <CInputGroupText>Name</CInputGroupText>
-            <CFormInput
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter admin name"
-            />
-          </CInputGroup>
+          {editingAdmin && (
+            <>
+              <CInputGroup className="mb-3">
+                <CInputGroupText>Name</CInputGroupText>
+                <CFormInput value={editingAdmin.name} disabled />
+              </CInputGroup>
 
-          <CInputGroup className="mb-3">
-            <CInputGroupText>Email</CInputGroupText>
-            <CFormInput
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="Enter admin email"
-            />
-          </CInputGroup>
+              <CInputGroup className="mb-3">
+                <CInputGroupText>Email</CInputGroupText>
+                <CFormInput value={editingAdmin.email} disabled />
+              </CInputGroup>
+            </>
+          )}
 
           <CInputGroup className="mb-3">
             <CInputGroupText>Permissions</CInputGroupText>
@@ -288,6 +276,7 @@ const AdminManagement: React.FC = () => {
                 permissions: e.target.value as ('read' | 'write' | 'admin') 
               })}
             >
+              <option value="none">None (No Access)</option>
               <option value="read">Read</option>
               <option value="write">Write</option>
               <option value="admin">Admin</option>
@@ -297,6 +286,7 @@ const AdminManagement: React.FC = () => {
           <div className="mt-3">
             <small className="text-muted">
               <strong>Permissions:</strong><br />
+              • <strong>None:</strong> No access to the portal<br />
               • <strong>Read:</strong> Can view data but cannot make changes<br />
               • <strong>Write:</strong> Can create and edit data (includes read permissions)<br />
               • <strong>Admin:</strong> Full access including user management (includes all permissions)
@@ -308,7 +298,7 @@ const AdminManagement: React.FC = () => {
             Cancel
           </CButton>
           <CButton color="primary" onClick={handleSaveAdmin}>
-            {editingAdmin ? 'Update' : 'Create'} Admin
+            Update Permissions
           </CButton>
         </CModalFooter>
       </CModal>

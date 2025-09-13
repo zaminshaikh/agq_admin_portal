@@ -26,7 +26,7 @@ interface TableProps {
 }
 
 const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities, filteredActivities, setFilteredActivities, clients, setClients, selectedClient, setSelectedClient}) => {
-    const { canWrite } = usePermissions();
+    const { canWrite, canRead } = usePermissions();
     const [isHovered, setIsHovered] = useState(false);
 
     const [clientOptions, setClientOptions] = useState<Option[]>(
@@ -98,7 +98,8 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
         },
     ]
 
-    const columns = canWrite ? [...baseColumns, ...writeColumns] : baseColumns
+    // Show write columns for all authenticated users, but disable functionality for read-only users
+    const columns = (canRead || canWrite) ? [...baseColumns, ...writeColumns] : baseColumns
 
     const getBadge = (status: string) => {
         switch (status.toLowerCase()) {
@@ -135,7 +136,7 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                     selectedClient={selectedClient}
                 />
             )}
-            {showDeleteSelectedButton && canWrite && <div
+            {showDeleteSelectedButton && (canRead || canWrite) && <div
                 style={{
                     position: 'fixed',
                     bottom: '20px',
@@ -159,7 +160,8 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                     className={isHovered ? 'text-light' : 'text-danger'}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
-                    onClick={() => setShowDeleteSelectedModal(true)}
+                    onClick={() => canWrite ? setShowDeleteSelectedModal(true) : null}
+                    disabled={!canWrite}
                 >
                     <CIcon icon={cilTrash} className="me-2" /> Delete {selectedActivities.length} {selectedActivities.length > 1 ? 'Activities' : 'Activity'}
                 </CButton>
@@ -224,10 +226,13 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                 itemsPerPage={20}
                 pagination
                 sorterValue={{ column: 'formattedTime', state: 'desc' }}
-                selectable={canWrite}
-                selected={canWrite ? selectedActivities : []} 
+                selectable={canRead || canWrite}
+                selected={(canRead || canWrite) ? selectedActivities : []} 
                 onSelectedItemsChange={(items) => {
                     if (canWrite) {
+                        setSelectedActivities(items as Activity[]);
+                    } else if (canRead) {
+                        // Allow selection for read-only users but don't enable bulk actions
                         setSelectedActivities(items as Activity[]);
                     }
                 }}
@@ -242,7 +247,7 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                             {formatCurrency(item.amount)}
                         </td>
                     ),
-                    ...(canWrite && {
+                    ...((canRead || canWrite) && {
                         edit: (item: Activity) => {
                             return (
                             <td className="py-2">
@@ -251,10 +256,14 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                                 variant="outline"
                                 shape="square"
                                 size="sm"
+                                disabled={!canWrite}
                                 onClick={async () => {
-                                    setCurrentActivity(item);
-                                    setShowEditActivityModal(true);
+                                    if (canWrite) {
+                                        setCurrentActivity(item);
+                                        setShowEditActivityModal(true);
+                                    }
                                 }}
+                                title={!canWrite ? "Read-only access - editing disabled" : "Edit activity"}
                                 >
                                 Edit
                                 </CButton>
@@ -269,10 +278,14 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                                 variant="outline"
                                 shape="square"
                                 size="sm"
+                                disabled={!canWrite}
                                 onClick={() => {
-                                    setCurrentActivity(item);
-                                    setShowDeleteActivityModal(true);
+                                    if (canWrite) {
+                                        setCurrentActivity(item);
+                                        setShowDeleteActivityModal(true);
+                                    }
                                 }}
+                                title={!canWrite ? "Read-only access - deletion disabled" : "Delete activity"}
                                 >
                                 Delete
                                 </CButton>
