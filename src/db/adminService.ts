@@ -111,8 +111,8 @@ export class AdminService {
         name: admin.name,
         email: admin.email,
         permissions: admin.permissions as AdminPermission,
-        createdAt: admin.createdAt ? (admin.createdAt.toDate ? admin.createdAt.toDate() : new Date(admin.createdAt)) : new Date(),
-        updatedAt: admin.updatedAt ? (admin.updatedAt.toDate ? admin.updatedAt.toDate() : new Date(admin.updatedAt)) : new Date(),
+        createdAt: admin.createdAt ? new Date(admin.createdAt) : new Date(),
+        updatedAt: admin.updatedAt ? new Date(admin.updatedAt) : new Date(),
         updatedBy: admin.updatedBy || ''
       }))
     } catch (error) {

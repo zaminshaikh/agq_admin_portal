@@ -209,7 +209,7 @@ const AdminManagement: React.FC = () => {
                       <CTableDataCell>
                         {admin.createdAt?.toLocaleDateString()}
                         <br />
-                        <small className="text-muted">by {admin.updatedBy}</small>
+                        <small className="text-muted">by System</small>
                       </CTableDataCell>
                       <CTableDataCell>
                         {admin.updatedAt?.toLocaleDateString()}

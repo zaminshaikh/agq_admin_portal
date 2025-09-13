@@ -33,13 +33,17 @@ export const getAllAdmins = functions.https.onCall(
           permissions = 'none';
         }
 
+        // Convert Firestore Timestamps to JavaScript Date objects
+        const createdAt = adminData.createdAt?.toDate ? adminData.createdAt.toDate() : (adminData.createdAt ? new Date(adminData.createdAt) : null);
+        const updatedAt = adminData.updatedAt?.toDate ? adminData.updatedAt.toDate() : (adminData.updatedAt ? new Date(adminData.updatedAt) : null);
+
         admins.push({
           id: doc.id,
           name: adminData.name,
           email: adminData.email,
           permissions,
-          createdAt: adminData.createdAt,
-          updatedAt: adminData.updatedAt,
+          createdAt: createdAt?.toISOString() || null,
+          updatedAt: updatedAt?.toISOString() || null,
           updatedBy: adminData.updatedBy
         });
       }
