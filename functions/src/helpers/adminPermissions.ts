@@ -99,3 +99,25 @@ export function hasPermission(
 export function isValidPermission(permission: string): permission is AdminPermission {
   return ['none', 'read', 'write', 'admin'].includes(permission);
 }
+
+/**
+ * Get admin name from Firestore document by UID
+ */
+export async function getAdminNameByUid(uid: string): Promise<string> {
+  const admin = await import('firebase-admin');
+  
+  try {
+    const adminDoc = await admin.firestore()
+      .collection('admins')
+      .doc(uid)
+      .get();
+    
+    if (adminDoc.exists) {
+      return adminDoc.data()?.name || 'Unknown Admin';
+    }
+    return 'Unknown Admin';
+  } catch (error) {
+    console.warn(`Could not fetch admin name for UID ${uid}:`, error);
+    return 'Unknown Admin';
+  }
+}

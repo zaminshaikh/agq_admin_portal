@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import { checkAdminPermission } from "../helpers/adminPermissions";
+import { checkAdminPermission, getAdminNameByUid } from "../helpers/adminPermissions";
 
 interface DeleteAdminData {
   adminId: string;
@@ -46,7 +46,9 @@ export const deleteAdmin = functions.https.onCall(
         .doc(adminId)
         .delete();
 
-      console.log(`Admin account deleted: ${adminId} by ${context.auth!.token.email}`);
+      // Get the current admin's name for logging
+      const deletedByName = await getAdminNameByUid(context.auth!.uid);
+      console.log(`Admin account deleted: ${adminId} by ${deletedByName}`);
 
       return { 
         success: true,

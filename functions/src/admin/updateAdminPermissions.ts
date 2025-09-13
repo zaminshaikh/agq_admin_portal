@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import { checkAdminPermission, AdminPermission, isValidPermission } from "../helpers/adminPermissions";
+import { checkAdminPermission, AdminPermission, isValidPermission, getAdminNameByUid } from "../helpers/adminPermissions";
 
 interface UpdateAdminPermissionsData {
   adminId: string;
@@ -48,16 +48,19 @@ export const updateAdminPermissions = functions.https.onCall(
         adminPermissions: permissions 
       });
 
+      // Get the current admin's name from Firestore
+      const updatedByName = await getAdminNameByUid(context.auth!.uid);
+
       // Update admin document timestamp and updatedBy
       await admin.firestore()
         .collection('admins')
         .doc(adminId)
         .update({
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedBy: context.auth!.token.email || 'System'
+          updatedBy: updatedByName
         });
 
-      console.log(`Admin permissions updated: ${adminId} -> ${permissions} by ${context.auth!.token.email}`);
+      console.log(`Admin permissions updated: ${adminId} -> ${permissions} by ${updatedByName}`);
 
       return { 
         success: true,
