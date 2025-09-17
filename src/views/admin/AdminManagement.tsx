@@ -41,7 +41,7 @@ const AdminManagement: React.FC = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [updateLoading, setUpdateLoading] = useState(false)
-  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deletingAdminIds, setDeletingAdminIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     loadAdmins()
@@ -72,6 +72,7 @@ const AdminManagement: React.FC = () => {
 
 
   const handleSaveAdmin = async () => {
+    setUpdateLoading(true)
     try {
       if (!currentAdmin) {
         setError('You must be logged in as an admin')
@@ -97,6 +98,7 @@ const AdminManagement: React.FC = () => {
       console.error('Error saving admin:', error)
       setError('Failed to save admin')
     }
+    setUpdateLoading(false)
   }
 
   const handleDeleteAdmin = async (adminId: string) => {
@@ -111,6 +113,7 @@ const AdminManagement: React.FC = () => {
     }
 
     if (window.confirm('Are you sure you want to delete this admin?')) {
+      setDeletingAdminIds(prev => new Set(prev).add(adminId))
       try {
         await adminService.deleteAdmin(adminId)
         setSuccess('Admin deleted successfully')
@@ -118,6 +121,12 @@ const AdminManagement: React.FC = () => {
       } catch (error) {
         console.error('Error deleting admin:', error)
         setError('Failed to delete admin')
+      } finally {
+        setDeletingAdminIds(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(adminId)
+          return newSet
+        })
       }
     }
   }
@@ -227,15 +236,16 @@ const AdminManagement: React.FC = () => {
                         >
                           Edit
                         </CButton>
-                        <CButton
+                        <CLoadingButton
                           color="danger"
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteAdmin(admin.id)}
                           disabled={admin.id === currentAdmin?.id}
+                          loading={deletingAdminIds.has(admin.id)}
                         >
                           Delete
-                        </CButton>
+                        </CLoadingButton>
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -298,9 +308,9 @@ const AdminManagement: React.FC = () => {
           <CButton color="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </CButton>
-          <CButton color="primary" onClick={handleSaveAdmin}>
+          <CLoadingButton color="primary" onClick={handleSaveAdmin} loading={updateLoading}>
             Update Permissions
-          </CButton>
+          </CLoadingButton>
         </CModalFooter>
       </CModal>
     </CRow>
