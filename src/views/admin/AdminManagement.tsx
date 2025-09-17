@@ -12,7 +12,7 @@ import {
   CTableBody,
   CTableDataCell,
   CButton,
-  CModal,
+  CLoadingButton,  CModal,
   CModalHeader,
   CModalTitle,
   CModalBody,
@@ -40,7 +40,8 @@ const AdminManagement: React.FC = () => {
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-
+  const [updateLoading, setUpdateLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
     loadAdmins()
@@ -209,7 +210,7 @@ const AdminManagement: React.FC = () => {
                       <CTableDataCell>
                         {admin.createdAt?.toLocaleDateString()}
                         <br />
-                        <small className="text-muted">by System</small>
+                        <small className="text-muted">by {admin.updatedBy}</small>
                       </CTableDataCell>
                       <CTableDataCell>
                         {admin.updatedAt?.toLocaleDateString()}
