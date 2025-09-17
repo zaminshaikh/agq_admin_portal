@@ -18,7 +18,6 @@ import { cilLockLocked, cilUser } from '@coreui/icons';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../../App'; // Adjust the path as necessary
 import { AuthErrorModal } from 'src/components/ErrorModal';
-import { error } from 'console';
 import { FirebaseError } from '@firebase/app';
 
 const Login = () => {
@@ -40,19 +39,19 @@ const handleLogin = async (e: React.FormEvent) => {
             // Handle Firebase auth errors
             switch (error.code) {
                 case 'auth/invalid-email':
-                    setErrorMessage('Invalid email address.');
+                    setErrorMessage('Invalid email format. Please enter a valid admin email address.');
                     break;
                 case 'auth/user-disabled':
-                    setErrorMessage('Client account is disabled.');
+                    setErrorMessage('Your admin account has been disabled. Contact support for assistance.');
                     break;
                 case 'auth/user-not-found':
-                    setErrorMessage('Client not found.');
+                    setErrorMessage('No admin account found with this email. Please register or check the email.');
                     break;
                 case 'auth/wrong-password':
-                    setErrorMessage('Incorrect password.');
+                    setErrorMessage('Password incorrect. Please try again or reset your password.');
                     break;
                 default:
-                    setErrorMessage('An unknown error occurred.');
+                    setErrorMessage('An unexpected error occurred during login. Please try again later.');
             }
         } else {
             // Handle other errors (e.g., network issues)
