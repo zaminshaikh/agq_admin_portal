@@ -19,55 +19,35 @@ interface PermissionProviderProps {
 }
 
 export const PermissionProvider: React.FC<PermissionProviderProps> = ({ children }) => {
-  try {
-    const { admin, permissions, loading, adminService } = useCurrentAdmin()
+  const { admin, permissions, loading, adminService } = useCurrentAdmin()
 
-    const hasPermission = (permission: AdminPermission): boolean => {
-      try {
-        return adminService.hasPermission(permissions, permission)
-      } catch (error) {
-        console.error('Error checking permissions:', error)
-        return false
-      }
+  const hasPermission = (permission: AdminPermission): boolean => {
+    try {
+      return adminService.hasPermission(permissions, permission)
+    } catch (error) {
+      console.error('Error checking permissions:', error)
+      return false
     }
-
-    const canWrite = hasPermission('write')
-    const canRead = hasPermission('read')
-    const isAdmin = hasPermission('admin')
-
-    return (
-      <PermissionContext.Provider value={{
-        admin,
-        permissions,
-        loading,
-        hasPermission,
-        canWrite,
-        canRead,
-        isAdmin,
-        adminService
-      }}>
-        {children}
-      </PermissionContext.Provider>
-    )
-  } catch (error) {
-    console.error('Error in PermissionProvider:', error)
-    // Provide fallback context with loading state to prevent flash
-    const fallbackAdminService = new AdminService()
-    return (
-      <PermissionContext.Provider value={{
-        admin: null,
-        permissions: 'none',
-        loading: true, // Keep loading true to prevent access denied flash
-        hasPermission: () => false,
-        canWrite: false,
-        canRead: false,
-        isAdmin: false,
-        adminService: fallbackAdminService
-      }}>
-        {children}
-      </PermissionContext.Provider>
-    )
   }
+
+  const canWrite = hasPermission('write')
+  const canRead = hasPermission('read')
+  const isAdmin = hasPermission('admin')
+
+  return (
+    <PermissionContext.Provider value={{
+      admin,
+      permissions,
+      loading,
+      hasPermission,
+      canWrite,
+      canRead,
+      isAdmin,
+      adminService
+    }}>
+      {children}
+    </PermissionContext.Provider>
+  )
 }
 
 export const usePermissions = (): PermissionContextType => {
