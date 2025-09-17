@@ -7,7 +7,8 @@ interface DeleteAdminData {
 }
 
 /**
- * Deletes an admin account and removes all permissions
+ * Deletes an admin account completely: removes custom claims, deletes Firestore document, 
+ * and removes user from Firebase Auth (following the same pattern as unlinkUser)
  * Requires 'admin' level permissions
  */
 export const deleteAdmin = functions.https.onCall(
@@ -39,16 +40,22 @@ export const deleteAdmin = functions.https.onCall(
 
       // Remove custom claims (revoke all permissions)
       await admin.auth().setCustomUserClaims(adminId, null);
+      console.log(`Cleared custom claims for admin ${adminId}`);
 
-      // Delete admin document
+      // Delete admin document from Firestore
       await admin.firestore()
         .collection('admins')
         .doc(adminId)
         .delete();
+      console.log(`Deleted Firestore document for admin ${adminId}`);
+
+      // Delete the user from Firebase Auth
+      await admin.auth().deleteUser(adminId);
+      console.log(`Deleted Auth user with uid ${adminId}`);
 
       // Get the current admin's name for logging
       const deletedByName = await getAdminNameByUid(context.auth!.uid);
-      console.log(`Admin account deleted: ${adminId} by ${deletedByName}`);
+      console.log(`Admin account fully deleted: ${adminId} by ${deletedByName}`);
 
       return { 
         success: true,
