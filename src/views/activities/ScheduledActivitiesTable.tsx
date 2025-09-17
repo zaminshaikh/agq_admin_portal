@@ -8,6 +8,7 @@ import { cilArrowRight, cilReload } from "@coreui/icons";
 import CIcon from "@coreui/icons-react";
 import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import Activities from './Activities';
+import { usePermissions } from "../../contexts/PermissionContext";
 
 interface TableProps {
     scheduledActivities: ScheduledActivity[];
@@ -18,6 +19,7 @@ interface TableProps {
 }
 
 const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, setScheduledActivities, clients, setClients}) => {
+    const { canWrite } = usePermissions();
     const [selectedClient, setSelectedClient] = useState<string | number | undefined>(undefined);
 
     const [showDeleteActivityModal, setShowDeleteActivityModal] = useState(false);
@@ -157,11 +159,11 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
                             variant="outline"
                             shape="square"
                             size="sm"
-                            disabled={item.status === 'completed'}
+                            disabled={item.status === 'completed' || !canWrite}
                             onClick={async () => {
-                                setCurrentActivity(item);
+                                if (canWrite) { setCurrentActivity(item);
                                 setShowEditActivityModal(true);
-                                setSelectedClient(item.cid);
+                                setSelectedClient(item.cid); }
                             }}
                             >
                             Edit
@@ -173,14 +175,15 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
                         return (
                         <td className="py-2">
                             <CButton
-                            color="danger"
+                            disabled={!canWrite}
+                            title={!canWrite ? "Read-only access - deletion disabled" : "Delete scheduled activity"}                            color="danger"
                             variant="outline"
                             shape="square"
                             size="sm"
                             onClick={() => {
-                                setCurrentActivity(item);
+                                if (canWrite) { setCurrentActivity(item);
                                 setShowDeleteActivityModal(true);
-                                setSelectedClient(item.cid);
+                                setSelectedClient(item.cid); }
                             }}
                             >
                             Delete

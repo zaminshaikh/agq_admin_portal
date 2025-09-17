@@ -8,6 +8,7 @@ import { FormValidationErrorModal } from '../../components/ErrorModal';
 import CIcon from '@coreui/icons-react';
 import { cilCalendar, cilPlus, cilTrash } from '@coreui/icons';
 import { amortize } from "src/utils/utilities.ts";
+import { usePermissions } from "../../contexts/PermissionContext";
 
 
 interface ShowModalProps {
@@ -22,7 +23,15 @@ interface ShowModalProps {
 
 
 export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, selectedClient, setAllActivities, setFilteredActivities, setScheduledActivities}) => {
+    const { admin } = usePermissions();
     const db = new DatabaseService();
+    
+    // Initialize database service with current admin
+    useEffect(() => {
+        if (admin) {
+            db.setCurrentAdmin(admin);
+        }
+    }, [admin, db]);
     const [activityState, setActivityState] = useState<Activity>(emptyActivity);
     const [clientState, setClientState] = useState<Client | null>(clients?.find(client => client.cid === selectedClient) ?? null);
     const [showErrorModal, setShowErrorModal] = useState(false);

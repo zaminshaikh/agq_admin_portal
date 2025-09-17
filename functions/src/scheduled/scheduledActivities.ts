@@ -152,6 +152,12 @@ export const processScheduledActivities = functions.pubsub
           batch.set(assetCollectionRef.doc(config.ASSETS_AGQ_DOC_ID), updatedAgqDoc);
           batch.set(assetCollectionRef.doc(config.ASSETS_AK1_DOC_ID), updatedAk1Doc);
           batch.set(assetCollectionRef.doc(config.ASSETS_GENERAL_DOC_ID), updatedGeneral);
+
+          // Update parent client document with audit trail
+          batch.update(clientRef, { 
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: "System" 
+          });
         }
 
         // 3) Mark this scheduled activity as 'completed'

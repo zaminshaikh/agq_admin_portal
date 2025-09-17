@@ -6,9 +6,40 @@ import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { isValid, parse, set } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { formatDate, parseDateWithTwoDigitYear, toTitleCase } from 'src/utils/utilities.ts';
+import { Timestamp } from 'firebase/firestore';
 import countries from '../../utils/countries.json';
 import states from '../../utils/states.json';
 import provinces from '../../utils/provinces.json';
+
+// Helper function to safely format dates from either Date objects or Firestore Timestamps
+const formatAuditDate = (date: Date | Timestamp | undefined | null): string => {
+    if (!date) return '';
+    
+    let jsDate: Date;
+    if (date instanceof Timestamp) {
+        jsDate = date.toDate();
+    } else if (date instanceof Date) {
+        jsDate = date;
+    } else {
+        return '';
+    }
+    
+    return `${jsDate.toLocaleDateString()} ${jsDate.toLocaleTimeString()}`;
+};
+
+// Helper function to safely convert Timestamp or Date to Date
+const toDate = (date: Date | Timestamp): Date => {
+    if (date instanceof Timestamp) {
+        return date.toDate();
+    }
+    return date;
+};
+
+// Helper function to safely get ISO string from Date or Timestamp
+const toISOString = (date: Date | Timestamp | undefined | null): string => {
+    if (!date) return '';
+    return toDate(date).toISOString();
+};
 
 interface ClientInputProps {
     clientState: Client,
@@ -142,7 +173,7 @@ const exceptions = ["LLC", "Inc", "Ltd"];
                 activities: [
                     ...(clientState.activities || []),
                     ...activities
-                ].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
+                ].sort((a, b) => toDate(a.time).getTime() - toDate(b.time).getTime()),
             };
 
             setClientState(newClientState)
@@ -587,7 +618,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
             <EditAssetsSection clientState={clientState} setClientState={setClientState} viewOnly={viewOnly}/>
 
-            <CInputGroup className='pb-5'>
+            <CInputGroup className='pb-3'>
                 <CInputGroupText>Notes</CInputGroupText>
                 <CFormTextarea
                     id="notes"
@@ -598,6 +629,51 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     }}
                 />
             </CInputGroup>
+
+            {/* Audit Trail Information */}
+            {(clientState.createdAt || clientState.updatedAt) && (
+                <CContainer className="px-0">
+                    <h6 className="text-muted mb-3">Audit Information</h6>
+                    <CRow>
+                        {clientState.createdAt && (
+                            <CCol md={6}>
+                                <CInputGroup className="mb-2">
+                                    <CInputGroupText>Created</CInputGroupText>
+                                    <CFormInput
+                                        value={formatAuditDate(clientState.createdAt)}
+                                        disabled
+                                        readOnly
+                                    />
+                                </CInputGroup>
+                                {clientState.createdBy && (
+                                    <CInputGroup className="mb-2">
+                                        <CInputGroupText>Created By</CInputGroupText>
+                                        <CFormInput value={clientState.createdBy} disabled readOnly />
+                                    </CInputGroup>
+                                )}
+                            </CCol>
+                        )}
+                        {clientState.updatedAt && (
+                            <CCol md={6}>
+                                <CInputGroup className="mb-2">
+                                    <CInputGroupText>Last Updated</CInputGroupText>
+                                    <CFormInput
+                                        value={formatAuditDate(clientState.updatedAt)}
+                                        disabled
+                                        readOnly
+                                    />
+                                </CInputGroup>
+                                {clientState.updatedBy && (
+                                    <CInputGroup className="mb-2">
+                                        <CInputGroupText>Updated By</CInputGroupText>
+                                        <CFormInput value={clientState.updatedBy} disabled readOnly />
+                                    </CInputGroup>
+                                )}
+                            </CCol>
+                        )}
+                    </CRow>
+                </CContainer>
+            )}
 
             <div className="my-3 ">
                 <h5>Upload Previous Activities</h5>
@@ -664,7 +740,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                             type="date"
                             value={
                                 editedActivity?.time
-                                ? editedActivity.time.toISOString().split('T')[0]
+                                ? toISOString(editedActivity.time).split('T')[0]
                                 : ''
                             }
                             onChange={(e) => {

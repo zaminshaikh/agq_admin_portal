@@ -16,6 +16,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from 'firebase/auth'
 import ProtectedRoute from './ProtectedRoute'
+import { PermissionProvider } from './contexts/PermissionContext'
 // import 'firebase/auth'
 // import 'firebase/firestore'
 // import {useAuthState} from 'react-firebase-hooks/auth'
@@ -50,6 +51,7 @@ const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 
 const Login = React.lazy(() => import('./views/pages/login/Login'))
 const Register = React.lazy(() => import('./views/pages/register/Register'))
+const AdminSignup = React.lazy(() => import('./views/pages/adminSignup/AdminSignup'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 
@@ -92,9 +94,10 @@ const App = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/admin-signup" element={<AdminSignup />} />
           <Route path="/404" element={<Page404 />} />
           <Route path="/500" element={<Page500 />} />
-          <Route path="*" element={<ProtectedRoute><DefaultLayout /></ProtectedRoute>}/>
+          <Route path="*" element={<PermissionProvider><ProtectedRoute><DefaultLayout /></ProtectedRoute></PermissionProvider>}/>
           {/* <Route path="*" element={<DefaultLayout />} /> */}
         </Routes>
       </Suspense>

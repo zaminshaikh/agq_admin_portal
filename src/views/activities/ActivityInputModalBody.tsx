@@ -5,7 +5,24 @@ import { Activity, AssetDetails, Client, DatabaseService, roundToNearestHour, Sc
 import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { Timestamp } from 'firebase/firestore';
 import { applyAssetChanges } from "src/utils/utilities";
+import { usePermissions } from "../../contexts/PermissionContext";
 // import { ActivityInputModalBody } from "./ActivityInputModalBody.tsx";
+
+// Helper function to safely format dates from either Date objects or Firestore Timestamps
+const formatDate = (date: Date | Timestamp | undefined | null): string => {
+    if (!date) return '';
+    
+    let jsDate: Date;
+    if (date instanceof Timestamp) {
+        jsDate = date.toDate();
+    } else if (date instanceof Date) {
+        jsDate = date;
+    } else {
+        return '';
+    }
+    
+    return `${jsDate.toLocaleDateString()} ${jsDate.toLocaleTimeString()}`;
+};
 
 interface ActivityInputProps {
     activityState: Activity,
@@ -60,8 +77,15 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
     initialClientState,
     setInitialClientState
 }) => {
-    
+    const { admin } = usePermissions();
     const db = new DatabaseService();
+    
+    // Initialize database service with current admin
+    useEffect(() => {
+        if (admin) {
+            db.setCurrentAdmin(admin);
+        }
+    }, [admin, db]);
 
     // Convert and round the date to the nearest hour
     const initialDate = activityState.time instanceof Timestamp
@@ -415,6 +439,58 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                     </CCol>
                 </CRow>
             </CContainer>
+
+            {/* Audit Trail Information */}
+            {(() => {
+                // For scheduled activities, check the scheduledActivity object for audit trail
+                // For regular activities, check the activityState object
+                const auditSource = scheduledActivity || activityState;
+                const hasAuditTrail = auditSource.createdAt || auditSource.updatedAt;
+                
+                return hasAuditTrail && (
+                    <CContainer className="py-3 px-3">
+                        <h6 className="text-muted mb-3">Audit Information</h6>
+                        <CRow>
+                            {auditSource.createdAt && (
+                                <CCol md={6}>
+                                    <CInputGroup className="mb-2">
+                                        <CInputGroupText>Created</CInputGroupText>
+                                        <CFormInput
+                                            value={formatDate(auditSource.createdAt)}
+                                            disabled
+                                            readOnly
+                                        />
+                                    </CInputGroup>
+                                    {auditSource.createdBy && (
+                                        <CInputGroup className="mb-2">
+                                            <CInputGroupText>Created By</CInputGroupText>
+                                            <CFormInput value={auditSource.createdBy} disabled readOnly />
+                                        </CInputGroup>
+                                    )}
+                                </CCol>
+                            )}
+                            {auditSource.updatedAt && (
+                                <CCol md={6}>
+                                    <CInputGroup className="mb-2">
+                                        <CInputGroupText>Last Updated</CInputGroupText>
+                                        <CFormInput
+                                            value={formatDate(auditSource.updatedAt)}
+                                            disabled
+                                            readOnly
+                                        />
+                                    </CInputGroup>
+                                    {auditSource.updatedBy && (
+                                        <CInputGroup className="mb-2">
+                                            <CInputGroupText>Updated By</CInputGroupText>
+                                            <CFormInput value={auditSource.updatedBy} disabled readOnly />
+                                        </CInputGroup>
+                                    )}
+                                </CCol>
+                            )}
+                        </CRow>
+                    </CContainer>
+                );
+            })()}
             
         </CModalBody>
     )

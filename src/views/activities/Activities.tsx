@@ -8,10 +8,20 @@ import { CreateActivity } from "./CreateActivity";
 import ExportActivitiesModal from "./ExportActivitiesModal";
 import { cilCloudDownload, cilFile } from "@coreui/icons";
 import CIcon from "@coreui/icons-react";
+import { usePermissions } from "../../contexts/PermissionContext";
 
 const Activities = () => {
     useTranslation();
+    const { canWrite, admin } = usePermissions();
     const [isLoading, setIsLoading] = useState(true);
+
+    // Initialize database service with current admin
+    useEffect(() => {
+        if (admin) {
+            const db = new DatabaseService();
+            db.setCurrentAdmin(admin);
+        }
+    }, [admin]);
 
     const [showCreateActivityModal, setShowCreateActivityModal] = useState(false);
     const [showExportActivitiesModal, setShowExportActivitiesModal] = useState(false);
@@ -27,6 +37,9 @@ const Activities = () => {
     useEffect(() => {
       const fetchActivities = async () => {
           const db = new DatabaseService();
+          if (admin) {
+              db.setCurrentAdmin(admin);
+          }
           const activities = await db.getActivities();
           const newScheduledActivities = await db.getScheduledActivities();
 
@@ -48,7 +61,7 @@ const Activities = () => {
           setIsLoading(false);
       };
       fetchActivities();
-    }, []);
+    }, [admin]);
 
 
     if (isLoading) {
@@ -82,7 +95,14 @@ const Activities = () => {
 
             <CRow className="mb-3">
               <CCol>
-                <CButton color='primary' onClick={() => setShowCreateActivityModal(true)} className="w-100">Add Activity +</CButton>
+                <CButton 
+                    color='primary' 
+                    onClick={() => setShowCreateActivityModal(true)} 
+                    className="w-100"
+                    disabled={!canWrite}
+                >
+                    Add Activity +
+                </CButton>
               </CCol>
               <CCol>
                 <CButton color='success' onClick={() => setShowExportActivitiesModal(true)} className="w-100">

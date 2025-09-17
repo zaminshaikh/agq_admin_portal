@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
-import { DatabaseService, Activity, emptyActivity, Client, emptyClient, ScheduledActivity, getChangedAssets } from 'src/db/database';
+import { Activity, emptyActivity, Client, emptyClient, ScheduledActivity, getChangedAssets } from 'src/db/database';
 import { ValidateActivity, ActivityInputModalBody } from './ActivityInputModalBody';
 import { FormValidationErrorModal } from '../../components/ErrorModal';
 import { amortize, applyAssetChanges } from 'src/utils/utilities';
+import { useDatabaseService } from "../../hooks/useDatabaseService";
 
 interface EditActivityProps {
     showModal: boolean;
@@ -19,7 +20,7 @@ interface EditActivityProps {
 }
 
 const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, clients, activity, scheduledActivity, selectedClient, setAllActivities, setFilteredActivities, setScheduledActivities, isScheduled=false}) => {
-    const db = new DatabaseService();
+    const db = useDatabaseService();
     
     const [activityState, setActivityState] = useState<Activity>(activity ?? emptyActivity);
     const [clientState, setClientState] = useState<Client | null>(emptyClient);
@@ -102,7 +103,6 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     }, []);
 
     const handleEditActivity = async (id: string | undefined, activityState: Activity, initialClientState: Client, clientState: Client, isScheduled: boolean) => {
-        const db = new DatabaseService();
         
         const changedAssets = getChangedAssets(initialClientState, clientState);
     

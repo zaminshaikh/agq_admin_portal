@@ -27,6 +27,12 @@ import { unlinkUser } from "./callable/unlinkUser";
 import { calculateTotalYTD, calculateYTD } from "./callable/ytd";
 import { checkUIDExists } from "./callable/checkUIDExists";
 
+// ======= ADMIN MANAGEMENT =======
+import { createAdminAccount } from "./admin/createAdminAccount";
+import { updateAdminPermissions } from "./admin/updateAdminPermissions";
+import { getAllAdmins } from "./admin/getAllAdmins";
+import { deleteAdmin } from "./admin/deleteAdmin";
+
 export {
   // ======= TRIGGERS =======
   handleActivity,
@@ -49,4 +55,10 @@ export {
   calculateTotalYTD,
   calculateYTD,
   checkUIDExists,
+
+  // ======= ADMIN MANAGEMENT =======
+  createAdminAccount,
+  updateAdminPermissions,
+  getAllAdmins,
+  deleteAdmin,
 }
