@@ -26,6 +26,7 @@ import { isUIDLinked, checkDocumentExists, checkDocumentLinked } from "./callabl
 import { unlinkUser } from "./callable/unlinkUser";
 import { calculateTotalYTD, calculateYTD } from "./callable/ytd";
 import { checkUIDExists } from "./callable/checkUIDExists";
+import { sendInviteEmail } from "./callable/sendInviteEmail";
 
 // ======= ADMIN MANAGEMENT =======
 import { createAdminAccount } from "./admin/createAdminAccount";
@@ -55,6 +56,7 @@ export {
   calculateTotalYTD,
   calculateYTD,
   checkUIDExists,
+  sendInviteEmail,
 
   // ======= ADMIN MANAGEMENT =======
   createAdminAccount,
