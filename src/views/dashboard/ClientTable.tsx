@@ -7,7 +7,8 @@ import { DeleteClient } from './DeleteClient';
 import { EditClient } from './EditClient';
 import ImportClients from './ImportClients';
 import { UnlinkClient } from './UnlinkClient';
-import { cilCheckCircle, cilCloudDownload, cilXCircle } from '@coreui/icons';
+import SendInviteModal from './SendInviteModal';
+import { cilCheckCircle, cilCloudDownload, cilXCircle, cilEnvelopeClosed } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { usePermissions } from '../../contexts/PermissionContext';
 
@@ -19,6 +20,7 @@ const ClientsTable = () => {
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
     const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
     const [showEditClientModal, setShowEditClientModal] = useState(false);
+    const [showSendInviteModal, setShowSendInviteModal] = useState(false);
     const [clients, setClients] = useState<Client[]>([]);
     const [currentClient, setCurrentClient] = useState<Client | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
@@ -222,7 +224,8 @@ const ClientsTable = () => {
             {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} setClients={setClients} activeClient={currentClient}/>}
             {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} clients={clients} currentClient={currentClient ?? emptyClient}/>}
             {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} client={currentClient} setClients={setClients}/>}
-            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients} setClients={setClients}/>} 
+            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients} setClients={setClients}/>}
+            {showSendInviteModal && <SendInviteModal showModal={showSendInviteModal} setShowModal={setShowSendInviteModal} client={currentClient}/>} 
             <CRow className="mb-3">
               <CCol>
                 <CButton 
@@ -290,7 +293,7 @@ const ClientsTable = () => {
                         return (
                         <CCollapse visible={details.includes(item.cid)}>
                         <CCardBody className="p-3">
-                            <CRow>
+                            <CRow className="mb-2">
                                 <CCol className="text-center">
                                     <CButton 
                                         size="sm" 
@@ -320,12 +323,20 @@ const ClientsTable = () => {
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
-                                    <CButton size="sm" color="info" className='ml-1' variant="outline" 
+                                    <CButton 
+                                        size="sm" 
+                                        color="info" 
+                                        className="ml-1" 
+                                        variant="outline"
+                                        disabled={!canWrite || (!item.initEmail && !item.appEmail)}
                                         onClick={() => {
-                                            setShowDisplayDetailsModal(true)
+                                            setShowSendInviteModal(true);
                                             setCurrentClient(clients.find(client => client.cid === item.cid))
-                                        }}>
-                                        Client Details
+                                        }}
+                                        title={(!item.initEmail && !item.appEmail) ? "Client must have an email address" : "Send app invitation email"}
+                                    >
+                                        <CIcon icon={cilEnvelopeClosed} className="me-1" />
+                                        Send Invite
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">

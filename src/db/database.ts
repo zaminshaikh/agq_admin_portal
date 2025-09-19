@@ -36,6 +36,9 @@ pdfMake.vfs = (pdfFontsModule as any).pdfMake?.vfs;
 // Initialize Firebase Functions
 const functions = getFunctions();
 
+// Export functions instance for use in other components
+export { functions };
+
 export class DatabaseService {
   /**
    * Firestore database instance from the app initialization.
