@@ -323,12 +323,20 @@ const ClientsTable = () => {
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
-                                    <CButton size="sm" color="info" className='ml-1' variant="outline" 
+                                    <CButton 
+                                        size="sm" 
+                                        color="info" 
+                                        className="ml-1" 
+                                        variant="outline"
+                                        disabled={!canWrite || (!item.initEmail && !item.appEmail)}
                                         onClick={() => {
-                                            setShowDisplayDetailsModal(true)
+                                            setShowSendInviteModal(true);
                                             setCurrentClient(clients.find(client => client.cid === item.cid))
-                                        }}>
-                                        Client Details
+                                        }}
+                                        title={(!item.initEmail && !item.appEmail) ? "Client must have an email address" : "Send app invitation email"}
+                                    >
+                                        <CIcon icon={cilEnvelopeClosed} className="me-1" />
+                                        Send Invite
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
@@ -343,25 +351,6 @@ const ClientsTable = () => {
                                             setCurrentClient(clients.find(client => client.cid === item.cid))
                                         }}>
                                         Edit Client 
-                                    </CButton>
-                                </CCol>
-                            </CRow>
-                            <CRow>
-                                <CCol className="text-center">
-                                    <CButton 
-                                        size="sm" 
-                                        color="success" 
-                                        className="ml-1" 
-                                        variant="outline"
-                                        disabled={!canWrite || (!item.initEmail && !item.appEmail)}
-                                        onClick={() => {
-                                            setShowSendInviteModal(true);
-                                            setCurrentClient(clients.find(client => client.cid === item.cid))
-                                        }}
-                                        title={(!item.initEmail && !item.appEmail) ? "Client must have an email address" : "Send app invitation email"}
-                                    >
-                                        <CIcon icon={cilEnvelopeClosed} className="me-1" />
-                                        Send Invite
                                     </CButton>
                                 </CCol>
                             </CRow>
