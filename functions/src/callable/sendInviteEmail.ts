@@ -34,7 +34,7 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AGQ Consulting - App Invitation</title>
+        <title>AGQ - App Invitation</title>
         <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
             body {
@@ -284,7 +284,7 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
                         </g>
                     </svg>
                 </div>
-                <h1>Welcome to AGQ Consulting</h1>
+                <h1>Welcome to AGQ</h1>
                 <p>Your Investment Management App Invitation</p>
             </div>
             
@@ -292,7 +292,7 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
                 <div class="greeting">Dear ${clientName},</div>
                 
                 <div class="intro-text">
-                    We hope this message finds you well. AGQ Consulting is pleased to invite you to access your investment portfolio through our secure mobile application.
+                    We hope this message finds you well. AGQ is pleased to invite you to access your investment portfolio through our secure mobile application.
                     <br><br>
                     With this app, you can conveniently monitor your up-to-date investment information, track performance, and stay connected with your financial growth—all from your mobile device.
                 </div>
@@ -311,7 +311,7 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
                             <strong>For iOS Users:</strong>
                             <a href="${iosLink}" class="download-link" target="_blank">${iosLink}</a>
                             <strong>For Android Users:</strong>
-                            <a href="https://play.google.com/apps/internaltest/4701740371572084825" class="download-link" target="_blank">https://play.google.com/apps/internaltest/4701740371572084825</a>
+                            <a href="https://play.google.com/store/apps/details?id=com.teamshaikh.investmentportfolio" class="download-link" target="_blank">https://play.google.com/store/apps/details?id=com.teamshaikh.investmentportfolio</a>
                         </div>
                         <div class="important-note">
                             <strong>Important:</strong> The application is exclusively available on mobile devices. Please ensure you open the download links directly on your smartphone or tablet.
@@ -347,13 +347,13 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
                 </div>
                 
                 <div class="intro-text">
-                    Thank you for your continued trust in AGQ Consulting. We are excited to provide you with enhanced accessibility and a more streamlined experience through this mobile platform.
+                    Thank you for your continued trust in AGQ. We are excited to provide you with enhanced accessibility and a more streamlined experience through this mobile platform.
                 </div>
                 
                 <div class="signature">
                     <p style="margin: 0;">Cordially,</p>
                     <p style="margin: 5px 0 0 0;"><strong>Sonny and Kash</strong></p>
-                    <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.8;">AGQ Consulting Team</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.8;">AGQ Team</p>
                 </div>
             </div>
             
@@ -419,10 +419,10 @@ export const sendInviteEmail = onCall<SendInviteEmailRequest, Promise<SendInvite
 
       // Send email using Resend
       const { data, error } = await resend.emails.send({
-        from: "AGQ Consulting <invite@app.agqconsulting.com>",
+        from: "AGQ <invite@app.agqconsulting.com>",
         to: [clientEmail],
         replyTo: "management@agqconsulting.com",
-        subject: "Welcome to AGQ Consulting - Your App Invitation",
+        subject: "Welcome to AGQ - Your App Invitation",
         html: htmlContent,
       });
 
