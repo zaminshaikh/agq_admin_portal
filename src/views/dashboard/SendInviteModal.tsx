@@ -160,7 +160,7 @@ const SendInviteModal: React.FC<SendInviteModalProps> = ({
 
         <p className="text-muted">
           An invitation email will be sent to the client with instructions on how to download 
-          and set up the AGQ Consulting mobile app using their Client ID (CID).
+          and set up the AGQ mobile app using their Client ID (CID).
         </p>
       </CModalBody>
       <CModalFooter>
