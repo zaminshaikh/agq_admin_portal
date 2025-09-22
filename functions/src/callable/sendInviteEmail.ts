@@ -26,6 +26,8 @@ interface SendInviteEmailResponse {
  * Creates HTML email template for client invitation
  */
 function createEmailTemplate(clientName: string, clientCid: string): string {
+  // Extract first name from full name
+  const firstName = clientName.split(' ')[0];
   // Update the iOS link in the email template
   const iosLink = "https://apps.apple.com/us/app/agq/id6502013306";
   return `
@@ -35,7 +37,7 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AGQ - App Invitation</title>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Open+Sans:wght@300;400;500;600;700&family=Mistrally:wght@400&display=swap" rel="stylesheet">
         <style>
             body {
                 font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -284,12 +286,11 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
                         </g>
                     </svg>
                 </div>
-                <h1>Welcome to AGQ</h1>
-                <p>Your Investment Management App Invitation</p>
+                <h1>Welcome to your Investment Management App Invitation</h1>
             </div>
             
             <div class="content">
-                <div class="greeting">Dear ${clientName},</div>
+                <div class="greeting">Dear ${firstName},</div>
                 
                 <div class="intro-text">
                     We hope this message finds you well. AGQ is pleased to invite you to access your investment portfolio through our secure mobile application.
@@ -351,8 +352,8 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
                 </div>
                 
                 <div class="signature">
-                    <p style="margin: 0;">Cordially,</p>
-                    <p style="margin: 5px 0 0 0;"><strong>Sonny and Kash</strong></p>
+                    <p style="margin: 0;">With humility and continued gratitude,</p>
+                    <p style="margin: 5px 0 0 0; font-family: 'Mistrally', cursive;"><strong>Sonny and Kash Shaikh</strong></p>
                     <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.8;">AGQ Team</p>
                 </div>
             </div>
@@ -377,12 +378,6 @@ function createEmailTemplate(clientName: string, clientCid: string): string {
                     <strong>AGQ Consulting LLC</strong><br>
                     195 International Parkway | Suite 103 | Lake Mary, FL 32746<br>
                     Email: management@agqconsulting.com
-                </div>
-                
-                <div class="disclaimer">
-                    <strong>Confidentiality Disclaimer:</strong> This e-mail and any attachments may contain information that is confidential, proprietary, or otherwise protected from disclosure. If you are not the intended recipient, please notify the sender immediately and delete this message. Any unauthorized use, disclosure, or distribution is strictly prohibited. Thank you.
-                    <br><br>
-                    <em>AGQ Consulting is a Florida based Private Equity Hedge Fund that is exempted from the registration requirements of the Investment Company Act of 1940. Our private offerings are available to accredited investors and rely on the offering exemption under Rule 506 of Regulation D under the Securities Act of 1933.</em>
                 </div>
             </div>
         </div>
@@ -422,7 +417,7 @@ export const sendInviteEmail = onCall<SendInviteEmailRequest, Promise<SendInvite
         from: "AGQ <invite@app.agqconsulting.com>",
         to: [clientEmail],
         replyTo: "management@agqconsulting.com",
-        subject: "Welcome to AGQ - Your App Invitation",
+        subject: "Welcome to your Investment Management App Invitation",
         html: htmlContent,
       });
 
