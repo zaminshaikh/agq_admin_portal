@@ -12,6 +12,7 @@ import * as admin from "firebase-admin";
 import config from "../../config.json";
 import { Activity } from "../interfaces/activity.interface";
 import { updateYTD } from "../helpers/ytd";
+import { updatePSI } from "../helpers/psi";
 import { updateGraphpoints } from "../helpers/graphpoints";
 
 /**
@@ -27,8 +28,9 @@ export const handleActivity = functions.firestore
     const activity = snapshot.data() as Activity;
     const { userId, activityId, userCollection } = context.params;
 
-    // 1) Update YTD totals
+    // 1) Update YTD and PSI totals
     await updateYTD(userId, userCollection);
+    await updatePSI(userId, userCollection);
 
     // 2) Check if we need to create and send a notification
     if (
@@ -84,7 +86,15 @@ export const onActivityWrite = functions.firestore
       );
     };
 
+    const doesAffectPSI = (activity: Activity): boolean => {
+      return (
+        activity.fund === "AGQ" &&
+        ["profit", "income"].includes(activity.type)
+      );
+    };
+
     let shouldUpdateYTD = false;
+    let shouldUpdatePSI = false;
 
     // Case: new doc created
     if (!change.before.exists && change.after.exists) {
@@ -92,12 +102,18 @@ export const onActivityWrite = functions.firestore
       if (doesAffectYTD(activity)) {
         shouldUpdateYTD = true;
       }
+      if (doesAffectPSI(activity)) {
+        shouldUpdatePSI = true;
+      }
     }
     // Case: doc deleted
     else if (change.before.exists && !change.after.exists) {
       const activity = change.before.data() as Activity;
       if (doesAffectYTD(activity)) {
         shouldUpdateYTD = true;
+      }
+      if (doesAffectPSI(activity)) {
+        shouldUpdatePSI = true;
       }
     }
     // Case: doc updated
@@ -107,6 +123,9 @@ export const onActivityWrite = functions.firestore
       if (doesAffectYTD(beforeActivity) || doesAffectYTD(afterActivity)) {
         shouldUpdateYTD = true;
       }
+      if (doesAffectPSI(beforeActivity) || doesAffectPSI(afterActivity)) {
+        shouldUpdatePSI = true;
+      }
     }
 
     // 1) Update YTD if needed
@@ -114,7 +133,12 @@ export const onActivityWrite = functions.firestore
       await updateYTD(userId, userCollection);
     }
 
-    // 2) Always update the graphpoints so historical data is consistent
+    // 2) Update PSI if needed
+    if (shouldUpdatePSI) {
+      await updatePSI(userId, userCollection);
+    }
+
+    // 3) Always update the graphpoints so historical data is consistent
     await updateGraphpoints(userCollection, userId);
 
     return null;

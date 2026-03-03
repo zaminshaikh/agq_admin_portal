@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase/firestore";
+import { Timestamp } from 'firebase/firestore'
 
 /**
  * Client interface representing a client in the Firestore database.
@@ -27,6 +27,8 @@ import { Timestamp } from "firebase/firestore";
  * @property totalAssets - The total value of assets held by the client.
  * @property ytd - Year-to-date earnings or performance.
  * @property totalYTD - Total year-to-date earnings or performance.
+ * @property psi - Profit since inception for this client.
+ * @property totalPSI - Total profit since inception including connected users.
  * @property _selected - Optional flag used for UI selection states.
  * @property lastLoggedIn - Timestamp or string indicating the last login time.
  * @property notes - Optional notes or comments about the client.
@@ -34,41 +36,43 @@ import { Timestamp } from "firebase/firestore";
  * @property graphPoints - Optional array of data points for generating graphs.
  * @property assets - An object detailing the client's assets, structured by fund and asset type.
  */
-export interface Client {
-    cid: string;
-    uid: string;
-    uidGrantedAccess: string[];
-    linked: boolean;
-    firstName: string;
-    lastName: string;
-    companyName: string;
-    address: string;
-    province: string;
-    state: string;
-    street: string;
-    city: string;
-    zip: string;
-    country: string;
-    dob: Date | null;
-    phoneNumber: string;
-    appEmail: string;
-    initEmail: string;
-    firstDepositDate: Date | null;
-    beneficiaries: string[];
-    connectedUsers: string[];
-    totalAssets: number;
-    ytd: number;
-    totalYTD: number;
-    _selected?: boolean;
-    lastLoggedIn?: string | null | undefined;
-    notes?: string | undefined;
-    activities?: Activity[];
-    graphPoints?: GraphPoint[];
-    assets: Assets;
-    createdAt?: Date;
-    createdBy?: string;
-    updatedAt?: Date;
-    updatedBy?: string;
+export type Client = {
+  cid: string
+  uid: string
+  uidGrantedAccess: string[]
+  linked: boolean
+  firstName: string
+  lastName: string
+  companyName: string
+  address: string
+  province: string
+  state: string
+  street: string
+  city: string
+  zip: string
+  country: string
+  dob: Date | null
+  phoneNumber: string
+  appEmail: string
+  initEmail: string
+  firstDepositDate: Date | null
+  beneficiaries: string[]
+  connectedUsers: string[]
+  totalAssets: number
+  ytd: number
+  totalYTD: number
+  psi: number
+  totalPSI: number
+  _selected?: boolean
+  lastLoggedIn?: string | null | undefined
+  notes?: string | undefined
+  activities?: Activity[]
+  graphPoints?: GraphPoint[]
+  assets: Assets
+  createdAt?: Date
+  createdBy?: string
+  updatedAt?: Date
+  updatedBy?: string
 }
 
 /**
@@ -91,27 +95,27 @@ export interface Client {
  * @property profitPaid - Optional amount of profit paid in an amortization.
  * @property parentName - Optional name of the parent entity or account.
  */
-export interface Activity {
-    id?: string;
-    notes?: string | number | string[] | undefined;
-    parentDocId?: string;
-    amount: number;
-    fund?: string;
-    recipient?: string;
-    time: Date | Timestamp;
-    formattedTime?: string;
-    type: string;
-    isDividend?: boolean;
-    sendNotif?: boolean;
-    amortizationCreated?: boolean;
-    isAmortization?: boolean;
-    principalPaid?: number;
-    profitPaid?: number;
-    parentName?: string;
-    createdAt?: Date;
-    createdBy?: string;
-    updatedAt?: Date;
-    updatedBy?: string;
+export type Activity = {
+  id?: string
+  notes?: string | number | string[] | undefined
+  parentDocId?: string
+  amount: number
+  fund?: string
+  recipient?: string
+  time: Date | Timestamp
+  formattedTime?: string
+  type: string
+  isDividend?: boolean
+  sendNotif?: boolean
+  amortizationCreated?: boolean
+  isAmortization?: boolean
+  principalPaid?: number
+  profitPaid?: number
+  parentName?: string
+  createdAt?: Date
+  createdBy?: string
+  updatedAt?: Date
+  updatedBy?: string
 }
 
 /**
@@ -126,19 +130,19 @@ export interface Activity {
  * @property formattedTime - Optional pre-formatted string representation of the scheduled time.
  * @property usersCollectionID - The ID of the Firestore collection where user data is stored.
  */
-export interface ScheduledActivity {
-    id: string;
-    cid: string;
-    activity: Activity;
-    changedAssets: Assets | null;
-    status: string;
-    scheduledTime: Date;
-    formattedTime?: string;
-    usersCollectionID: string;
-    createdAt?: Date;
-    createdBy?: string;
-    updatedAt?: Date;
-    updatedBy?: string;
+export type ScheduledActivity = {
+  id: string
+  cid: string
+  activity: Activity
+  changedAssets: Assets | null
+  status: string
+  scheduledTime: Date
+  formattedTime?: string
+  usersCollectionID: string
+  createdAt?: Date
+  createdBy?: string
+  updatedAt?: Date
+  updatedBy?: string
 }
 
 /**
@@ -153,15 +157,15 @@ export interface ScheduledActivity {
  * @property type - The type of notification (e.g., "activity", "document").
  * @property time - The timestamp when the notification was created. Can be a Date object or Firestore Timestamp.
  */
-export interface Notification {
-    activityId: string;
-    recipient: string;
-    title: string;
-    body: string;
-    message: string;
-    isRead: boolean;
-    type: string;
-    time: Date | Timestamp;
+export type Notification = {
+  activityId: string
+  recipient: string
+  title: string
+  body: string
+  message: string
+  isRead: boolean
+  type: string
+  time: Date | Timestamp
 }
 
 /**
@@ -174,13 +178,13 @@ export interface Notification {
  * @property cashflow - The cash flow value at this point, or null if not applicable.
  * @property account - Optional account identifier associated with this graph point.
  */
-export interface GraphPoint {
-    id?: string;
-    time: Date | Timestamp | null;
-    type?: string;
-    amount: number;
-    cashflow: number | null;
-    account?: string;
+export type GraphPoint = {
+  id?: string
+  time: Date | Timestamp | null
+  type?: string
+  amount: number
+  cashflow: number | null
+  account?: string
 }
 
 /**
@@ -190,10 +194,10 @@ export interface GraphPoint {
  * @property downloadURL - The URL from which the statement PDF can be downloaded.
  * @property clientId - The ID of the client to whom this statement belongs.
  */
-export interface StatementData {
-    statementTitle: string;
-    downloadURL: string;
-    clientId: string;
+export type StatementData = {
+  statementTitle: string
+  downloadURL: string
+  clientId: string
 }
 
 /**
@@ -204,11 +208,11 @@ export interface StatementData {
  * @property displayTitle - A user-friendly title for displaying the asset.
  * @property index - A numerical index for ordering or identifying the asset.
  */
-export interface AssetDetails {
-    amount: number;
-    firstDepositDate: Date | Timestamp | null;
-    displayTitle: string;
-    index: number;
+export type AssetDetails = {
+  amount: number
+  firstDepositDate: Date | Timestamp | null
+  displayTitle: string
+  index: number
 }
 
 /**
@@ -228,66 +232,68 @@ export interface AssetDetails {
  *   }
  * };
  */
-export interface Assets {
-    [fundKey: string]: {
-        [assetType: string]: AssetDetails;
-    };
+export type Assets = {
+  [fundKey: string]: {
+    [assetType: string]: AssetDetails
+  }
 }
 
 export const emptyClient: Client = {
-    firstName: '',
-    lastName: '',
-    companyName: '',
-    address: '',
-    province: '',
-    state: '',
-    street: '',
-    city: '',
-    zip: '',
-    country: 'US',
-    dob: null,
-    phoneNumber: '',
-    firstDepositDate: null,
-    beneficiaries: [],
-    connectedUsers: [],
-    cid: '',
-    uid: '',
-    uidGrantedAccess: [],
-    linked: false,
-    appEmail: '',
-    initEmail: '',
-    totalAssets: 0,
-    ytd: 0,
-    totalYTD: 0,
-    assets: {
-        agq: {
-            personal: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'Personal',
-                index: 0,
-            },
-        },
-        ak1: {
-            personal: {
-                amount: 0,
-                firstDepositDate: null,
-                displayTitle: 'Personal',
-                index: 0,
-            },
-        },
+  firstName: '',
+  lastName: '',
+  companyName: '',
+  address: '',
+  province: '',
+  state: '',
+  street: '',
+  city: '',
+  zip: '',
+  country: 'US',
+  dob: null,
+  phoneNumber: '',
+  firstDepositDate: null,
+  beneficiaries: [],
+  connectedUsers: [],
+  cid: '',
+  uid: '',
+  uidGrantedAccess: [],
+  linked: false,
+  appEmail: '',
+  initEmail: '',
+  totalAssets: 0,
+  ytd: 0,
+  totalYTD: 0,
+  psi: 0,
+  totalPSI: 0,
+  assets: {
+    agq: {
+      personal: {
+        amount: 0,
+        firstDepositDate: null,
+        displayTitle: 'Personal',
+        index: 0,
+      },
     },
-};
+    ak1: {
+      personal: {
+        amount: 0,
+        firstDepositDate: null,
+        displayTitle: 'Personal',
+        index: 0,
+      },
+    },
+  },
+}
 
 export const emptyActivity: Activity = {
-    amount: 0,
-    fund: 'AGQ',
-    recipient: '',
-    time: new Date(),
-    type: 'profit',
-    isDividend: false,
-    sendNotif: true,
-    isAmortization: false,
-    notes: undefined,
-    parentName: '',
-};
+  amount: 0,
+  fund: 'AGQ',
+  recipient: '',
+  time: new Date(),
+  type: 'profit',
+  isDividend: false,
+  sendNotif: true,
+  isAmortization: false,
+  notes: undefined,
+  parentName: '',
+}

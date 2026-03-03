@@ -266,6 +266,8 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     const db = new DatabaseService();
     const [ytdLoading, setYTDLoading] = useState(false);
     const [totalYTDLoading, setTotalYTDLoading] = useState(false);
+    const [psiLoading, setPSILoading] = useState(false);
+    const [totalPSILoading, setTotalPSILoading] = useState(false);
 
     const [editActivityIndex, setEditActivityIndex] = useState<number | null>(null);
     const [editedActivity, setEditedActivity] = useState<Activity>(emptyActivity);
@@ -614,6 +616,69 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                     }
                 }}
                 >Update Total YTD</CLoadingButton>
+            </CInputGroup>
+
+            <CInputGroup className='py-3'>
+                <CInputGroupText>Profit Since Inception</CInputGroupText>
+                <CFormInput type="number" id="psi" value={clientState.psi} disabled={viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    psi: parseFloat(e.target.value),
+                    };
+                    setClientState(newClientState)
+                }}/>
+                <CLoadingButton 
+                color="primary" 
+                variant="outline" 
+                disabled={clientState.cid == '' || clientState.cid == null || viewOnly} 
+                loading={psiLoading}
+                onClick={async () => {    
+                    setPSILoading(true);
+                    try {const psi = await db.getPSI(clientState.cid); 
+                    const newClientState = {
+                        ...clientState,
+                        psi: psi,
+                    };
+                    setClientState(newClientState);
+                    } catch (error) {
+                    console.error(error);
+                    } finally {
+                    setPSILoading(false);
+                    }
+                }}
+                >Update PSI</CLoadingButton>
+            </CInputGroup>
+            <CInputGroup className='py-3'>
+                <CInputGroupText>Total Profit Since Inception</CInputGroupText>
+                <CFormInput type="number" id="totalPsi" value={clientState.totalPSI ?? clientState.psi} disabled={clientState.connectedUsers.length == 0 || viewOnly}
+                onChange={(e) => {
+                    const newClientState = {
+                    ...clientState,
+                    totalPSI: parseFloat(e.target.value),
+                    };
+                    setClientState(newClientState)
+                }}/>
+                <CLoadingButton 
+                color="primary" 
+                variant="outline" 
+                disabled={clientState.connectedUsers.length == 0 || clientState.cid == '' || clientState.cid == null || viewOnly} 
+                loading={totalPSILoading}
+                onClick={async () => {    
+                    setTotalPSILoading(true);
+                    try {const totalPSI = await db.getTotalPSI(clientState.cid); 
+                    const newClientState = {
+                        ...clientState,
+                        totalPSI: totalPSI,
+                    };
+                    setClientState(newClientState);
+                    } catch (error) {
+                    console.error(error);
+                    } finally {
+                    setTotalPSILoading(false);
+                    }
+                }}
+                >Update Total PSI</CLoadingButton>
             </CInputGroup>
 
             <EditAssetsSection clientState={clientState} setClientState={setClientState} viewOnly={viewOnly}/>

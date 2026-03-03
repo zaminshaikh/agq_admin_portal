@@ -25,6 +25,7 @@ import { linkNewUser } from "./callable/linkUser";
 import { isUIDLinked, checkDocumentExists, checkDocumentLinked } from "./callable/checkDocsAndUID";
 import { unlinkUser } from "./callable/unlinkUser";
 import { calculateTotalYTD, calculateYTD } from "./callable/ytd";
+import { calculateTotalPSI, calculatePSI } from "./callable/psi";
 import { checkUIDExists } from "./callable/checkUIDExists";
 import { sendInviteEmail } from "./callable/sendInviteEmail";
 
@@ -55,6 +56,8 @@ export {
   unlinkUser,
   calculateTotalYTD,
   calculateYTD,
+  calculateTotalPSI,
+  calculatePSI,
   checkUIDExists,
   sendInviteEmail,
 

@@ -142,7 +142,7 @@ const ClientsTable = () => {
         const headers = [
             'CID', 'First Name', 'Last Name', 'Email', 'App Email',
             'Phone Number', 'Address', 'Date of Birth', 'First Deposit Date',
-            'Total Assets', 'YTD', 'Total YTD', 'Linked', 'Last Login',
+            'Total Assets', 'YTD', 'Total YTD', 'Profit Since Inception', 'Total Profit Since Inception', 'Linked', 'Last Login',
             'Beneficiaries', 'Notes'
         ];
         

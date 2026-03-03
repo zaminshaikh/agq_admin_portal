@@ -277,6 +277,8 @@ export class DatabaseService {
           totalAssets: generalAssetsData ? generalAssetsData.total : 0,
           ytd: generalAssetsData ? generalAssetsData.ytd : 0,
           totalYTD: generalAssetsData ? generalAssetsData.totalYTD : 0,
+          psi: generalAssetsData ? generalAssetsData.psi : 0,
+          totalPSI: generalAssetsData ? generalAssetsData.totalPSI : 0,
           phoneNumber: data?.phoneNumber ?? '',
           firstDepositDate: data?.firstDepositDate?.toDate() ?? null,
           beneficiaries: data?.beneficiaries ?? [],
@@ -362,7 +364,7 @@ export class DatabaseService {
       };
 
       // Delete these unused properties from the newClientDocData object
-      ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints', 'ytd', 'totalYTD'].forEach(key => {
+      ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints', 'ytd', 'totalYTD', 'psi', 'totalPSI'].forEach(key => {
               delete newClientDocData[key];
       });
 
@@ -468,6 +470,8 @@ export class DatabaseService {
       const general = {
           ytd: client.ytd ?? 0,
           totalYTD: client.totalYTD ?? 0,
+          psi: client.psi ?? 0,
+          totalPSI: client.totalPSI ?? 0,
           total: agqDoc.total + ak1Doc.total,
       };
 
@@ -571,6 +575,49 @@ export class DatabaseService {
       } catch (error) {
           console.error('Error updating YTD:', error);
           throw new Error('Failed to update YTD.');
+      }
+  }
+
+  /*=============================================================================
+   * PSI METHODS
+   *============================================================================*/
+
+  /**
+   * Calculates Profit Since Inception (PSI) for a client via Cloud Function.
+   * 
+   * @param cid - Client ID to calculate PSI for
+   * @returns The calculated PSI value
+   * @throws Error if the calculation fails
+   */
+  async getPSI(cid: string): Promise<number> {
+      const calculatePSIFn = httpsCallable<{cid: string, usersCollectionID: string}, number>(functions, 'calculatePSI');
+      try {
+          const result = await calculatePSIFn({ cid: cid, usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION });
+          console.log('PSI Total:', result.data);
+          return result.data as unknown as number;
+      } catch (error) {
+          console.error('Error updating PSI:', error);
+          throw new Error('Failed to update PSI.');
+      }
+  }
+
+  /**
+   * Calculates Total Profit Since Inception (PSI) for a client via Cloud Function.
+   * Includes connected users.
+   * 
+   * @param cid - Client ID to calculate Total PSI for
+   * @returns The calculated Total PSI value
+   * @throws Error if the calculation fails
+   */
+  async getTotalPSI(cid: string): Promise<number> {
+      const calculateTotalPSIFn = httpsCallable<{cid: string, usersCollectionID: string}, number>(functions, 'calculateTotalPSI');
+      try {
+          const result = await calculateTotalPSIFn({ cid: cid, usersCollectionID: config.FIRESTORE_ACTIVE_USERS_COLLECTION });
+          console.log('Total PSI:', result.data);
+          return result.data as unknown as number;
+      } catch (error) {
+          console.error('Error updating Total PSI:', error);
+          throw new Error('Failed to update Total PSI.');
       }
   }
 
