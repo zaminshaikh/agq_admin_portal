@@ -193,6 +193,8 @@ const ClientsTable = () => {
             formatCSVValue(client.totalAssets),
             formatCSVValue(client.ytd),
             formatCSVValue(client.totalYTD),
+            formatCSVValue(client.psi),
+            formatCSVValue(client.totalPSI),
             formatCSVValue(client.linked ? 'Yes' : 'No'),
             formatCSVValue(client.lastLoggedIn || ''),
             formatCSVValue(client.beneficiaries),
