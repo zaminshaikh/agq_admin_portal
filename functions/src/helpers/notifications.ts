@@ -102,31 +102,43 @@ export async function sendNotif(
 
   // Check if user has token(s)
   if (userData && Array.isArray(userData.tokens) && userData.tokens.length > 0) {
-    let tokensToRemove: string[] = [];
-    const sendPromises = userData.tokens.map(async (token: string) => {
-      console.log(`Sending notification to token: ${token}`);
-      const fcmMessage = {
-        token,
-        notification: { title, body },
-      };
-      try {
-        const response = await messaging.send(fcmMessage);
-        console.log(`Successfully sent message to token ${token}:`, response);
-        return response; // Successfully sent message ID
-      } catch (error) {
-        console.error(`Failed to send notification to token ${token}:`, error);
-        // If sending failed due to an invalid token, remove it
-        if ((error as any).code === 'messaging/registration-token-not-registered' || (error as any).code === 'messaging/invalid-registration-token' || (error as any).code === 'messaging/invalid-argument') {
+    const messages = userData.tokens.map((token: string) => ({
+      token,
+      notification: { title, body },
+    }));
+
+    console.log(`Sending notification to ${messages.length} token(s)`);
+    const batchResponse = await messaging.sendEach(messages);
+
+    const tokensToRemove: string[] = [];
+    const successIds: string[] = [];
+
+    batchResponse.responses.forEach((resp, idx) => {
+      const token = userData.tokens[idx];
+      if (resp.success) {
+        console.log(`Successfully sent message to token ${token}:`, resp.messageId);
+        successIds.push(resp.messageId!);
+      } else {
+        const errorCode = resp.error?.code;
+        console.error(`Failed to send notification to token ${token}:`, resp.error);
+        // Only remove tokens that are genuinely invalid, not server-side errors
+        if (
+          errorCode === 'messaging/registration-token-not-registered' ||
+          errorCode === 'messaging/invalid-registration-token' ||
+          errorCode === 'messaging/invalid-argument'
+        ) {
           tokensToRemove.push(token);
-          console.log(`Removed invalid token ${token} for user ${userRef.id}`);
+          console.log(`Marked invalid token ${token} for removal for user ${userRef.id}`);
         }
-        return null; // Indicate failure for this token  
       }
     });
-    const results = await Promise.all(sendPromises);
-    await userRef.update({ tokens: userData.tokens.filter((token: string) => !tokensToRemove.includes(token)) });
-    // Filter out nulls (failed sends) and return only successful message IDs
-    return results.filter((result): result is string => result !== null);
+
+    // Remove invalid tokens if any were found
+    if (tokensToRemove.length > 0) {
+      await userRef.update({ tokens: userData.tokens.filter((token: string) => !tokensToRemove.includes(token)) });
+    }
+
+    return successIds;
   } else {
     throw new Error("FCM tokens not found");
   }
