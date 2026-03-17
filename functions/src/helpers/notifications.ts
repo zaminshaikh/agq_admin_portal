@@ -140,6 +140,7 @@ export async function sendNotif(
 
     return successIds;
   } else {
-    throw new Error("FCM tokens not found");
+    console.warn(`No FCM tokens registered for user ${userRef.id}, skipping push notification.`);
+    return [];
   }
 }
