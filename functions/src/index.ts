@@ -34,6 +34,8 @@ import { createAdminAccount } from "./admin/createAdminAccount";
 import { updateAdminPermissions } from "./admin/updateAdminPermissions";
 import { getAllAdmins } from "./admin/getAllAdmins";
 import { deleteAdmin } from "./admin/deleteAdmin";
+import { listAuthUsers } from "./admin/listAuthUsers";
+import { adminLinkUser } from "./admin/adminLinkUser";
 
 export {
   // ======= TRIGGERS =======
@@ -66,4 +68,6 @@ export {
   updateAdminPermissions,
   getAllAdmins,
   deleteAdmin,
+  listAuthUsers,
+  adminLinkUser,
 }
