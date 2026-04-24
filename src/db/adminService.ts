@@ -21,6 +21,21 @@ export interface AdminClaims {
   adminPermissions: AdminPermission
 }
 
+export interface AuthUserSummary {
+  uid: string
+  email: string | null
+  displayName: string | null
+  phoneNumber: string | null
+  providerIds: string[]
+  disabled: boolean
+  emailVerified: boolean
+  creationTime: string | null
+  lastSignInTime: string | null
+  linkedCid: string | null
+  linkedClientName: string | null
+  isAdmin: boolean
+}
+
 export class AdminService {
   private db: Firestore = getFirestore(app)
   private adminsCollection: CollectionReference<DocumentData, DocumentData>
@@ -176,6 +191,35 @@ export class AdminService {
       console.error('Error deleting admin:', error)
       throw error
     }
+  }
+
+  /**
+   * Get all Firebase Auth users with their linking status against the clients
+   * collection. Requires 'admin' custom claim.
+   */
+  async listAuthUsers(): Promise<AuthUserSummary[]> {
+    const listAuthUsersFn = httpsCallable(this.functions, 'listAuthUsers')
+    const result = await listAuthUsersFn()
+    const data = result.data as { success: boolean, users: AuthUserSummary[] }
+    if (!data.success) {
+      throw new Error('Failed to fetch Firebase Auth users')
+    }
+    return data.users
+  }
+
+  /**
+   * Link a Firebase Auth UID to a client document (by CID). Requires 'admin'
+   * custom claim. Mirrors the mobile app's linkNewUser flow so an
+   * administrator can manually finish a failed link.
+   */
+  async linkAuthUserToClient(uid: string, cid: string): Promise<{ email: string }> {
+    const linkFn = httpsCallable(this.functions, 'adminLinkUser')
+    const result = await linkFn({ uid, cid })
+    const data = result.data as { success: boolean, message: string, email: string }
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to link user')
+    }
+    return { email: data.email }
   }
 
   /**
