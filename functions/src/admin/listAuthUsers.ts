@@ -27,6 +27,14 @@ interface AuthUserSummary {
   isAdmin: boolean;
 }
 
+interface UnlinkedClientSummary {
+  cid: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  email: string;
+}
+
 /**
  * Callable: listAuthUsers
  *
@@ -44,22 +52,40 @@ export const listAuthUsers = functions.https.onCall(
       const usersCollectionID = config.FIRESTORE_ACTIVE_USERS_COLLECTION;
       const firestore = admin.firestore();
 
-      // Build a lookup from uid -> client document info for all linked clients.
-      // We fetch the full collection and filter in memory because some docs may
-      // not have the `uid` field at all, which a Firestore != query cannot match.
+      // Single pass over the clients collection to build both:
+      // 1. A uid -> client lookup for already-linked clients.
+      // 2. The list of unlinked clients (sent back so the page doesn't have to
+      //    issue a second, heavier client fetch on the frontend).
       const linkedUidToClient = new Map<string, { cid: string; name: string }>();
+      const unlinkedClients: UnlinkedClientSummary[] = [];
       const clientsSnapshot = await firestore.collection(usersCollectionID).get();
 
       for (const docSnap of clientsSnapshot.docs) {
         const data = docSnap.data() || {};
-        const uid: string | undefined = data.uid;
-        if (!uid || uid === "") continue;
-        const first = data?.name?.first ?? "";
-        const last = data?.name?.last ?? "";
-        const company = data?.name?.company ?? "";
+        const first: string = data?.name?.first ?? "";
+        const last: string = data?.name?.last ?? "";
+        const company: string = data?.name?.company ?? "";
         const displayName = [first, last].filter(Boolean).join(" ") || company || "";
-        linkedUidToClient.set(uid, { cid: docSnap.id, name: displayName });
+        const uid: string | undefined = data.uid;
+
+        if (uid && uid !== "") {
+          linkedUidToClient.set(uid, { cid: docSnap.id, name: displayName });
+        } else {
+          unlinkedClients.push({
+            cid: docSnap.id,
+            firstName: first,
+            lastName: last,
+            companyName: company,
+            email: data?.initEmail ?? data?.email ?? "",
+          });
+        }
       }
+
+      unlinkedClients.sort((a, b) => {
+        const an = `${a.firstName} ${a.lastName} ${a.companyName}`.toLowerCase();
+        const bn = `${b.firstName} ${b.lastName} ${b.companyName}`.toLowerCase();
+        return an.localeCompare(bn);
+      });
 
       // Collect admin UIDs so we can flag them in the UI
       const adminUids = new Set<string>();
@@ -93,7 +119,7 @@ export const listAuthUsers = functions.https.onCall(
         pageToken = result.pageToken;
       } while (pageToken);
 
-      return { success: true, users };
+      return { success: true, users, unlinkedClients };
     } catch (error) {
       console.error("Error listing auth users:", error);
       if (error instanceof functions.https.HttpsError) {
