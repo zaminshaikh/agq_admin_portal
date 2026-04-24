@@ -64,8 +64,8 @@ const _nav: NavItem[] = [
   },
   {
     component: CNavItem,
-    name: "User Links",
-    to: '/user-links',
+    name: "User Authentication",
+    to: '/user-authentication',
     icon: <CIcon icon={cilLinkAlt} customClassName="nav-icon" />,
   },
   {

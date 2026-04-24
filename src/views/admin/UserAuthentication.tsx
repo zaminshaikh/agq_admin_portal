@@ -50,7 +50,7 @@ const buildClientLabel = (c: UnlinkedClientSummary): string => {
   return `${name} — ${c.cid}${emailPart}`
 }
 
-const UserLinks: React.FC = () => {
+const UserAuthentication: React.FC = () => {
   const { isAdmin, loading: permissionLoading, adminService } = usePermissions()
 
   const [loading, setLoading] = useState(true)
@@ -238,7 +238,7 @@ const UserLinks: React.FC = () => {
           <CCardHeader>
             <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div>
-                <h4 className="mb-0">User Links</h4>
+                <h4 className="mb-0">User Authentication</h4>
                 <small className="text-muted">
                   Firebase Auth users and their link status with client records. Use this to
                   manually complete a link when the mobile app&rsquo;s sign-up call failed.
@@ -474,4 +474,4 @@ const UserLinks: React.FC = () => {
   )
 }
 
-export default UserLinks
+export default UserAuthentication
