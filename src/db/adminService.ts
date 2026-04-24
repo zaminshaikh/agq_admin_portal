@@ -36,6 +36,14 @@ export interface AuthUserSummary {
   isAdmin: boolean
 }
 
+export interface UnlinkedClientSummary {
+  cid: string
+  firstName: string
+  lastName: string
+  companyName: string
+  email: string
+}
+
 export class AdminService {
   private db: Firestore = getFirestore(app)
   private adminsCollection: CollectionReference<DocumentData, DocumentData>
@@ -197,14 +205,21 @@ export class AdminService {
    * Get all Firebase Auth users with their linking status against the clients
    * collection. Requires 'admin' custom claim.
    */
-  async listAuthUsers(): Promise<AuthUserSummary[]> {
+  async listAuthUsers(): Promise<{ users: AuthUserSummary[]; unlinkedClients: UnlinkedClientSummary[] }> {
     const listAuthUsersFn = httpsCallable(this.functions, 'listAuthUsers')
     const result = await listAuthUsersFn()
-    const data = result.data as { success: boolean, users: AuthUserSummary[] }
+    const data = result.data as {
+      success: boolean
+      users: AuthUserSummary[]
+      unlinkedClients?: UnlinkedClientSummary[]
+    }
     if (!data.success) {
       throw new Error('Failed to fetch Firebase Auth users')
     }
-    return data.users
+    return {
+      users: data.users || [],
+      unlinkedClients: data.unlinkedClients || [],
+    }
   }
 
   /**

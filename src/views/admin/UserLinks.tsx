@@ -17,16 +17,16 @@ import {
   CModalFooter,
   CModalHeader,
   CModalTitle,
+  CMultiSelect,
   CRow,
   CSmartTable,
   CSpinner,
 } from '@coreui/react-pro'
+import type { Option } from '@coreui/react-pro/dist/esm/components/multi-select/types'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilLinkAlt, cilXCircle } from '@coreui/icons'
 import { usePermissions } from '../../contexts/PermissionContext'
-import { AuthUserSummary } from '../../db/adminService'
-import { DatabaseService } from '../../db/database'
-import { Client } from '../../db/models'
+import { AuthUserSummary, UnlinkedClientSummary } from '../../db/adminService'
 
 type FilterMode = 'all' | 'unlinked' | 'linked' | 'admins'
 
@@ -37,12 +37,18 @@ const formatDate = (value: string | null): string => {
   return d.toLocaleString()
 }
 
+const buildClientLabel = (c: UnlinkedClientSummary): string => {
+  const name = [c.firstName, c.lastName].filter(Boolean).join(' ') || c.companyName || 'Unnamed'
+  const emailPart = c.email ? ` (${c.email})` : ''
+  return `${name} — ${c.cid}${emailPart}`
+}
+
 const UserLinks: React.FC = () => {
   const { isAdmin, loading: permissionLoading, adminService } = usePermissions()
 
   const [loading, setLoading] = useState(true)
   const [users, setUsers] = useState<AuthUserSummary[]>([])
-  const [clients, setClients] = useState<Client[]>([])
+  const [unlinkedClients, setUnlinkedClients] = useState<UnlinkedClientSummary[]>([])
   const [filter, setFilter] = useState<FilterMode>('unlinked')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -53,17 +59,16 @@ const UserLinks: React.FC = () => {
   const [manualCid, setManualCid] = useState('')
   const [linkLoading, setLinkLoading] = useState(false)
   const [modalError, setModalError] = useState('')
+  const [selectKey, setSelectKey] = useState(0)
 
   const loadData = async () => {
     try {
       setLoading(true)
       setError('')
-      const [fetchedUsers, fetchedClients] = await Promise.all([
-        adminService.listAuthUsers(),
-        new DatabaseService().getClients(),
-      ])
+      const { users: fetchedUsers, unlinkedClients: fetchedUnlinkedClients } =
+        await adminService.listAuthUsers()
       setUsers(fetchedUsers)
-      setClients((fetchedClients || []) as Client[])
+      setUnlinkedClients(fetchedUnlinkedClients)
     } catch (err: any) {
       console.error('Error loading user links data:', err)
       setError(err?.message || 'Failed to load Firebase Auth users')
@@ -92,22 +97,23 @@ const UserLinks: React.FC = () => {
     }
   }, [users, filter])
 
-  const unlinkedClients = useMemo(
-    () => clients.filter((c) => !c.uid || c.uid === ''),
-    [clients],
+  const baseClientOptions = useMemo<Option[]>(
+    () =>
+      unlinkedClients.map((c) => ({
+        value: c.cid,
+        label: buildClientLabel(c),
+      })),
+    [unlinkedClients],
   )
 
-  const clientOptions = useMemo(() => {
-    const sorted = [...unlinkedClients].sort((a, b) => {
-      const an = `${a.firstName} ${a.lastName}`.toLowerCase()
-      const bn = `${b.firstName} ${b.lastName}`.toLowerCase()
-      return an.localeCompare(bn)
-    })
-    return sorted.map((c) => ({
-      value: c.cid,
-      label: `${c.cid} — ${c.firstName} ${c.lastName}${c.initEmail ? ` (${c.initEmail})` : ''}`,
-    }))
-  }, [unlinkedClients])
+  const clientOptions = useMemo<Option[]>(
+    () =>
+      baseClientOptions.map((opt) => ({
+        ...opt,
+        selected: opt.value === selectedCid,
+      })),
+    [baseClientOptions, selectedCid],
+  )
 
   const handleOpenLinkModal = (user: AuthUserSummary) => {
     setActiveUser(user)
@@ -115,6 +121,7 @@ const UserLinks: React.FC = () => {
     setManualCid('')
     setModalError('')
     setShowLinkModal(true)
+    setSelectKey((k) => k + 1)
   }
 
   const handleConfirmLink = async () => {
@@ -360,23 +367,24 @@ const UserLinks: React.FC = () => {
 
           <div className="mb-3">
             <label className="form-label fw-semibold mb-1">
-              Select an unlinked client
+              Search and select an unlinked client
             </label>
-            <CFormSelect
-              value={selectedCid}
-              onChange={(e) => {
-                setSelectedCid(e.target.value)
-                if (e.target.value) setManualCid('')
-              }}
+            <CMultiSelect
+              key={selectKey}
+              options={clientOptions}
+              multiple={false}
+              cleaner
+              search
+              virtualScroller
+              placeholder="Type a name, email, or CID to search..."
+              searchNoResultsLabel="No matching clients"
               disabled={linkLoading}
-            >
-              <option value="">-- Choose a client --</option>
-              {clientOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </CFormSelect>
+              onChange={(selected) => {
+                const value = (selected[0]?.value as string | undefined) ?? ''
+                setSelectedCid(value)
+                if (value) setManualCid('')
+              }}
+            />
             <small className="text-muted">
               Showing {clientOptions.length} client record
               {clientOptions.length === 1 ? '' : 's'} without a linked UID.
