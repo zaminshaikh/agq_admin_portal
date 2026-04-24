@@ -33,11 +33,15 @@ import { AuthUserSummary, UnlinkedClientSummary } from '../../db/adminService'
 
 type FilterMode = 'all' | 'unlinked' | 'linked' | 'admins'
 
-const formatDate = (value: string | null): string => {
+const parseTimestamp = (value: string | null): number => {
+  if (!value) return 0
+  const t = new Date(value).getTime()
+  return isNaN(t) ? 0 : t
+}
+
+const formatTimestamp = (value: number): string => {
   if (!value) return '-'
-  const d = new Date(value)
-  if (isNaN(d.getTime())) return '-'
-  return d.toLocaleString()
+  return new Date(value).toLocaleString()
 }
 
 const buildClientLabel = (c: UnlinkedClientSummary): string => {
@@ -221,6 +225,8 @@ const UserLinks: React.FC = () => {
   const items = filteredUsers.map((u) => ({
     ...u,
     _linkedLabel: u.linkedClientName || '',
+    creationTime: parseTimestamp(u.creationTime),
+    lastSignInTime: parseTimestamp(u.lastSignInTime),
   }))
 
   const activeUserLinked = !!activeUser?.linkedCid
@@ -331,14 +337,14 @@ const UserLinks: React.FC = () => {
                         : item.providerIds.join(', ')}
                     </td>
                   ),
-                  creationTime: (item: AuthUserSummary) => (
+                  creationTime: (item: AuthUserSummary & { creationTime: number }) => (
                     <td>
-                      <small>{formatDate(item.creationTime)}</small>
+                      <small>{formatTimestamp(item.creationTime)}</small>
                     </td>
                   ),
-                  lastSignInTime: (item: AuthUserSummary) => (
+                  lastSignInTime: (item: AuthUserSummary & { lastSignInTime: number }) => (
                     <td>
-                      <small>{formatDate(item.lastSignInTime)}</small>
+                      <small>{formatTimestamp(item.lastSignInTime)}</small>
                     </td>
                   ),
                   actions: (item: AuthUserSummary) => (
