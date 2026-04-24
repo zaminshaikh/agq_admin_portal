@@ -2,6 +2,7 @@ import CIcon from '@coreui/icons-react'
 import {
   cilFolderOpen,
   cilLayers,
+  cilLinkAlt,
   cilPeople,
   cilSpeedometer,
 } from '@coreui/icons'
@@ -38,8 +39,14 @@ export const useConditionalNav = (): NavItem[] => {
     },
   ]
 
-  // Add Admin Management tab only for users with admin permissions
+  // Admin-only tabs
   if (isAdmin) {
+    baseNav.push({
+      component: CNavItem,
+      name: "User Links",
+      to: '/user-links',
+      icon: <CIcon icon={cilLinkAlt} customClassName="nav-icon" />,
+    })
     baseNav.push({
       component: CNavItem,
       name: "Admin Management",
