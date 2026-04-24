@@ -7,14 +7,16 @@ import { DeleteClient } from './DeleteClient';
 import { EditClient } from './EditClient';
 import ImportClients from './ImportClients';
 import { UnlinkClient } from './UnlinkClient';
+import { LinkClient } from './LinkClient';
 import SendInviteModal from './SendInviteModal';
-import { cilCheckCircle, cilCloudDownload, cilXCircle, cilEnvelopeClosed } from '@coreui/icons';
+import { cilCheckCircle, cilCloudDownload, cilLinkAlt, cilXCircle, cilEnvelopeClosed } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { usePermissions } from '../../contexts/PermissionContext';
 
 const ClientsTable = () => {
-    const { canWrite, admin, adminService } = usePermissions();
+    const { canWrite, isAdmin, admin, adminService } = usePermissions();
     const [showUnlinkClientModal, setShowUnlinkClientModal] = useState(false);
+    const [showLinkClientModal, setShowLinkClientModal] = useState(false);
     const [showImportClientsModal, setShowImportClientsModal] = useState(false);
     const [showCreateNewClientModal, setShowCreateNewClientModal] = useState(false);
     const [showDisplayDetailsModal, setShowDisplayDetailsModal] = useState(false);
@@ -222,6 +224,7 @@ const ClientsTable = () => {
     return (
         <CContainer>
             {showUnlinkClientModal && <UnlinkClient showModal={showUnlinkClientModal} setShowModal={setShowUnlinkClientModal} client={currentClient} setClients={setClients}/>}
+            {showLinkClientModal && <LinkClient showModal={showLinkClientModal} setShowModal={setShowLinkClientModal} client={currentClient} setClients={setClients}/>}
             {showImportClientsModal && <ImportClients showModal={showImportClientsModal} setShowModal={setShowImportClientsModal} clients={clients}/>}
             {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} setClients={setClients} activeClient={currentClient}/>}
             {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} clients={clients} currentClient={currentClient ?? emptyClient}/>}
@@ -311,18 +314,35 @@ const ClientsTable = () => {
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
-                                    <CButton 
-                                        size="sm" 
-                                        color="primary" 
-                                        className="ml-1" 
-                                        variant="outline"
-                                        disabled={!canWrite}
-                                        onClick={() => {
-                                            setShowUnlinkClientModal(true);
-                                            setCurrentClient(clients.find(client => client.cid === item.cid))
-                                        }}>
-                                        Unlink Client 
-                                    </CButton>
+                                    {item.linked ? (
+                                        <CButton 
+                                            size="sm" 
+                                            color="primary" 
+                                            className="ml-1" 
+                                            variant="outline"
+                                            disabled={!canWrite}
+                                            onClick={() => {
+                                                setShowUnlinkClientModal(true);
+                                                setCurrentClient(clients.find(client => client.cid === item.cid))
+                                            }}>
+                                            Unlink Client 
+                                        </CButton>
+                                    ) : (
+                                        <CButton 
+                                            size="sm" 
+                                            color="success" 
+                                            className="ml-1" 
+                                            variant="outline"
+                                            disabled={!canWrite || !isAdmin}
+                                            title={!isAdmin ? 'Admin permission required to link an account' : 'Link a Firebase Auth account to this client'}
+                                            onClick={() => {
+                                                setShowLinkClientModal(true);
+                                                setCurrentClient(clients.find(client => client.cid === item.cid))
+                                            }}>
+                                            <CIcon icon={cilLinkAlt} className="me-1" />
+                                            Link Client
+                                        </CButton>
+                                    )}
                                 </CCol>
                                 <CCol className="text-center">
                                     <CButton 

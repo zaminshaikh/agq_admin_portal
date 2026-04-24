@@ -13,6 +13,7 @@ const Activities = React.lazy(() => import('./views/activities/Activities'))
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Statements = React.lazy(() => import('./views/statements/Statements'))
 const AdminManagement = React.lazy(() => import('./views/admin/AdminManagement'))
+const UserAuthentication = React.lazy(() => import('./views/admin/UserAuthentication'))
 
 const routes: Route[] = [
   { path: '/', exact: true, name: <Translation>{(t) => t('home')}</Translation> },
@@ -30,6 +31,11 @@ const routes: Route[] = [
     path: '/statements',
     name: <Translation>{(t) => t('statements')}</Translation>,
     element: Statements,
+  },
+  {
+    path: '/user-authentication',
+    name: 'User Authentication',
+    element: UserAuthentication,
   },
   {
     path: '/admin-management',
