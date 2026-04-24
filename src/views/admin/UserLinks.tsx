@@ -25,6 +25,9 @@ import {
 import type { Option } from '@coreui/react-pro/dist/esm/components/multi-select/types'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilLinkAlt, cilXCircle } from '@coreui/icons'
+import { collection, getDocs, getFirestore } from 'firebase/firestore'
+import { app } from '../../App'
+import config from '../../../config.json'
 import { usePermissions } from '../../contexts/PermissionContext'
 import { AuthUserSummary, UnlinkedClientSummary } from '../../db/adminService'
 
@@ -61,14 +64,46 @@ const UserLinks: React.FC = () => {
   const [modalError, setModalError] = useState('')
   const [selectKey, setSelectKey] = useState(0)
 
+  const fetchUnlinkedClientsDirect = async (): Promise<UnlinkedClientSummary[]> => {
+    const db = getFirestore(app)
+    const snap = await getDocs(collection(db, config.FIRESTORE_ACTIVE_USERS_COLLECTION))
+    const out: UnlinkedClientSummary[] = []
+    snap.forEach((docSnap) => {
+      const data = docSnap.data() || {}
+      const uid = (data.uid as string | undefined) ?? ''
+      if (uid && uid !== '') return
+      out.push({
+        cid: docSnap.id,
+        firstName: data?.name?.first ?? '',
+        lastName: data?.name?.last ?? '',
+        companyName: data?.name?.company ?? '',
+        email: data?.initEmail ?? data?.email ?? '',
+      })
+    })
+    out.sort((a, b) => {
+      const an = `${a.firstName} ${a.lastName} ${a.companyName}`.toLowerCase()
+      const bn = `${b.firstName} ${b.lastName} ${b.companyName}`.toLowerCase()
+      return an.localeCompare(bn)
+    })
+    return out
+  }
+
   const loadData = async () => {
     try {
       setLoading(true)
       setError('')
-      const { users: fetchedUsers, unlinkedClients: fetchedUnlinkedClients } =
-        await adminService.listAuthUsers()
-      setUsers(fetchedUsers)
-      setUnlinkedClients(fetchedUnlinkedClients)
+      // Run auth-user lookup and the unlinked-client read in parallel. We pull
+      // the client list directly from Firestore so the page works even before
+      // the cloud function is updated to include `unlinkedClients` in its
+      // response (and to avoid waiting on the function's listUsers pagination).
+      const [authResult, directClients] = await Promise.all([
+        adminService.listAuthUsers(),
+        fetchUnlinkedClientsDirect(),
+      ])
+      setUsers(authResult.users)
+      setUnlinkedClients(
+        authResult.unlinkedClients.length > 0 ? authResult.unlinkedClients : directClients,
+      )
     } catch (err: any) {
       console.error('Error loading user links data:', err)
       setError(err?.message || 'Failed to load Firebase Auth users')
