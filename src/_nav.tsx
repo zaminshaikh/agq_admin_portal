@@ -12,6 +12,7 @@ import {
   cilFolderOpen,
   cilGrid,
   cilLayers,
+  cilLinkAlt,
   cilMap,
   cilNotes,
   cilPencil,
@@ -60,6 +61,12 @@ const _nav: NavItem[] = [
     name: "Statements",
     to: '/statements',
     icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: "User Links",
+    to: '/user-links',
+    icon: <CIcon icon={cilLinkAlt} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
