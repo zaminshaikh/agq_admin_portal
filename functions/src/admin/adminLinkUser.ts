@@ -17,6 +17,7 @@ import config from "../../config.json";
 interface AdminLinkUserData {
   uid: string;
   cid: string;
+  markEmailVerified?: boolean;
 }
 
 /**
@@ -34,7 +35,7 @@ export const adminLinkUser = functions.https.onCall(
   async (data: AdminLinkUserData, context: functions.https.CallableContext) => {
     checkAdminPermission(context, "admin");
 
-    const { uid, cid } = data || ({} as AdminLinkUserData);
+    const { uid, cid, markEmailVerified } = data || ({} as AdminLinkUserData);
     if (!uid || !cid) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -63,6 +64,21 @@ export const adminLinkUser = functions.https.onCall(
     }
 
     const email = authUser.email ?? "";
+
+    // Optionally mark the auth account as verified — useful when the admin is
+    // vouching for an account whose owner never clicked the verification email.
+    if (markEmailVerified && !authUser.emailVerified) {
+      try {
+        await admin.auth().updateUser(uid, { emailVerified: true });
+        console.log(`Marked uid ${uid} as email-verified by admin ${context.auth!.uid}`);
+      } catch (verifyError) {
+        console.error("Failed to mark email as verified:", verifyError);
+        throw new functions.https.HttpsError(
+          "internal",
+          "Failed to mark the Firebase account as email-verified."
+        );
+      }
+    }
 
     const firestore = admin.firestore();
     const usersCollection = firestore.collection(usersCollectionID);
@@ -123,6 +139,7 @@ export const adminLinkUser = functions.https.onCall(
       success: true,
       message: `Linked UID ${uid} to client ${cid}.`,
       email,
+      emailVerified: markEmailVerified ? true : authUser.emailVerified,
     };
   }
 );
