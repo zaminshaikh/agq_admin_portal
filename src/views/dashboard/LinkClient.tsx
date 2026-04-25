@@ -1,6 +1,7 @@
 import {
   CAlert,
   CButton,
+  CFormCheck,
   CFormInput,
   CInputGroup,
   CInputGroupText,
@@ -14,6 +15,8 @@ import {
   CSpinner,
 } from '@coreui/react-pro'
 import type { Option } from '@coreui/react-pro/dist/esm/components/multi-select/types'
+import CIcon from '@coreui/icons-react'
+import { cilCheckCircle, cilWarning } from '@coreui/icons'
 import { useEffect, useMemo, useState } from 'react'
 import { Client, DatabaseService } from 'src/db/database'
 import { usePermissions } from '../../contexts/PermissionContext'
@@ -29,7 +32,8 @@ interface LinkClientProps {
 const buildUidLabel = (u: AuthUserSummary): string => {
   const email = u.email || 'no email'
   const name = u.displayName ? ` · ${u.displayName}` : ''
-  return `${email}${name} — ${u.uid}`
+  const verifiedTag = u.emailVerified ? '' : ' [unverified]'
+  return `${email}${name}${verifiedTag} — ${u.uid}`
 }
 
 export const LinkClient: React.FC<LinkClientProps> = ({
@@ -47,6 +51,7 @@ export const LinkClient: React.FC<LinkClientProps> = ({
   const [error, setError] = useState('')
   const [isLinking, setIsLinking] = useState(false)
   const [selectKey, setSelectKey] = useState(0)
+  const [markVerified, setMarkVerified] = useState(false)
 
   const loadUnlinkedUsers = async () => {
     try {
@@ -73,10 +78,25 @@ export const LinkClient: React.FC<LinkClientProps> = ({
       setSelectedUid('')
       setManualUid('')
       setError('')
+      setMarkVerified(false)
       setSelectKey((k) => k + 1)
       loadUnlinkedUsers()
     }
   }, [showModal])
+
+  const selectedUser = useMemo<AuthUserSummary | undefined>(
+    () => unlinkedUsers.find((u) => u.uid === selectedUid),
+    [unlinkedUsers, selectedUid],
+  )
+
+  // Auto-suggest "mark verified" when an unverified UID is picked from the dropdown
+  useEffect(() => {
+    if (selectedUser && !selectedUser.emailVerified) {
+      setMarkVerified(true)
+    } else {
+      setMarkVerified(false)
+    }
+  }, [selectedUser])
 
   const baseOptions = useMemo<Option[]>(
     () =>
@@ -110,7 +130,13 @@ export const LinkClient: React.FC<LinkClientProps> = ({
     setIsLinking(true)
     setError('')
     try {
-      await adminService.linkAuthUserToClient(uid, client.cid)
+      // Only forward markEmailVerified when we actually know the picked UID is
+      // unverified (selecting from the dropdown). For a manually typed UID the
+      // backend will read emailVerified itself and ignore the flag if not needed.
+      const shouldMarkVerified = !!(selectedUser && !selectedUser.emailVerified && markVerified)
+      await adminService.linkAuthUserToClient(uid, client.cid, {
+        markEmailVerified: shouldMarkVerified,
+      })
       const service = new DatabaseService()
       if (admin) service.setCurrentAdmin(admin)
       const updatedClients = await service.getClients()
@@ -209,6 +235,40 @@ export const LinkClient: React.FC<LinkClientProps> = ({
             {unlinkedUsers.length === 1 ? '' : 's'} without a linked client.
           </small>
         </div>
+
+        {selectedUser && !selectedUser.emailVerified && !alreadyLinked && (
+          <CAlert color="warning" className="mb-3">
+            <div className="d-flex align-items-start">
+              <CIcon icon={cilWarning} className="me-2 mt-1" />
+              <div>
+                <strong>This Firebase account&rsquo;s email is unverified.</strong>
+                <div className="small mt-1">
+                  The user signed up but never confirmed their email through their inbox.
+                  Only link this UID if you&rsquo;ve independently confirmed it belongs to{' '}
+                  <strong>
+                    {client?.firstName} {client?.lastName}
+                  </strong>
+                  . Otherwise, delete the account from User Authentication instead.
+                </div>
+                <CFormCheck
+                  id="link-client-mark-verified"
+                  className="mt-2"
+                  checked={markVerified}
+                  onChange={(e) => setMarkVerified(e.target.checked)}
+                  label="Also mark this email as verified at link time (admin override)"
+                  disabled={isLinking}
+                />
+              </div>
+            </div>
+          </CAlert>
+        )}
+
+        {selectedUser && selectedUser.emailVerified && !alreadyLinked && (
+          <div className="text-success small mb-3 d-flex align-items-center">
+            <CIcon icon={cilCheckCircle} className="me-1" />
+            This Firebase account&rsquo;s email is verified.
+          </div>
+        )}
 
         <div className="mb-1">
           <label className="form-label fw-semibold mb-1">Or enter a UID manually</label>

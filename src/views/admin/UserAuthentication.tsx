@@ -7,6 +7,7 @@ import {
   CCardBody,
   CCardHeader,
   CCol,
+  CFormCheck,
   CFormInput,
   CFormSelect,
   CInputGroup,
@@ -24,7 +25,7 @@ import {
 } from '@coreui/react-pro'
 import type { Option } from '@coreui/react-pro/dist/esm/components/multi-select/types'
 import CIcon from '@coreui/icons-react'
-import { cilCheckCircle, cilLinkAlt, cilXCircle } from '@coreui/icons'
+import { cilCheckCircle, cilLinkAlt, cilTrash, cilWarning, cilXCircle } from '@coreui/icons'
 import { collection, getDocs, getFirestore } from 'firebase/firestore'
 import { app } from '../../App'
 import config from '../../../config.json'
@@ -65,8 +66,15 @@ const UserAuthentication: React.FC = () => {
   const [selectedCid, setSelectedCid] = useState('')
   const [manualCid, setManualCid] = useState('')
   const [linkLoading, setLinkLoading] = useState(false)
+  const [markVerified, setMarkVerified] = useState(false)
   const [modalError, setModalError] = useState('')
   const [selectKey, setSelectKey] = useState(0)
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<AuthUserSummary | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const fetchUnlinkedClientsDirect = async (): Promise<UnlinkedClientSummary[]> => {
     const db = getFirestore(app)
@@ -158,6 +166,7 @@ const UserAuthentication: React.FC = () => {
     setActiveUser(user)
     setSelectedCid('')
     setManualCid('')
+    setMarkVerified(!user.emailVerified)
     setModalError('')
     setShowLinkModal(true)
     setSelectKey((k) => k + 1)
@@ -174,8 +183,12 @@ const UserAuthentication: React.FC = () => {
     setLinkLoading(true)
     setModalError('')
     try {
-      await adminService.linkAuthUserToClient(activeUser.uid, cid)
-      setSuccess(`Linked UID ${activeUser.uid} to client ${cid}.`)
+      await adminService.linkAuthUserToClient(activeUser.uid, cid, {
+        markEmailVerified: !activeUser.emailVerified && markVerified,
+      })
+      const verifiedNote =
+        !activeUser.emailVerified && markVerified ? ' (and marked email verified)' : ''
+      setSuccess(`Linked UID ${activeUser.uid} to client ${cid}${verifiedNote}.`)
       setShowLinkModal(false)
       setActiveUser(null)
       await loadData()
@@ -187,6 +200,34 @@ const UserAuthentication: React.FC = () => {
       setModalError(message)
     } finally {
       setLinkLoading(false)
+    }
+  }
+
+  const handleOpenDeleteModal = (user: AuthUserSummary) => {
+    setDeleteTarget(user)
+    setDeleteConfirmText('')
+    setDeleteError('')
+    setShowDeleteModal(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError('')
+    try {
+      await adminService.deleteAuthUser(deleteTarget.uid)
+      setSuccess(`Deleted Firebase Auth user ${deleteTarget.uid}.`)
+      setShowDeleteModal(false)
+      setDeleteTarget(null)
+      await loadData()
+    } catch (err: any) {
+      console.error('Error deleting auth user:', err)
+      const message =
+        err?.message?.replace(/^FirebaseError:\s*/, '') ||
+        'Failed to delete this Firebase Auth user.'
+      setDeleteError(message)
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -213,13 +254,14 @@ const UserAuthentication: React.FC = () => {
   }
 
   const columns = [
-    { key: 'status', label: 'Status', _style: { width: '10%' }, filter: false, sorter: false },
-    { key: 'uid', label: 'Firebase UID', _style: { width: '22%' } },
+    { key: 'status', label: 'Status', _style: { width: '9%' }, filter: false, sorter: false },
+    { key: 'verified', label: 'Verified', _style: { width: '7%' }, filter: false, sorter: false },
+    { key: 'uid', label: 'Firebase UID', _style: { width: '20%' } },
     { key: 'email', label: 'Email' },
-    { key: 'providers', label: 'Providers', _style: { width: '10%' }, filter: false },
-    { key: 'creationTime', label: 'Created', _style: { width: '12%' }, filter: false },
-    { key: 'lastSignInTime', label: 'Last Sign-In', _style: { width: '12%' }, filter: false },
-    { key: 'actions', label: '', _style: { width: '10%' }, filter: false, sorter: false },
+    { key: 'providers', label: 'Providers', _style: { width: '9%' }, filter: false },
+    { key: 'creationTime', label: 'Created', _style: { width: '11%' }, filter: false },
+    { key: 'lastSignInTime', label: 'Last Sign-In', _style: { width: '11%' }, filter: false },
+    { key: 'actions', label: '', _style: { width: '12%' }, filter: false, sorter: false },
   ]
 
   const items = filteredUsers.map((u) => ({
@@ -307,6 +349,25 @@ const UserAuthentication: React.FC = () => {
                       )}
                     </td>
                   ),
+                  verified: (item: AuthUserSummary) => (
+                    <td>
+                      {item.emailVerified ? (
+                        <CBadge color="success" className="d-inline-flex align-items-center" title="Email verified">
+                          <CIcon icon={cilCheckCircle} className="me-1" />
+                          Yes
+                        </CBadge>
+                      ) : (
+                        <CBadge
+                          color="warning"
+                          className="d-inline-flex align-items-center"
+                          title="User never confirmed their email address"
+                        >
+                          <CIcon icon={cilWarning} className="me-1" />
+                          No
+                        </CBadge>
+                      )}
+                    </td>
+                  ),
                   uid: (item: AuthUserSummary) => (
                     <td>
                       <code style={{ fontSize: '0.85em' }}>{item.uid}</code>
@@ -349,23 +410,41 @@ const UserAuthentication: React.FC = () => {
                   ),
                   actions: (item: AuthUserSummary) => (
                     <td>
-                      <CButton
-                        color="primary"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenLinkModal(item)}
-                        disabled={!!item.linkedCid || item.isAdmin}
-                        title={
-                          item.isAdmin
-                            ? 'This UID belongs to an admin account'
-                            : item.linkedCid
-                              ? 'Already linked'
-                              : 'Link this UID to a client'
-                        }
-                      >
-                        <CIcon icon={cilLinkAlt} className="me-1" />
-                        Link
-                      </CButton>
+                      <div className="d-flex gap-1 flex-wrap">
+                        <CButton
+                          color="primary"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenLinkModal(item)}
+                          disabled={!!item.linkedCid || item.isAdmin}
+                          title={
+                            item.isAdmin
+                              ? 'This UID belongs to an admin account'
+                              : item.linkedCid
+                                ? 'Already linked'
+                                : 'Link this UID to a client'
+                          }
+                        >
+                          <CIcon icon={cilLinkAlt} className="me-1" />
+                          Link
+                        </CButton>
+                        <CButton
+                          color="danger"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenDeleteModal(item)}
+                          disabled={!!item.linkedCid || item.isAdmin}
+                          title={
+                            item.isAdmin
+                              ? 'Admin accounts must be removed via Admin Management'
+                              : item.linkedCid
+                                ? 'Unlink the client first'
+                                : 'Delete this Firebase Auth account'
+                          }
+                        >
+                          <CIcon icon={cilTrash} />
+                        </CButton>
+                      </div>
                     </td>
                   ),
                 }}
@@ -395,10 +474,45 @@ const UserAuthentication: React.FC = () => {
               <CInputGroup className="mb-2">
                 <CInputGroupText>Email</CInputGroupText>
                 <CFormInput value={activeUser.email ?? ''} disabled />
+                <CInputGroupText>
+                  {activeUser.emailVerified ? (
+                    <span className="text-success d-inline-flex align-items-center">
+                      <CIcon icon={cilCheckCircle} className="me-1" /> Verified
+                    </span>
+                  ) : (
+                    <span className="text-warning d-inline-flex align-items-center">
+                      <CIcon icon={cilWarning} className="me-1" /> Unverified
+                    </span>
+                  )}
+                </CInputGroupText>
               </CInputGroup>
               {activeUserLinked && (
                 <CAlert color="warning">
                   This UID is already linked to client {activeUser.linkedCid}.
+                </CAlert>
+              )}
+              {!activeUser.emailVerified && !activeUserLinked && (
+                <CAlert color="warning" className="mb-3">
+                  <div className="d-flex align-items-start">
+                    <CIcon icon={cilWarning} className="me-2 mt-1" />
+                    <div>
+                      <strong>This account&rsquo;s email is unverified.</strong>
+                      <div className="small mt-1">
+                        The user signed up but never confirmed their email through their
+                        inbox. Only link this UID if you can independently confirm the
+                        owner is the correct client &mdash; otherwise the account may have
+                        been created in error and should be deleted instead.
+                      </div>
+                      <CFormCheck
+                        id="mark-email-verified"
+                        className="mt-2"
+                        checked={markVerified}
+                        onChange={(e) => setMarkVerified(e.target.checked)}
+                        label="Also mark this email as verified at link time (admin override)"
+                        disabled={linkLoading}
+                      />
+                    </div>
+                  </div>
                 </CAlert>
               )}
             </>
@@ -467,6 +581,76 @@ const UserAuthentication: React.FC = () => {
           >
             <CIcon icon={cilLinkAlt} className="me-1" />
             Link Account
+          </CLoadingButton>
+        </CModalFooter>
+      </CModal>
+
+      <CModal
+        visible={showDeleteModal}
+        onClose={() => (deleteLoading ? undefined : setShowDeleteModal(false))}
+        size="lg"
+        backdrop="static"
+        alignment="center"
+      >
+        <CModalHeader>
+          <CModalTitle>
+            <CIcon icon={cilWarning} className="me-2 text-danger" />
+            Delete Firebase Auth User
+          </CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {deleteError && <CAlert color="danger">{deleteError}</CAlert>}
+          {deleteTarget && (
+            <>
+              <p className="mb-2">
+                You are about to permanently delete the Firebase Auth account for{' '}
+                <strong>{deleteTarget.email || 'this UID'}</strong>. This is appropriate
+                for abandoned sign-ups (e.g. unverified emails that were never linked to
+                a client). <strong>This action is irreversible.</strong>
+              </p>
+              <CInputGroup className="mb-2">
+                <CInputGroupText>UID</CInputGroupText>
+                <CFormInput value={deleteTarget.uid} disabled />
+              </CInputGroup>
+              <CInputGroup className="mb-3">
+                <CInputGroupText>Email</CInputGroupText>
+                <CFormInput value={deleteTarget.email ?? ''} disabled />
+                <CInputGroupText>
+                  {deleteTarget.emailVerified ? (
+                    <span className="text-success">Verified</span>
+                  ) : (
+                    <span className="text-warning">Unverified</span>
+                  )}
+                </CInputGroupText>
+              </CInputGroup>
+              <label className="form-label fw-semibold mb-1">
+                Type <code>DELETE</code> to confirm
+              </label>
+              <CFormInput
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                disabled={deleteLoading}
+              />
+            </>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton
+            color="secondary"
+            onClick={() => setShowDeleteModal(false)}
+            disabled={deleteLoading}
+          >
+            Cancel
+          </CButton>
+          <CLoadingButton
+            color="danger"
+            loading={deleteLoading}
+            onClick={handleConfirmDelete}
+            disabled={deleteConfirmText.trim() !== 'DELETE'}
+          >
+            <CIcon icon={cilTrash} className="me-1" />
+            Delete UID
           </CLoadingButton>
         </CModalFooter>
       </CModal>
