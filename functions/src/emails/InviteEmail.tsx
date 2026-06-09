@@ -2,11 +2,28 @@
  * @file InviteEmail.tsx
  * @description React Email template for the AGQ client invitation.
  *
- * This template uses @react-email/components which compile JSX into the
- * "bulletproof" table-based HTML pattern. The components automatically emit
- * Outlook-compatible fallbacks (mso-conditional VML, mso-line-height-rule,
- * etc.) while still producing visually rich output (rounded corners, custom
- * fonts, etc.) for modern clients like Gmail and Apple Mail.
+ * The template uses @react-email/components for the structural pieces
+ * (<Html>, <Body>, <Container>, <Heading>, <Text>, <Img>, <Link>) which
+ * compile JSX into bulletproof table-based HTML.
+ *
+ * For the *colored* regions (header, footer, step number badges, CID box,
+ * support panel, signature panel, "important" callout) the template drops
+ * down to raw <table bgcolor="..."> markup. This is intentional: Outlook,
+ * especially "New Outlook for Windows" (Webview2 / Edge engine) and
+ * Outlook 365 webmail in dark mode, aggressively strips inline
+ * `background-color` CSS but respects the legacy `bgcolor=""` HTML
+ * attribute. Keeping both means the email renders consistently in
+ * Outlook light AND dark mode, in addition to Gmail / Apple Mail.
+ *
+ * The <Head> also includes:
+ *   - color-scheme meta tags that opt the message out of automatic dark
+ *     mode in iOS Mail and Outlook 365.
+ *   - <!--[if mso]> conditional VML rectangles that paint the header /
+ *     footer background in Classic Outlook even when CSS backgrounds are
+ *     stripped.
+ *   - [data-ogsc] / [data-ogsb] selectors that re-assert colors inside
+ *     Outlook 365 webmail dark mode (which wraps content in those data
+ *     attributes when inverting colors).
  *
  * Render to HTML with `@react-email/render` (see ../callable/sendInviteEmail.ts).
  */
@@ -17,12 +34,10 @@ import {
   Container,
   Head,
   Heading,
-  Hr,
   Html,
   Img,
   Link,
   Preview,
-  Section,
   Text,
 } from "@react-email/components";
 
@@ -73,22 +88,6 @@ const styles = {
     border: `1px solid ${COLORS.border}`,
     overflow: "hidden",
   } as React.CSSProperties,
-  header: {
-    backgroundColor: COLORS.primary,
-    backgroundImage: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%)`,
-    padding: "36px 24px",
-    textAlign: "center" as const,
-  } as React.CSSProperties,
-  headerTitle: {
-    fontFamily: FONT_SERIF,
-    color: "#ffffff",
-    fontSize: 26,
-    lineHeight: "32px",
-    fontWeight: 400,
-    margin: "16px 0 0 0",
-    padding: 0,
-    letterSpacing: "-0.2px",
-  } as React.CSSProperties,
   contentPadding: {
     padding: "32px 32px 8px 32px",
   } as React.CSSProperties,
@@ -105,13 +104,6 @@ const styles = {
     color: COLORS.text,
     margin: "0 0 16px 0",
   } as React.CSSProperties,
-  stepsPanel: {
-    backgroundColor: COLORS.panelBg,
-    borderLeft: `4px solid ${COLORS.primary}`,
-    borderRadius: 8,
-    padding: "24px",
-    margin: "8px 32px 8px 32px",
-  } as React.CSSProperties,
   stepsTitle: {
     fontFamily: FONT_SERIF,
     fontSize: 20,
@@ -120,38 +112,6 @@ const styles = {
     margin: "0 0 20px 0",
     fontWeight: 400,
   } as React.CSSProperties,
-  stepCard: {
-    backgroundColor: COLORS.cardBg,
-    border: `1px solid ${COLORS.border}`,
-    borderRadius: 8,
-    padding: "20px",
-    margin: "0 0 16px 0",
-  } as React.CSSProperties,
-  stepCardLast: {
-    backgroundColor: COLORS.cardBg,
-    border: `1px solid ${COLORS.border}`,
-    borderRadius: 8,
-    padding: "20px",
-    margin: 0,
-  } as React.CSSProperties,
-  stepHeaderRow: {
-    margin: 0,
-    padding: 0,
-  } as React.CSSProperties,
-  stepBadge: {
-    backgroundColor: COLORS.primary,
-    color: "#ffffff",
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    fontFamily: FONT_BODY,
-    fontWeight: 700,
-    fontSize: 14,
-    lineHeight: "28px",
-    textAlign: "center" as const,
-    display: "inline-block",
-    verticalAlign: "middle",
-  } as React.CSSProperties,
   stepTitle: {
     fontFamily: FONT_SERIF,
     fontSize: 18,
@@ -159,9 +119,7 @@ const styles = {
     color: COLORS.text,
     fontWeight: 400,
     margin: 0,
-    padding: "0 0 0 12px",
-    display: "inline-block",
-    verticalAlign: "middle",
+    padding: 0,
   } as React.CSSProperties,
   stepBodyText: {
     fontSize: 15,
@@ -183,26 +141,11 @@ const styles = {
     textDecoration: "underline",
     wordBreak: "break-all" as const,
   } as React.CSSProperties,
-  noteBox: {
-    backgroundColor: COLORS.warningBg,
-    borderLeft: `4px solid ${COLORS.warningBorder}`,
-    borderRadius: 6,
-    padding: "12px 14px",
-    margin: "14px 0 0 0",
-  } as React.CSSProperties,
   noteText: {
     fontSize: 14,
     lineHeight: "20px",
     color: COLORS.text,
     margin: 0,
-  } as React.CSSProperties,
-  cidBox: {
-    backgroundColor: COLORS.cidBg,
-    border: `2px solid ${COLORS.primary}`,
-    borderRadius: 8,
-    padding: "18px",
-    margin: "14px 0 0 0",
-    textAlign: "center" as const,
   } as React.CSSProperties,
   cidLabel: {
     fontSize: 12,
@@ -222,14 +165,6 @@ const styles = {
     letterSpacing: "2px",
     margin: 0,
   } as React.CSSProperties,
-  supportPanel: {
-    backgroundColor: COLORS.panelBg,
-    border: `1px solid ${COLORS.border}`,
-    borderRadius: 8,
-    padding: "20px",
-    margin: "8px 32px 8px 32px",
-    textAlign: "center" as const,
-  } as React.CSSProperties,
   supportText: {
     fontSize: 15,
     lineHeight: "22px",
@@ -241,13 +176,6 @@ const styles = {
     lineHeight: "22px",
     color: COLORS.text,
     margin: 0,
-  } as React.CSSProperties,
-  signaturePanel: {
-    backgroundColor: COLORS.panelBg,
-    border: `1px solid ${COLORS.border}`,
-    borderRadius: 8,
-    padding: "18px 20px",
-    margin: "16px 32px 32px 32px",
   } as React.CSSProperties,
   signatureItalic: {
     fontStyle: "italic" as const,
@@ -270,17 +198,15 @@ const styles = {
     color: COLORS.mutedText,
     margin: 0,
   } as React.CSSProperties,
-  hrTransparent: {
-    borderColor: "transparent",
-    borderWidth: 0,
-    margin: 0,
-    height: 0,
-  } as React.CSSProperties,
-  footer: {
-    backgroundColor: COLORS.primary,
-    backgroundImage: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`,
-    padding: "28px 24px",
-    textAlign: "center" as const,
+  headerTitle: {
+    fontFamily: FONT_SERIF,
+    color: "#ffffff",
+    fontSize: 26,
+    lineHeight: "32px",
+    fontWeight: 400,
+    margin: "16px 0 0 0",
+    padding: 0,
+    letterSpacing: "-0.2px",
   } as React.CSSProperties,
   footerTagline: {
     fontFamily: FONT_SERIF,
@@ -309,11 +235,182 @@ const styles = {
     color: "#ffffff",
     margin: 0,
   } as React.CSSProperties,
-  footerLink: {
-    color: "#ffffff",
-    textDecoration: "underline",
-  } as React.CSSProperties,
 };
+
+/**
+ * The CSS injected into <head>. Intentionally short.
+ * The selectors below target Outlook 365 webmail's dark mode wrappers,
+ * forcing our colors back even when Outlook tries to invert them.
+ */
+const HEAD_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Open+Sans:wght@400;600;700&display=swap');
+
+  /* Outlook 365 webmail dark mode: re-assert colors that get inverted. */
+  [data-ogsc] td.agq-header,
+  [data-ogsb] td.agq-header {
+    background-color: ${COLORS.primary} !important;
+    background-image: linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%) !important;
+    color: #ffffff !important;
+  }
+  [data-ogsc] td.agq-footer,
+  [data-ogsb] td.agq-footer {
+    background-color: ${COLORS.primary} !important;
+    background-image: linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%) !important;
+    color: #ffffff !important;
+  }
+  [data-ogsc] td.agq-card,
+  [data-ogsb] td.agq-card {
+    background-color: ${COLORS.cardBg} !important;
+    color: ${COLORS.text} !important;
+  }
+  [data-ogsc] td.agq-panel,
+  [data-ogsb] td.agq-panel {
+    background-color: ${COLORS.panelBg} !important;
+    color: ${COLORS.text} !important;
+  }
+  [data-ogsc] td.agq-cid,
+  [data-ogsb] td.agq-cid {
+    background-color: ${COLORS.cidBg} !important;
+    color: ${COLORS.text} !important;
+  }
+  [data-ogsc] td.agq-note,
+  [data-ogsb] td.agq-note {
+    background-color: ${COLORS.warningBg} !important;
+    color: ${COLORS.text} !important;
+  }
+  [data-ogsc] td.agq-badge,
+  [data-ogsb] td.agq-badge {
+    background-color: ${COLORS.primary} !important;
+    color: #ffffff !important;
+  }
+  [data-ogsc] .agq-text-light,
+  [data-ogsb] .agq-text-light {
+    color: #ffffff !important;
+  }
+  [data-ogsc] .agq-text-dark,
+  [data-ogsb] .agq-text-dark {
+    color: ${COLORS.text} !important;
+  }
+  [data-ogsc] .agq-text-primary,
+  [data-ogsb] .agq-text-primary {
+    color: ${COLORS.primary} !important;
+  }
+
+  /* Apple / iOS Mail: opt every panel out of color-scheme inversion. */
+  :root {
+    color-scheme: light only;
+    supported-color-schemes: light only;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .agq-header { background-color: ${COLORS.primary} !important; }
+    .agq-footer { background-color: ${COLORS.primary} !important; }
+    .agq-card { background-color: ${COLORS.cardBg} !important; }
+    .agq-panel { background-color: ${COLORS.panelBg} !important; }
+    .agq-cid { background-color: ${COLORS.cidBg} !important; }
+    .agq-note { background-color: ${COLORS.warningBg} !important; }
+    .agq-badge { background-color: ${COLORS.primary} !important; }
+    .agq-text-light { color: #ffffff !important; }
+    .agq-text-dark { color: ${COLORS.text} !important; }
+    .agq-text-primary { color: ${COLORS.primary} !important; }
+  }
+`;
+
+/**
+ * MSO-conditional VML rectangles for the header and footer. These give
+ * Classic Outlook (Word renderer) a guaranteed colored background even
+ * when it strips inline `background-color` styles.
+ */
+const HEADER_VML_OPEN = `<!--[if mso]>
+<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:185px;">
+  <v:fill type="gradient" color="${COLORS.primary}" color2="${COLORS.primaryDark}" angle="135" />
+  <v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
+<![endif]-->`;
+const HEADER_VML_CLOSE = `<!--[if mso]>
+  </v:textbox>
+</v:rect>
+<![endif]-->`;
+
+const FOOTER_VML_OPEN = `<!--[if mso]>
+<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:160px;">
+  <v:fill type="gradient" color="${COLORS.primaryDark}" color2="${COLORS.primary}" angle="135" />
+  <v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
+<![endif]-->`;
+const FOOTER_VML_CLOSE = `<!--[if mso]>
+  </v:textbox>
+</v:rect>
+<![endif]-->`;
+
+/**
+ * `bgcolor=""` was removed from React 19's `<td>` / `<table>` typings,
+ * but the attribute is still valid HTML and is the only way to get
+ * Outlook (especially in dark mode) to actually paint a background.
+ * This helper builds the prop object with the correct runtime keys
+ * while satisfying TypeScript.
+ */
+function bgcolorProps(color: string): { bgcolor: string } {
+  return { bgcolor: color } as unknown as { bgcolor: string };
+}
+
+/**
+ * Renders a numbered "step" badge: a 28x28 navy circle with a white
+ * digit. Implemented as a real `<table bgcolor="">` so Outlook (which
+ * ignores `border-radius` and `background-color`) still paints the
+ * navy square. Modern clients see a navy circle.
+ */
+const StepBadge: React.FC<{ digit: string }> = ({ digit }) => (
+  <td
+    width={28}
+    height={28}
+    align="center"
+    valign="middle"
+    {...bgcolorProps(COLORS.primary)}
+    className="agq-badge agq-text-light"
+    style={{
+      width: 28,
+      height: 28,
+      backgroundColor: COLORS.primary,
+      color: "#ffffff",
+      borderRadius: 14,
+      fontFamily: FONT_BODY,
+      fontWeight: 700,
+      fontSize: 14,
+      lineHeight: "28px",
+      msoLineHeightRule: "exactly",
+      textAlign: "center",
+    } as React.CSSProperties}
+  >
+    {digit}
+  </td>
+);
+
+const StepHeaderRow: React.FC<{ digit: string; title: string }> = ({
+  digit,
+  title,
+}) => (
+  <table
+    role="presentation"
+    cellPadding={0}
+    cellSpacing={0}
+    border={0}
+    style={{ borderCollapse: "collapse" }}
+  >
+    <tbody>
+      <tr>
+        <StepBadge digit={digit} />
+        <td
+          width={12}
+          style={{ width: 12, lineHeight: "1px", fontSize: 1 }}
+        >
+          &nbsp;
+        </td>
+        <td valign="middle" className="agq-text-dark" style={styles.stepTitle}>
+          {title}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+);
 
 export const InviteEmail: React.FC<InviteEmailProps> = ({
   firstName,
@@ -331,177 +428,571 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
           name="format-detection"
           content="telephone=no, date=no, address=no, email=no"
         />
-        {/*
-          We avoid React Email's <Font> component because each instance emits
-          a global `* { font-family: ... }` rule and the last one wins,
-          stomping on inline font-family declarations elsewhere in the
-          template. Loading the Google fonts via a regular @import here
-          works in Gmail / Apple Mail (and is silently ignored by Outlook,
-          which falls back to the inline Georgia / Arial declarations on
-          each element).
-        */}
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Open+Sans:wght@400;600;700&display=swap');
-        `}</style>
+        <meta name="color-scheme" content="light only" />
+        <meta name="supported-color-schemes" content="light only" />
+        <style dangerouslySetInnerHTML={{ __html: HEAD_CSS }} />
       </Head>
       <Preview>
         Your AGQ Investment Management App invitation and Client ID are inside.
       </Preview>
-      <Body style={styles.body}>
+      <Body style={styles.body} {...bgcolorProps(COLORS.pageBg)}>
         <Container style={styles.container}>
-          <Section style={styles.header}>
-            <Img
-              src={`cid:${logoCid}`}
-              alt="AGQ"
-              width="160"
-              height="101"
-              style={{
-                display: "block",
-                margin: "0 auto",
-                width: 160,
-                height: "auto",
-                maxWidth: 160,
-                border: 0,
-                outline: "none",
-                textDecoration: "none",
-              }}
-            />
-            <Heading as="h1" style={styles.headerTitle}>
-              Welcome to your Investment
-              <br />
-              Management App Invitation
-            </Heading>
-          </Section>
+          {/* HEADER */}
+          <table
+            role="presentation"
+            width="100%"
+            cellPadding={0}
+            cellSpacing={0}
+            border={0}
+            style={{ borderCollapse: "collapse" }}
+          >
+            <tbody>
+              <tr>
+                <td
+                  align="center"
+                  {...bgcolorProps(COLORS.primary)}
+                  className="agq-header"
+                  style={{
+                    backgroundColor: COLORS.primary,
+                    backgroundImage: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%)`,
+                    padding: "36px 24px",
+                    textAlign: "center",
+                  }}
+                >
+                  <span
+                    dangerouslySetInnerHTML={{ __html: HEADER_VML_OPEN }}
+                  />
+                  <Img
+                    src={`cid:${logoCid}`}
+                    alt="AGQ"
+                    width="160"
+                    height="101"
+                    style={{
+                      display: "block",
+                      margin: "0 auto",
+                      width: 160,
+                      height: "auto",
+                      maxWidth: 160,
+                      border: 0,
+                      outline: "none",
+                      textDecoration: "none",
+                    }}
+                  />
+                  <Heading
+                    as="h1"
+                    className="agq-text-light"
+                    style={styles.headerTitle}
+                  >
+                    Welcome to your Investment
+                    <br />
+                    Management App Invitation
+                  </Heading>
+                  <span
+                    dangerouslySetInnerHTML={{ __html: HEADER_VML_CLOSE }}
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <Section style={styles.contentPadding}>
-            <Text style={styles.greeting}>Dear {firstName},</Text>
-            <Text style={styles.paragraph}>
-              We hope this message finds you well. AGQ is pleased to invite you
-              to access your investment portfolio through our secure mobile
-              application.
-            </Text>
-            <Text style={styles.paragraph}>
-              With this app, you can conveniently monitor your up-to-date
-              investment information, track performance, and stay connected
-              with your financial growth&mdash;all from your mobile device.
-            </Text>
-          </Section>
+          {/* GREETING + INTRO */}
+          <table
+            role="presentation"
+            width="100%"
+            cellPadding={0}
+            cellSpacing={0}
+            border={0}
+            style={{ borderCollapse: "collapse" }}
+          >
+            <tbody>
+              <tr>
+                <td style={styles.contentPadding}>
+                  <Text className="agq-text-dark" style={styles.greeting}>
+                    Dear {firstName},
+                  </Text>
+                  <Text className="agq-text-dark" style={styles.paragraph}>
+                    We hope this message finds you well. AGQ is pleased to
+                    invite you to access your investment portfolio through our
+                    secure mobile application.
+                  </Text>
+                  <Text className="agq-text-dark" style={styles.paragraph}>
+                    With this app, you can conveniently monitor your up-to-date
+                    investment information, track performance, and stay
+                    connected with your financial growth&mdash;all from your
+                    mobile device.
+                  </Text>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <Section style={styles.stepsPanel}>
-            <Heading as="h2" style={styles.stepsTitle}>
-              Getting Started &mdash; Three Simple Steps
-            </Heading>
+          {/* STEPS PANEL */}
+          <table
+            role="presentation"
+            width="100%"
+            cellPadding={0}
+            cellSpacing={0}
+            border={0}
+            style={{
+              borderCollapse: "collapse",
+              margin: "8px 0 8px 0",
+            }}
+          >
+            <tbody>
+              <tr>
+                <td style={{ padding: "0 32px" }}>
+                  <table
+                    role="presentation"
+                    width="100%"
+                    cellPadding={0}
+                    cellSpacing={0}
+                    border={0}
+                    {...bgcolorProps(COLORS.panelBg)}
+                    style={{
+                      borderCollapse: "collapse",
+                      backgroundColor: COLORS.panelBg,
+                      borderLeft: `4px solid ${COLORS.primary}`,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          className="agq-panel"
+                          {...bgcolorProps(COLORS.panelBg)}
+                          style={{
+                            backgroundColor: COLORS.panelBg,
+                            padding: "24px",
+                          }}
+                        >
+                          <Heading
+                            as="h2"
+                            className="agq-text-dark"
+                            style={styles.stepsTitle}
+                          >
+                            Getting Started &mdash; Three Simple Steps
+                          </Heading>
 
-            <Section style={styles.stepCard}>
-              <Section style={styles.stepHeaderRow}>
-                <span style={styles.stepBadge}>1</span>
-                <span style={styles.stepTitle}>Download the Application</span>
-              </Section>
-              <Text style={styles.downloadLabel}>For iOS Users:</Text>
-              <Link href={iosLink} style={styles.downloadLink}>
-                {iosLink}
-              </Link>
-              <Text style={styles.downloadLabel}>For Android Users:</Text>
-              <Link href={androidLink} style={styles.downloadLink}>
-                {androidLink}
-              </Link>
-              <Section style={styles.noteBox}>
-                <Text style={styles.noteText}>
-                  <strong style={{ color: COLORS.primary }}>Important:</strong>{" "}
-                  The application is exclusively available on mobile devices.
-                  Please open the download links directly on your smartphone or
-                  tablet.
-                </Text>
-              </Section>
-            </Section>
+                          {/* STEP 1 */}
+                          <StepCard>
+                            <StepHeaderRow
+                              digit="1"
+                              title="Download the Application"
+                            />
+                            <Text
+                              className="agq-text-dark"
+                              style={styles.downloadLabel}
+                            >
+                              For iOS Users:
+                            </Text>
+                            <Link
+                              href={iosLink}
+                              className="agq-text-primary"
+                              style={styles.downloadLink}
+                            >
+                              {iosLink}
+                            </Link>
+                            <Text
+                              className="agq-text-dark"
+                              style={styles.downloadLabel}
+                            >
+                              For Android Users:
+                            </Text>
+                            <Link
+                              href={androidLink}
+                              className="agq-text-primary"
+                              style={styles.downloadLink}
+                            >
+                              {androidLink}
+                            </Link>
+                            <NoteBox>
+                              <Text
+                                className="agq-text-dark"
+                                style={styles.noteText}
+                              >
+                                <strong
+                                  className="agq-text-primary"
+                                  style={{ color: COLORS.primary }}
+                                >
+                                  Important:
+                                </strong>{" "}
+                                The application is exclusively available on
+                                mobile devices. Please open the download links
+                                directly on your smartphone or tablet.
+                              </Text>
+                            </NoteBox>
+                          </StepCard>
 
-            <Section style={styles.stepCard}>
-              <Section style={styles.stepHeaderRow}>
-                <span style={styles.stepBadge}>2</span>
-                <span style={styles.stepTitle}>
-                  Enter Your Client Identification Number
-                </span>
-              </Section>
-              <Section style={styles.cidBox}>
-                <Text style={styles.cidLabel}>Your Client ID (CID)</Text>
-                <Text style={styles.cidValue}>{clientCid}</Text>
-              </Section>
-            </Section>
+                          {/* STEP 2 */}
+                          <StepCard>
+                            <StepHeaderRow
+                              digit="2"
+                              title="Enter Your Client Identification Number"
+                            />
+                            <table
+                              role="presentation"
+                              width="100%"
+                              cellPadding={0}
+                              cellSpacing={0}
+                              border={0}
+                              {...bgcolorProps(COLORS.cidBg)}
+                              style={{
+                                borderCollapse: "collapse",
+                                backgroundColor: COLORS.cidBg,
+                                border: `2px solid ${COLORS.primary}`,
+                                borderRadius: 8,
+                                margin: "14px 0 0 0",
+                              }}
+                            >
+                              <tbody>
+                                <tr>
+                                  <td
+                                    align="center"
+                                    {...bgcolorProps(COLORS.cidBg)}
+                                    className="agq-cid"
+                                    style={{
+                                      backgroundColor: COLORS.cidBg,
+                                      padding: "18px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    <Text
+                                      className="agq-text-primary"
+                                      style={styles.cidLabel}
+                                    >
+                                      Your Client ID (CID)
+                                    </Text>
+                                    <Text
+                                      className="agq-text-dark"
+                                      style={styles.cidValue}
+                                    >
+                                      {clientCid}
+                                    </Text>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </StepCard>
 
-            <Section style={styles.stepCardLast}>
-              <Section style={styles.stepHeaderRow}>
-                <span style={styles.stepBadge}>3</span>
-                <span style={styles.stepTitle}>Complete Account Setup</span>
-              </Section>
-              <Text style={styles.stepBodyText}>
-                Follow the guided instructions to create your secure account
-                using your email address and Client ID. This is a one-time
-                setup process&mdash;your CID will not be required for future
-                logins.
-              </Text>
-            </Section>
-          </Section>
+                          {/* STEP 3 */}
+                          <StepCard last>
+                            <StepHeaderRow
+                              digit="3"
+                              title="Complete Account Setup"
+                            />
+                            <Text
+                              className="agq-text-dark"
+                              style={styles.stepBodyText}
+                            >
+                              Follow the guided instructions to create your
+                              secure account using your email address and
+                              Client ID. This is a one-time setup
+                              process&mdash;your CID will not be required for
+                              future logins.
+                            </Text>
+                          </StepCard>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <Section style={styles.supportPanel}>
-            <Text style={styles.supportText}>
-              Our platform is designed with simplicity and security in mind.
-              Should you require any assistance during the setup process or
-              have questions about your account, our dedicated support team is
-              readily available.
-            </Text>
-            <Text style={styles.supportContact}>
-              <strong>Contact Support:</strong>{" "}
-              <Link
-                href={`mailto:${supportEmail}`}
-                style={{
-                  color: COLORS.primary,
-                  fontWeight: 700,
-                  textDecoration: "underline",
-                }}
-              >
-                {supportEmail}
-              </Link>
-            </Text>
-          </Section>
+          {/* SUPPORT PANEL */}
+          <table
+            role="presentation"
+            width="100%"
+            cellPadding={0}
+            cellSpacing={0}
+            border={0}
+            style={{ borderCollapse: "collapse" }}
+          >
+            <tbody>
+              <tr>
+                <td style={{ padding: "0 32px" }}>
+                  <table
+                    role="presentation"
+                    width="100%"
+                    cellPadding={0}
+                    cellSpacing={0}
+                    border={0}
+                    {...bgcolorProps(COLORS.panelBg)}
+                    style={{
+                      borderCollapse: "collapse",
+                      backgroundColor: COLORS.panelBg,
+                      border: `1px solid ${COLORS.border}`,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          align="center"
+                          {...bgcolorProps(COLORS.panelBg)}
+                          className="agq-panel"
+                          style={{
+                            backgroundColor: COLORS.panelBg,
+                            padding: "20px",
+                            textAlign: "center",
+                          }}
+                        >
+                          <Text
+                            className="agq-text-dark"
+                            style={styles.supportText}
+                          >
+                            Our platform is designed with simplicity and
+                            security in mind. Should you require any assistance
+                            during the setup process or have questions about
+                            your account, our dedicated support team is readily
+                            available.
+                          </Text>
+                          <Text
+                            className="agq-text-dark"
+                            style={styles.supportContact}
+                          >
+                            <strong>Contact Support:</strong>{" "}
+                            <Link
+                              href={`mailto:${supportEmail}`}
+                              className="agq-text-primary"
+                              style={{
+                                color: COLORS.primary,
+                                fontWeight: 700,
+                                textDecoration: "underline",
+                              }}
+                            >
+                              {supportEmail}
+                            </Link>
+                          </Text>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <Section style={styles.contentPadding}>
-            <Text style={styles.paragraph}>
-              Thank you for your continued trust in AGQ. We are excited to
-              provide you with enhanced accessibility and a more streamlined
-              experience through this mobile platform.
-            </Text>
-          </Section>
+          {/* CLOSING + SIGNATURE */}
+          <table
+            role="presentation"
+            width="100%"
+            cellPadding={0}
+            cellSpacing={0}
+            border={0}
+            style={{ borderCollapse: "collapse" }}
+          >
+            <tbody>
+              <tr>
+                <td style={styles.contentPadding}>
+                  <Text className="agq-text-dark" style={styles.paragraph}>
+                    Thank you for your continued trust in AGQ. We are excited
+                    to provide you with enhanced accessibility and a more
+                    streamlined experience through this mobile platform.
+                  </Text>
+                </td>
+              </tr>
+              <tr>
+                <td style={{ padding: "16px 32px 32px 32px" }}>
+                  <table
+                    role="presentation"
+                    width="100%"
+                    cellPadding={0}
+                    cellSpacing={0}
+                    border={0}
+                    {...bgcolorProps(COLORS.panelBg)}
+                    style={{
+                      borderCollapse: "collapse",
+                      backgroundColor: COLORS.panelBg,
+                      border: `1px solid ${COLORS.border}`,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          {...bgcolorProps(COLORS.panelBg)}
+                          className="agq-panel"
+                          style={{
+                            backgroundColor: COLORS.panelBg,
+                            padding: "18px 20px",
+                          }}
+                        >
+                          <Text
+                            className="agq-text-dark"
+                            style={styles.signatureItalic}
+                          >
+                            With humility and continued gratitude,
+                          </Text>
+                          <Text
+                            className="agq-text-dark"
+                            style={styles.signatureName}
+                          >
+                            Sonny and Kash Shaikh
+                          </Text>
+                          <Text
+                            className="agq-text-dark"
+                            style={styles.signatureTeam}
+                          >
+                            AGQ Team
+                          </Text>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <Section style={styles.signaturePanel}>
-            <Text style={styles.signatureItalic}>
-              With humility and continued gratitude,
-            </Text>
-            <Text style={styles.signatureName}>Sonny and Kash Shaikh</Text>
-            <Text style={styles.signatureTeam}>AGQ Team</Text>
-          </Section>
-
-          <Hr style={styles.hrTransparent} />
-
-          <Section style={styles.footer}>
-            <Text style={styles.footerTagline}>
-              &ldquo;Planning Today, Securing Tomorrow&rdquo;
-            </Text>
-            <Text style={styles.footerCompany}>AGQ Consulting LLC</Text>
-            <Text style={styles.footerLine}>
-              195 International Parkway &nbsp;|&nbsp; Suite 103 &nbsp;|&nbsp;
-              Lake Mary, FL 32746
-            </Text>
-            <Text style={styles.footerLineLast}>
-              Email:{" "}
-              <Link href={`mailto:${supportEmail}`} style={styles.footerLink}>
-                {supportEmail}
-              </Link>
-            </Text>
-          </Section>
+          {/* FOOTER */}
+          <table
+            role="presentation"
+            width="100%"
+            cellPadding={0}
+            cellSpacing={0}
+            border={0}
+            style={{ borderCollapse: "collapse" }}
+          >
+            <tbody>
+              <tr>
+                <td
+                  align="center"
+                  {...bgcolorProps(COLORS.primary)}
+                  className="agq-footer"
+                  style={{
+                    backgroundColor: COLORS.primary,
+                    backgroundImage: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`,
+                    padding: "28px 24px",
+                    textAlign: "center",
+                  }}
+                >
+                  <span
+                    dangerouslySetInnerHTML={{ __html: FOOTER_VML_OPEN }}
+                  />
+                  <Text
+                    className="agq-text-light"
+                    style={styles.footerTagline}
+                  >
+                    &ldquo;Planning Today, Securing Tomorrow&rdquo;
+                  </Text>
+                  <Text
+                    className="agq-text-light"
+                    style={styles.footerCompany}
+                  >
+                    AGQ Consulting LLC
+                  </Text>
+                  <Text
+                    className="agq-text-light"
+                    style={styles.footerLine}
+                  >
+                    195 International Parkway &nbsp;|&nbsp; Suite 103
+                    &nbsp;|&nbsp; Lake Mary, FL 32746
+                  </Text>
+                  <Text
+                    className="agq-text-light"
+                    style={styles.footerLineLast}
+                  >
+                    Email:{" "}
+                    <Link
+                      href={`mailto:${supportEmail}`}
+                      style={{
+                        color: "#ffffff",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      {supportEmail}
+                    </Link>
+                  </Text>
+                  <span
+                    dangerouslySetInnerHTML={{ __html: FOOTER_VML_CLOSE }}
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </Container>
       </Body>
     </Html>
   );
 };
+
+/**
+ * White card used inside the steps panel. Uses raw <table bgcolor> so
+ * that Outlook dark mode does not invert the card to navy.
+ */
+const StepCard: React.FC<{
+  children: React.ReactNode;
+  last?: boolean;
+}> = ({ children, last }) => (
+  <table
+    role="presentation"
+    width="100%"
+    cellPadding={0}
+    cellSpacing={0}
+    border={0}
+    {...bgcolorProps(COLORS.cardBg)}
+    style={{
+      borderCollapse: "collapse",
+      backgroundColor: COLORS.cardBg,
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: 8,
+      margin: last ? 0 : "0 0 16px 0",
+    }}
+  >
+    <tbody>
+      <tr>
+        <td
+          {...bgcolorProps(COLORS.cardBg)}
+          className="agq-card"
+          style={{
+            backgroundColor: COLORS.cardBg,
+            padding: "20px",
+          }}
+        >
+          {children}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+);
+
+/**
+ * Soft yellow callout used inside Step 1 to draw the eye to the
+ * "mobile-only" warning.
+ */
+const NoteBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <table
+    role="presentation"
+    width="100%"
+    cellPadding={0}
+    cellSpacing={0}
+    border={0}
+    {...bgcolorProps(COLORS.warningBg)}
+    style={{
+      borderCollapse: "collapse",
+      backgroundColor: COLORS.warningBg,
+      borderLeft: `4px solid ${COLORS.warningBorder}`,
+      borderRadius: 6,
+      margin: "14px 0 0 0",
+    }}
+  >
+    <tbody>
+      <tr>
+        <td
+          {...bgcolorProps(COLORS.warningBg)}
+          className="agq-note"
+          style={{
+            backgroundColor: COLORS.warningBg,
+            padding: "12px 14px",
+          }}
+        >
+          {children}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+);
 
 export default InviteEmail;
