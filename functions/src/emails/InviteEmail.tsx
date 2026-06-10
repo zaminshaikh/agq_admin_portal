@@ -462,22 +462,51 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
                   <span
                     dangerouslySetInnerHTML={{ __html: HEADER_VML_OPEN }}
                   />
-                  <Img
-                    src={`cid:${logoCid}`}
-                    alt="AGQ"
-                    width="160"
-                    height="101"
+                  {/*
+                    Logo is wrapped in its own centered table because some
+                    email clients (notably Apple Mail and Gmail web) strip
+                    `margin: 0 auto` from a `display: block` <img>, leaving
+                    the image left-aligned inside the header. Wrapping it
+                    in a `<table align="center">` is the bulletproof
+                    centering pattern: the table itself is a block-level
+                    element that gets horizontally centered by its parent's
+                    `align="center"` / `text-align: center`, and the image
+                    inside it stays its natural size. Works in every
+                    client, including Outlook.
+                  */}
+                  <table
+                    role="presentation"
+                    align="center"
+                    cellPadding={0}
+                    cellSpacing={0}
+                    border={0}
                     style={{
-                      display: "block",
+                      borderCollapse: "collapse",
                       margin: "0 auto",
-                      width: 160,
-                      height: "auto",
-                      maxWidth: 160,
-                      border: 0,
-                      outline: "none",
-                      textDecoration: "none",
                     }}
-                  />
+                  >
+                    <tbody>
+                      <tr>
+                        <td align="center" style={{ textAlign: "center" }}>
+                          <Img
+                            src={`cid:${logoCid}`}
+                            alt="AGQ"
+                            width="160"
+                            height="101"
+                            style={{
+                              display: "block",
+                              width: 160,
+                              height: 101,
+                              maxWidth: 160,
+                              border: 0,
+                              outline: "none",
+                              textDecoration: "none",
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                   <Heading
                     as="h1"
                     className="agq-text-light"
