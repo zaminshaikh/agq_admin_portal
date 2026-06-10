@@ -879,10 +879,60 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
           >
             <tbody>
               <tr>
-                <td style={{ padding: "32px 32px 32px 32px" }}>
+                <td style={styles.contentPadding}>
                   <Text className="agq-text-dark" style={styles.paragraph}>
                     Thank you for your continued trust in our team.
                   </Text>
+                </td>
+              </tr>
+              <tr>
+                <td style={{ padding: "16px 32px 32px 32px" }}>
+                  <table
+                    role="presentation"
+                    width="100%"
+                    cellPadding={0}
+                    cellSpacing={0}
+                    border={0}
+                    {...bgcolorProps(COLORS.panelBg)}
+                    style={{
+                      borderCollapse: "collapse",
+                      backgroundColor: COLORS.panelBg,
+                      border: `1px solid ${COLORS.border}`,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          {...bgcolorProps(COLORS.panelBg)}
+                          className="agq-panel"
+                          style={{
+                            backgroundColor: COLORS.panelBg,
+                            padding: "18px 20px",
+                          }}
+                        >
+                          <Text
+                            className="agq-text-dark"
+                            style={styles.signatureItalic}
+                          >
+                            With humility and continued gratitude,
+                          </Text>
+                          <Text
+                            className="agq-text-dark"
+                            style={styles.signatureName}
+                          >
+                            Sonny and Kash Shaikh
+                          </Text>
+                          <Text
+                            className="agq-text-dark"
+                            style={styles.signatureTeam}
+                          >
+                            AGQ Team
+                          </Text>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </td>
               </tr>
             </tbody>
