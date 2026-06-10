@@ -50,18 +50,35 @@ export interface InviteEmailProps {
   supportEmail: string;
 }
 
+/*
+ * Color palette.
+ *
+ * IMPORTANT: the panel / CID / note background colors are intentionally
+ * pushed slightly more saturated than a typical "near-white tint" (e.g.
+ * #ebeff5 instead of #f8f9fa). This is because Outlook 365 webmail and
+ * "New Outlook for Windows" (Webview2 / Edge engine) run an automatic
+ * color adjustment that inverts colors it considers to be "page
+ * background tint" - which catches near-white tinted colors like
+ * #f8f9fa, #fff8e1, and #eef2f8 - while leaving pure #ffffff cards
+ * and saturated brand colors alone.
+ *
+ * By moving the panel colors a few percent further from white, Outlook
+ * treats them as intentional design colors and renders them as-is.
+ * The colors still read as subtle "layered" panels in Apple Mail /
+ * Gmail, matching the intended visual hierarchy.
+ */
 const COLORS = {
   primary: "#0a3464",
   primaryDark: "#082849",
   text: "#3e3e3e",
   mutedText: "#5a5a5a",
   pageBg: "#f5f5f5",
-  panelBg: "#f8f9fa",
+  panelBg: "#ebeff5",
   cardBg: "#ffffff",
-  border: "#e2e6ea",
-  warningBg: "#fff8e1",
-  warningBorder: "#d4a017",
-  cidBg: "#eef2f8",
+  border: "#d8dde4",
+  warningBg: "#fde9b3",
+  warningBorder: "#c89009",
+  cidBg: "#d4e0f2",
 };
 
 const FONT_BODY =
@@ -296,6 +313,23 @@ const HEAD_CSS = `
     color: ${COLORS.primary} !important;
   }
 
+  /*
+   * Always-on color enforcement (light mode AND dark mode).
+   *
+   * Outlook 365 webmail and "New Outlook for Windows" run an automatic
+   * color adjustment that can re-tint or invert background colors even
+   * when the UI is in light mode (it reacts to the *system* color
+   * scheme, not the Outlook UI preference). The rules below set our
+   * intended palette with !important at the top of the cascade, so
+   * even when Outlook applies its own inline overrides, ours win.
+   *
+   * Pure-white step cards and pure-navy header/footer are always
+   * preserved by Outlook untouched, so they do not need a rule here.
+   */
+  td.agq-panel { background-color: ${COLORS.panelBg} !important; }
+  td.agq-cid { background-color: ${COLORS.cidBg} !important; }
+  td.agq-note { background-color: ${COLORS.warningBg} !important; }
+
   /* Apple / iOS Mail: opt every panel out of color-scheme inversion. */
   :root {
     color-scheme: light only;
@@ -462,22 +496,51 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
                   <span
                     dangerouslySetInnerHTML={{ __html: HEADER_VML_OPEN }}
                   />
-                  <Img
-                    src={`cid:${logoCid}`}
-                    alt="AGQ"
-                    width="160"
-                    height="101"
+                  {/*
+                    Logo is wrapped in its own centered table because some
+                    email clients (notably Apple Mail and Gmail web) strip
+                    `margin: 0 auto` from a `display: block` <img>, leaving
+                    the image left-aligned inside the header. Wrapping it
+                    in a `<table align="center">` is the bulletproof
+                    centering pattern: the table itself is a block-level
+                    element that gets horizontally centered by its parent's
+                    `align="center"` / `text-align: center`, and the image
+                    inside it stays its natural size. Works in every
+                    client, including Outlook.
+                  */}
+                  <table
+                    role="presentation"
+                    align="center"
+                    cellPadding={0}
+                    cellSpacing={0}
+                    border={0}
                     style={{
-                      display: "block",
+                      borderCollapse: "collapse",
                       margin: "0 auto",
-                      width: 160,
-                      height: "auto",
-                      maxWidth: 160,
-                      border: 0,
-                      outline: "none",
-                      textDecoration: "none",
                     }}
-                  />
+                  >
+                    <tbody>
+                      <tr>
+                        <td align="center" style={{ textAlign: "center" }}>
+                          <Img
+                            src={`cid:${logoCid}`}
+                            alt="AGQ"
+                            width="160"
+                            height="101"
+                            style={{
+                              display: "block",
+                              width: 160,
+                              height: 101,
+                              maxWidth: 160,
+                              border: 0,
+                              outline: "none",
+                              textDecoration: "none",
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                   <Heading
                     as="h1"
                     className="agq-text-light"
