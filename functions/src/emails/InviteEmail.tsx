@@ -158,6 +158,19 @@ const styles = {
     textDecoration: "underline",
     wordBreak: "break-all" as const,
   } as React.CSSProperties,
+  inlineLink: {
+    color: COLORS.primary,
+    fontWeight: 700,
+    textDecoration: "underline",
+  } as React.CSSProperties,
+  cidNote: {
+    fontSize: 13,
+    lineHeight: "18px",
+    color: COLORS.mutedText,
+    fontStyle: "italic" as const,
+    textAlign: "center" as const,
+    margin: "10px 0 0 0",
+  } as React.CSSProperties,
   noteText: {
     fontSize: 14,
     lineHeight: "20px",
@@ -574,15 +587,17 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
                     Dear {firstName},
                   </Text>
                   <Text className="agq-text-dark" style={styles.paragraph}>
-                    We hope this message finds you well. AGQ is pleased to
-                    invite you to access your investment portfolio through our
-                    secure mobile application.
+                    We hope this message finds you well.
                   </Text>
                   <Text className="agq-text-dark" style={styles.paragraph}>
-                    With this app, you can conveniently monitor your up-to-date
-                    investment information, track performance, and stay
-                    connected with your financial growth&mdash;all from your
-                    mobile device.
+                    We&rsquo;re excited to get you set up on the AGQ
+                    App&mdash;your personal, real-time view of your investment
+                    portfolio, available anytime directly from your phone.
+                  </Text>
+                  <Text className="agq-text-dark" style={styles.paragraph}>
+                    This is a quick, one-time setup that takes just a few
+                    minutes. Follow the four steps below and you&rsquo;ll be
+                    all set.
                   </Text>
                 </td>
               </tr>
@@ -628,46 +643,38 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
                             padding: "24px",
                           }}
                         >
-                          <Heading
-                            as="h2"
-                            className="agq-text-dark"
-                            style={styles.stepsTitle}
-                          >
-                            Getting Started &mdash; Three Simple Steps
-                          </Heading>
-
-                          {/* STEP 1 */}
+                          {/* STEP 1 - Download the AGQ App */}
                           <StepCard>
                             <StepHeaderRow
                               digit="1"
-                              title="Download the Application"
+                              title="Download the AGQ App"
                             />
                             <Text
                               className="agq-text-dark"
-                              style={styles.downloadLabel}
+                              style={styles.stepBodyText}
                             >
-                              For iOS Users:
+                              For Apple users click{" "}
+                              <Link
+                                href={iosLink}
+                                className="agq-text-primary"
+                                style={styles.inlineLink}
+                              >
+                                Here
+                              </Link>
                             </Text>
-                            <Link
-                              href={iosLink}
-                              className="agq-text-primary"
-                              style={styles.downloadLink}
-                            >
-                              {iosLink}
-                            </Link>
                             <Text
                               className="agq-text-dark"
-                              style={styles.downloadLabel}
+                              style={styles.stepBodyText}
                             >
-                              For Android Users:
+                              For Android users click{" "}
+                              <Link
+                                href={androidLink}
+                                className="agq-text-primary"
+                                style={styles.inlineLink}
+                              >
+                                Here
+                              </Link>
                             </Text>
-                            <Link
-                              href={androidLink}
-                              className="agq-text-primary"
-                              style={styles.downloadLink}
-                            >
-                              {androidLink}
-                            </Link>
                             <NoteBox>
                               <Text
                                 className="agq-text-dark"
@@ -677,21 +684,45 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
                                   className="agq-text-primary"
                                   style={{ color: COLORS.primary }}
                                 >
-                                  Important:
+                                  Important Note:
                                 </strong>{" "}
-                                The application is exclusively available on
-                                mobile devices. Please open the download links
-                                directly on your smartphone or tablet.
+                                The app is only available on mobile devices.
+                                The download links must be opened on a mobile
+                                device to install the app.
                               </Text>
                             </NoteBox>
                           </StepCard>
 
-                          {/* STEP 2 */}
+                          {/* STEP 2 - Create Your Account */}
                           <StepCard>
                             <StepHeaderRow
                               digit="2"
-                              title="Enter Your Client Identification Number"
+                              title="Create Your Account"
                             />
+                            <Text
+                              className="agq-text-dark"
+                              style={styles.stepBodyText}
+                            >
+                              Once installed, open the app and tap{" "}
+                              <strong>&ldquo;Create Account.&rdquo;</strong>{" "}
+                              Enter your email address and choose a password.
+                            </Text>
+                          </StepCard>
+
+                          {/* STEP 3 - Enter Your Client ID */}
+                          <StepCard>
+                            <StepHeaderRow
+                              digit="3"
+                              title="Enter Your Client ID (CID)"
+                            />
+                            <Text
+                              className="agq-text-dark"
+                              style={styles.stepBodyText}
+                            >
+                              When prompted, enter the Client ID
+                              below&mdash;this links your account to your
+                              portfolio.
+                            </Text>
                             <table
                               role="presentation"
                               width="100%"
@@ -735,23 +766,31 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
                                 </tr>
                               </tbody>
                             </table>
+                            <Text style={styles.cidNote}>
+                              This is your unique 8-digit identifier. Please
+                              keep it confidential.
+                            </Text>
                           </StepCard>
 
-                          {/* STEP 3 */}
+                          {/* STEP 4 - Finish & Log In */}
                           <StepCard last>
                             <StepHeaderRow
-                              digit="3"
-                              title="Complete Account Setup"
+                              digit="4"
+                              title="Finish & Log In"
                             />
                             <Text
                               className="agq-text-dark"
                               style={styles.stepBodyText}
                             >
-                              Follow the guided instructions to create your
-                              secure account using your email address and
-                              Client ID. This is a one-time setup
-                              process&mdash;your CID will not be required for
-                              future logins.
+                              Follow the final prompts to complete setup. This
+                              only needs to be done once.
+                            </Text>
+                            <Text
+                              className="agq-text-dark"
+                              style={styles.stepBodyText}
+                            >
+                              Going forward, open the app and log in with your
+                              email and password anytime.
                             </Text>
                           </StepCard>
                         </td>
@@ -803,19 +842,10 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
                         >
                           <Text
                             className="agq-text-dark"
-                            style={styles.supportText}
-                          >
-                            Our platform is designed with simplicity and
-                            security in mind. Should you require any assistance
-                            during the setup process or have questions about
-                            your account, our dedicated support team is readily
-                            available.
-                          </Text>
-                          <Text
-                            className="agq-text-dark"
                             style={styles.supportContact}
                           >
-                            <strong>Contact Support:</strong>{" "}
+                            Have a question or need help? Our support team is
+                            happy to assist&mdash;email us anytime at{" "}
                             <Link
                               href={`mailto:${supportEmail}`}
                               className="agq-text-primary"
@@ -827,6 +857,7 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
                             >
                               {supportEmail}
                             </Link>
+                            {" "}and we&rsquo;ll get back to you promptly.
                           </Text>
                         </td>
                       </tr>
@@ -848,62 +879,10 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
           >
             <tbody>
               <tr>
-                <td style={styles.contentPadding}>
+                <td style={{ padding: "32px 32px 32px 32px" }}>
                   <Text className="agq-text-dark" style={styles.paragraph}>
-                    Thank you for your continued trust in AGQ. We are excited
-                    to provide you with enhanced accessibility and a more
-                    streamlined experience through this mobile platform.
+                    Thank you for your continued trust in our team.
                   </Text>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: "16px 32px 32px 32px" }}>
-                  <table
-                    role="presentation"
-                    width="100%"
-                    cellPadding={0}
-                    cellSpacing={0}
-                    border={0}
-                    {...bgcolorProps(COLORS.panelBg)}
-                    style={{
-                      borderCollapse: "collapse",
-                      backgroundColor: COLORS.panelBg,
-                      border: `1px solid ${COLORS.border}`,
-                      borderRadius: 8,
-                    }}
-                  >
-                    <tbody>
-                      <tr>
-                        <td
-                          {...bgcolorProps(COLORS.panelBg)}
-                          className="agq-panel"
-                          style={{
-                            backgroundColor: COLORS.panelBg,
-                            padding: "18px 20px",
-                          }}
-                        >
-                          <Text
-                            className="agq-text-dark"
-                            style={styles.signatureItalic}
-                          >
-                            With humility and continued gratitude,
-                          </Text>
-                          <Text
-                            className="agq-text-dark"
-                            style={styles.signatureName}
-                          >
-                            Sonny and Kash Shaikh
-                          </Text>
-                          <Text
-                            className="agq-text-dark"
-                            style={styles.signatureTeam}
-                          >
-                            AGQ Team
-                          </Text>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </td>
               </tr>
             </tbody>
