@@ -227,14 +227,22 @@ export class AdminService {
    * custom claim. Mirrors the mobile app's linkNewUser flow so an
    * administrator can manually finish a failed link.
    */
-  async linkAuthUserToClient(uid: string, cid: string): Promise<{ email: string }> {
+  async linkAuthUserToClient(
+    uid: string,
+    cid: string,
+  ): Promise<{ email: string; emailVerified: boolean }> {
     const linkFn = httpsCallable(this.functions, 'adminLinkUser')
     const result = await linkFn({ uid, cid })
-    const data = result.data as { success: boolean, message: string, email: string }
+    const data = result.data as {
+      success: boolean
+      message: string
+      email: string
+      emailVerified?: boolean
+    }
     if (!data.success) {
       throw new Error(data.message || 'Failed to link user')
     }
-    return { email: data.email }
+    return { email: data.email, emailVerified: data.emailVerified === true }
   }
 
   /**

@@ -12,6 +12,7 @@ import SendInviteModal from './SendInviteModal';
 import { cilCheckCircle, cilCloudDownload, cilLinkAlt, cilXCircle, cilEnvelopeClosed } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { usePermissions } from '../../contexts/PermissionContext';
+import { isClientLinked } from 'src/utils/utilities';
 
 const ClientsTable = () => {
     const { canWrite, isAdmin, admin, adminService } = usePermissions();
@@ -197,7 +198,7 @@ const ClientsTable = () => {
             formatCSVValue(client.totalYTD),
             formatCSVValue(client.psi),
             formatCSVValue(client.totalPSI),
-            formatCSVValue(client.linked ? 'Yes' : 'No'),
+            formatCSVValue(isClientLinked(client) ? 'Yes' : 'No'),
             formatCSVValue(client.lastLoggedIn || ''),
             formatCSVValue(client.beneficiaries),
             formatCSVValue(client.notes)
@@ -264,7 +265,7 @@ const ClientsTable = () => {
                 scopedColumns={{
                     linked: (item: Client) => (
                         <td className="text-center">
-                            {item.linked ? (
+                            {isClientLinked(item) ? (
                                 <CIcon icon={cilCheckCircle} className="text-success" />
                             ) : (
                                 <CIcon icon={cilXCircle} className="text-danger" />
@@ -314,7 +315,7 @@ const ClientsTable = () => {
                                     </CButton>
                                 </CCol>
                                 <CCol className="text-center">
-                                    {item.linked ? (
+                                    {isClientLinked(item) ? (
                                         <CButton 
                                             size="sm" 
                                             color="primary" 

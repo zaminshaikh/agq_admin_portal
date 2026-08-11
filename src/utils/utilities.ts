@@ -1,6 +1,11 @@
 import { isValid, parse } from "date-fns";
 import { Activity, AssetDetails, Client } from "src/db/database";
 
+/** True when the client document has a non-empty Firebase Auth UID. */
+export const isClientLinked = (client: Pick<Client, 'uid'> | null | undefined): boolean => {
+    return Boolean(client?.uid && client.uid.trim() !== '');
+};
+
 export const toTitleCase = (str: string, exceptions: string[] = []) => {
     return str.split(' ').map(word => {
         return exceptions.includes(word.toUpperCase()) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();

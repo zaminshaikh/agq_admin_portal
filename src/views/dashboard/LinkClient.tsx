@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Client, DatabaseService } from 'src/db/database'
 import { usePermissions } from '../../contexts/PermissionContext'
 import { AuthUserSummary } from '../../db/adminService'
+import { isClientLinked } from 'src/utils/utilities'
 
 interface LinkClientProps {
   showModal: boolean
@@ -127,7 +128,7 @@ export const LinkClient: React.FC<LinkClientProps> = ({
     }
   }
 
-  const alreadyLinked = !!client?.uid && client.uid !== ''
+  const alreadyLinked = isClientLinked(client)
 
   return (
     <CModal
@@ -147,8 +148,9 @@ export const LinkClient: React.FC<LinkClientProps> = ({
           <strong>
             {client?.firstName} {client?.lastName}
           </strong>{' '}
-          (CID {client?.cid}). This will set the client&rsquo;s UID and email and finish the
-          sign-up flow that the mobile app was supposed to complete.
+          (CID {client?.cid}). This will set the client&rsquo;s UID and email, mark the
+          Firebase email as verified, and finish the sign-up flow that the mobile app
+          was supposed to complete.
         </p>
 
         {alreadyLinked && (

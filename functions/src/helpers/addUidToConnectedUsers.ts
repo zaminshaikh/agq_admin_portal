@@ -38,10 +38,11 @@ export async function addUidToConnectedUsers(
       uidGrantedAccess = [];
     }
 
-    // If missing, add the new user's uid
+    // If missing, add the new user's uid. Do not set linked here — linked
+    // tracks whether THIS client has their own uid, not granted access.
     if (!uidGrantedAccess.includes(uid)) {
       uidGrantedAccess.push(uid);
-      await connectedUserRef.update({ uidGrantedAccess, linked: true });
+      await connectedUserRef.update({ uidGrantedAccess });
       console.log(`Added ${uid} to uidGrantedAccess of user ${connectedUserId}`);
     }
   });

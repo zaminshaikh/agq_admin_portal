@@ -6,7 +6,8 @@ import { Timestamp } from 'firebase/firestore'
  * @property cid - The document ID of the client (the Client ID).
  * @property uid - The client's Firebase Authentication User ID. Empty if not signed up.
  * @property uidGrantedAccess - Array of UIDs that have been granted access to this client's data.
- * @property linked - Boolean indicating if the client's account is linked to a user.
+ * @property linked - Whether the client has a non-empty Firebase Auth UID.
+ *   Kept in sync for backfill; treat uid presence as the source of truth.
  * @property firstName - The first name of the client.
  * @property lastName - The last name of the client.
  * @property companyName - The company name, if applicable.

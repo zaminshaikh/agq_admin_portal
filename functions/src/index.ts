@@ -28,6 +28,7 @@ import { calculateTotalYTD, calculateYTD } from "./callable/ytd";
 import { calculateTotalPSI, calculatePSI } from "./callable/psi";
 import { checkUIDExists } from "./callable/checkUIDExists";
 import { sendInviteEmail } from "./callable/sendInviteEmail";
+import { getUserEmailVerified, verifyUserEmail } from "./callable/verifyUserEmail";
 
 // ======= ADMIN MANAGEMENT =======
 import { createAdminAccount } from "./admin/createAdminAccount";
@@ -62,6 +63,8 @@ export {
   calculatePSI,
   checkUIDExists,
   sendInviteEmail,
+  getUserEmailVerified,
+  verifyUserEmail,
 
   // ======= ADMIN MANAGEMENT =======
   createAdminAccount,

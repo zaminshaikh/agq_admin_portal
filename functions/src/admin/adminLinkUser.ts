@@ -25,8 +25,9 @@ interface AdminLinkUserData {
  * Links the given Firebase Auth UID to the client document with the given
  * CID. Pulls the user's email from Firebase Auth, updates the Firestore
  * document (setting uid, email, appEmail, linked), and grants access to the
- * client's connected users. Emulates what the mobile app's linkNewUser
- * callable is supposed to do, but callable by an admin instead of the user.
+ * client's connected users. Also marks the Firebase Auth email as verified.
+ * Emulates what the mobile app's linkNewUser callable is supposed to do, but
+ * callable by an admin instead of the user.
  *
  * Requires admin-level permissions.
  */
@@ -63,6 +64,24 @@ export const adminLinkUser = functions.https.onCall(
     }
 
     const email = authUser.email ?? "";
+
+    // Always mark the auth account as verified when an admin links it —
+    // the admin is vouching for the account so the user does not need to
+    // complete the email verification flow separately.
+    let emailVerified = authUser.emailVerified;
+    if (!emailVerified) {
+      try {
+        await admin.auth().updateUser(uid, { emailVerified: true });
+        emailVerified = true;
+        console.log(`Marked uid ${uid} as email-verified by admin ${context.auth!.uid}`);
+      } catch (verifyError) {
+        console.error("Failed to mark email as verified:", verifyError);
+        throw new functions.https.HttpsError(
+          "internal",
+          "Failed to mark the Firebase account as email-verified."
+        );
+      }
+    }
 
     const firestore = admin.firestore();
     const usersCollection = firestore.collection(usersCollectionID);
@@ -123,6 +142,7 @@ export const adminLinkUser = functions.https.onCall(
       success: true,
       message: `Linked UID ${uid} to client ${cid}.`,
       email,
+      emailVerified,
     };
   }
 );

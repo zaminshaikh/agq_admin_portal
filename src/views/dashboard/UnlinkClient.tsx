@@ -15,6 +15,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { set } from "date-fns";
 import { useEffect, useState } from "react";
 import { Client, DatabaseService } from "src/db/database";
+import { isClientLinked } from "src/utils/utilities";
 
 
 interface ShowModalProps {
@@ -41,7 +42,7 @@ export const UnlinkClient: React.FC<ShowModalProps> = ({
 
   const unlinkClient = async () => {
     console.log(client);
-    if (client?.uid && client?.uid !== "" ) {
+    if (isClientLinked(client)) {
       setIsLoading(true);
       await service.unlinkClient(client);
       const updatedClients = await service.getClients();

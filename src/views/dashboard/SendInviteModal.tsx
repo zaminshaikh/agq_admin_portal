@@ -14,6 +14,7 @@ import {
 import { Client } from 'src/db/database';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from 'src/db/database';
+import { isClientLinked } from 'src/utils/utilities';
 
 interface SendInviteModalProps {
   showModal: boolean;
@@ -142,7 +143,7 @@ const SendInviteModal: React.FC<SendInviteModalProps> = ({
           </CRow>
           <CRow className="mb-2">
             <CCol sm="4"><strong>Linked:</strong></CCol>
-            <CCol sm="8">{client.linked ? 'Yes' : 'No'}</CCol>
+            <CCol sm="8">{isClientLinked(client) ? 'Yes' : 'No'}</CCol>
           </CRow>
         </div>
 
@@ -152,7 +153,7 @@ const SendInviteModal: React.FC<SendInviteModalProps> = ({
           </CAlert>
         )}
 
-        {client.linked && (
+        {isClientLinked(client) && (
           <CAlert color="info">
             This client is already linked to the app. They may already have access.
           </CAlert>

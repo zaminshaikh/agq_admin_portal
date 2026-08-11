@@ -5,7 +5,7 @@ import Papa from 'papaparse';
 import { EditAssetsSection } from "../../components/EditAssetsSection";
 import { isValid, parse, set } from 'date-fns';
 import { useState, useEffect } from 'react';
-import { formatDate, parseDateWithTwoDigitYear, toTitleCase } from 'src/utils/utilities.ts';
+import { formatDate, parseDateWithTwoDigitYear, toTitleCase, isClientLinked } from 'src/utils/utilities.ts';
 import { Timestamp } from 'firebase/firestore';
 import countries from '../../utils/countries.json';
 import states from '../../utils/states.json';
@@ -268,9 +268,48 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     const [totalYTDLoading, setTotalYTDLoading] = useState(false);
     const [psiLoading, setPSILoading] = useState(false);
     const [totalPSILoading, setTotalPSILoading] = useState(false);
+    const [emailVerified, setEmailVerified] = useState(false);
+    const [emailVerifiedLoading, setEmailVerifiedLoading] = useState(false);
+    const [verifyEmailLoading, setVerifyEmailLoading] = useState(false);
 
     const [editActivityIndex, setEditActivityIndex] = useState<number | null>(null);
     const [editedActivity, setEditedActivity] = useState<Activity>(emptyActivity);
+
+    const hasLinkedUser = isClientLinked(clientState);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadEmailVerified = async () => {
+            if (!hasLinkedUser) {
+                setEmailVerified(false);
+                return;
+            }
+
+            setEmailVerifiedLoading(true);
+            try {
+                const verified = await db.getUserEmailVerified(clientState.uid);
+                if (!cancelled) {
+                    setEmailVerified(verified);
+                }
+            } catch (error) {
+                console.error(error);
+                if (!cancelled) {
+                    setEmailVerified(false);
+                }
+            } finally {
+                if (!cancelled) {
+                    setEmailVerifiedLoading(false);
+                }
+            }
+        };
+
+        loadEmailVerified();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [clientState.uid, hasLinkedUser]);
 
     useEffect(() => {
         let updatedState = { ...clientState };
@@ -529,6 +568,30 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 <CFormInput value={clientState.appEmail}  disabled={true}/>
                 <CInputGroupText>UID</CInputGroupText>
                 <CFormInput value={clientState.uid}  disabled={true}/>
+                <CLoadingButton
+                    color="primary"
+                    variant="outline"
+                    disabled={!hasLinkedUser || viewOnly || emailVerified || emailVerifiedLoading}
+                    loading={verifyEmailLoading || emailVerifiedLoading}
+                    onClick={async () => {
+                        if (!hasLinkedUser) return;
+                        setVerifyEmailLoading(true);
+                        try {
+                            const result = await db.verifyUserEmail(clientState.uid);
+                            setEmailVerified(true);
+                            if (result.alreadyVerified) {
+                                alert('This email is already marked as verified.');
+                            }
+                        } catch (error) {
+                            console.error(error);
+                            alert('Failed to verify email.');
+                        } finally {
+                            setVerifyEmailLoading(false);
+                        }
+                    }}
+                >
+                    {emailVerified ? 'Email Marked Verified' : 'Mark Email as Verified'}
+                </CLoadingButton>
             </CInputGroup>
 
             <CMultiSelect 

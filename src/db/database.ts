@@ -259,7 +259,7 @@ export class DatabaseService {
           cid: clientSnapshot.id,
           uid: data?.uid ?? '',
           uidGrantedAccess: data?.uidGrantedAccess ?? [],
-          linked: data?.linked ?? false,
+          linked: Boolean(data?.uid && data.uid !== ''),
           firstName: data?.name?.first ?? '',
           lastName: data?.name?.last ?? '',
           companyName: data?.name?.company ?? '',
@@ -354,8 +354,10 @@ export class DatabaseService {
    */
   setClient = async (client: Client) => {
       // Create a new DocumentData object from the newClient object, with a name property that is an object containing first, last, and company properties.
+      // Always derive `linked` from uid so edits never persist a stale false when a UID exists.
       let newClientDocData: DocumentData = {
           ...client,
+          linked: Boolean(client.uid && client.uid.trim() !== ''),
           name: {
               first: client.firstName.trimEnd(),
               last: client.lastName.trimEnd(),
@@ -522,6 +524,44 @@ export class DatabaseService {
       } catch (error) {
           console.error('Error unlinking user:', error);
           throw new Error('Failed to unlink user.');
+      }
+  }
+
+  /**
+   * Returns whether the linked Firebase Auth user's email is verified.
+   *
+   * @param uid - Firebase Auth UID
+   * @returns true if the email is verified
+   */
+  async getUserEmailVerified(uid: string): Promise<boolean> {
+      const getUserEmailVerifiedFn = httpsCallable<{ uid: string }, { emailVerified: boolean }>(
+          functions,
+          'getUserEmailVerified'
+      );
+      const result = await getUserEmailVerifiedFn({ uid });
+      return result.data.emailVerified === true;
+  }
+
+  /**
+   * Marks the linked Firebase Auth user's email as verified.
+   *
+   * @param uid - Firebase Auth UID
+   * @returns whether the email was already verified before this call
+   */
+  async verifyUserEmail(uid: string): Promise<{ success: boolean; alreadyVerified: boolean }> {
+      const verifyUserEmailFn = httpsCallable<
+          { uid: string },
+          { success: boolean; alreadyVerified: boolean }
+      >(functions, 'verifyUserEmail');
+      try {
+          const result = await verifyUserEmailFn({ uid });
+          if (!result.data.success) {
+              throw new Error('Failed to verify user email.');
+          }
+          return result.data;
+      } catch (error) {
+          console.error('Error verifying user email:', error);
+          throw new Error('Failed to verify user email.');
       }
   }
 
