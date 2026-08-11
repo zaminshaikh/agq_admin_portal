@@ -238,6 +238,46 @@ export class AdminService {
   }
 
   /**
+   * Get whether a Firebase Auth user's email is verified. Requires 'admin'
+   * custom claim.
+   */
+  async getAuthEmailStatus(uid: string): Promise<{ emailVerified: boolean; email: string | null }> {
+    const statusFn = httpsCallable(this.functions, 'adminGetAuthEmailStatus')
+    const result = await statusFn({ uid })
+    const data = result.data as {
+      success: boolean
+      emailVerified: boolean
+      email: string | null
+    }
+    if (!data.success) {
+      throw new Error('Failed to fetch email verification status')
+    }
+    return { emailVerified: data.emailVerified, email: data.email }
+  }
+
+  /**
+   * Mark a Firebase Auth user's email as verified via the Admin SDK.
+   * Requires 'admin' custom claim. Idempotent if already verified.
+   */
+  async verifyAuthUserEmail(uid: string): Promise<{ emailVerified: boolean; alreadyVerified: boolean }> {
+    const verifyFn = httpsCallable(this.functions, 'adminVerifyUserEmail')
+    const result = await verifyFn({ uid })
+    const data = result.data as {
+      success: boolean
+      emailVerified: boolean
+      alreadyVerified: boolean
+      message?: string
+    }
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to verify user email')
+    }
+    return {
+      emailVerified: data.emailVerified,
+      alreadyVerified: data.alreadyVerified,
+    }
+  }
+
+  /**
    * Check if user has specific permission based on custom claims
    */
   hasPermission(permissions: AdminPermission, requiredPermission: AdminPermission): boolean {

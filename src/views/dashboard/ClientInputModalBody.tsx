@@ -10,6 +10,7 @@ import { Timestamp } from 'firebase/firestore';
 import countries from '../../utils/countries.json';
 import states from '../../utils/states.json';
 import provinces from '../../utils/provinces.json';
+import { usePermissions } from '../../contexts/PermissionContext';
 
 // Helper function to safely format dates from either Date objects or Firestore Timestamps
 const formatAuditDate = (date: Date | Timestamp | undefined | null): string => {
@@ -264,13 +265,52 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     viewOnly,
 }) => {
     const db = new DatabaseService();
+    const { adminService } = usePermissions();
     const [ytdLoading, setYTDLoading] = useState(false);
     const [totalYTDLoading, setTotalYTDLoading] = useState(false);
     const [psiLoading, setPSILoading] = useState(false);
     const [totalPSILoading, setTotalPSILoading] = useState(false);
+    const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
+    const [emailStatusLoading, setEmailStatusLoading] = useState(false);
+    const [verifyEmailLoading, setVerifyEmailLoading] = useState(false);
 
     const [editActivityIndex, setEditActivityIndex] = useState<number | null>(null);
     const [editedActivity, setEditedActivity] = useState<Activity>(emptyActivity);
+
+    const hasLinkedUser = Boolean(clientState.uid && clientState.linked);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadEmailStatus = async () => {
+            if (!hasLinkedUser) {
+                setEmailVerified(null);
+                return;
+            }
+
+            setEmailStatusLoading(true);
+            try {
+                const { emailVerified: verified } = await adminService.getAuthEmailStatus(clientState.uid);
+                if (!cancelled) {
+                    setEmailVerified(verified);
+                }
+            } catch (error) {
+                console.error('Error fetching email verification status:', error);
+                if (!cancelled) {
+                    setEmailVerified(null);
+                }
+            } finally {
+                if (!cancelled) {
+                    setEmailStatusLoading(false);
+                }
+            }
+        };
+
+        loadEmailStatus();
+        return () => {
+            cancelled = true;
+        };
+    }, [clientState.uid, clientState.linked, hasLinkedUser]);
 
     useEffect(() => {
         let updatedState = { ...clientState };
@@ -529,6 +569,26 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                 <CFormInput value={clientState.appEmail}  disabled={true}/>
                 <CInputGroupText>UID</CInputGroupText>
                 <CFormInput value={clientState.uid}  disabled={true}/>
+                <CLoadingButton
+                    color="primary"
+                    variant="outline"
+                    disabled={!hasLinkedUser || viewOnly || emailVerified === true || emailStatusLoading}
+                    loading={verifyEmailLoading || emailStatusLoading}
+                    onClick={async () => {
+                        if (!hasLinkedUser) return;
+                        setVerifyEmailLoading(true);
+                        try {
+                            const result = await adminService.verifyAuthUserEmail(clientState.uid);
+                            setEmailVerified(result.emailVerified);
+                        } catch (error) {
+                            console.error('Error verifying user email:', error);
+                        } finally {
+                            setVerifyEmailLoading(false);
+                        }
+                    }}
+                >
+                    {emailVerified ? 'Email Verified' : 'Verify Email'}
+                </CLoadingButton>
             </CInputGroup>
 
             <CMultiSelect 
