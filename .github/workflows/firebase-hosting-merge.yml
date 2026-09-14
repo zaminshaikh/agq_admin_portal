@@ -3,8 +3,11 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
 jobs:
-  build_and_deploy:
+  deploy_hosting:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +20,30 @@ jobs:
       - name: Build hosting
         run: npm ci && npm run build
 
+      - name: Deploy Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEAM_SHAIKH_APP_52DC5 }}
+          channelId: live
+          projectId: team-shaikh-app-52dc5
+
+  # Functions deploy requires the GitHub Actions service account to have
+  # roles/iam.serviceAccountUser (iam.serviceAccounts.ActAs) on the runtime SAs:
+  #   team-shaikh-app-52dc5@appspot.gserviceaccount.com
+  #   PROJECT_NUMBER-compute@developer.gserviceaccount.com
+  # Hosting-only Firebase GitHub credentials do not include that role by default.
+  deploy_functions:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
       - name: Install functions dependencies
         run: npm install --prefix functions
 
@@ -25,13 +52,29 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEAM_SHAIKH_APP_52DC5 }}
 
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Ensure Service Account User for functions runtime
+        run: |
+          PROJECT_ID="team-shaikh-app-52dc5"
+          DEPLOYER="$(python3 -c "import json, os; print(json.load(open(os.environ['GOOGLE_APPLICATION_CREDENTIALS']))['client_email'])")"
+          echo "Functions deployer: ${DEPLOYER}"
+          echo "If firebase deploy fails with iam.serviceAccounts.ActAs, a project Owner must grant Service Account User to this account:"
+          echo "https://console.cloud.google.com/iam-admin/iam?project=${PROJECT_ID}"
+
+          PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          for SA in \
+            "${PROJECT_ID}@appspot.gserviceaccount.com" \
+            "${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+          do
+            gcloud iam service-accounts add-iam-policy-binding "$SA" \
+              --project="$PROJECT_ID" \
+              --member="serviceAccount:${DEPLOYER}" \
+              --role="roles/iam.serviceAccountUser" \
+              --quiet \
+              || echo "Could not grant Service Account User on ${SA} to ${DEPLOYER}."
+          done
+
       - name: Deploy Firebase Functions
         run: npx --yes firebase-tools deploy --only functions --project team-shaikh-app-52dc5 --non-interactive
-
-      - name: Deploy Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEAM_SHAIKH_APP_52DC5 }}
-          channelId: live
-          projectId: team-shaikh-app-52dc5
