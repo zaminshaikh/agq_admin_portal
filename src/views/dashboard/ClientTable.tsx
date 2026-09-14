@@ -145,7 +145,8 @@ const ClientsTable = () => {
         const headers = [
             'CID', 'First Name', 'Last Name', 'Email', 'App Email',
             'Phone Number', 'Address', 'Date of Birth', 'First Deposit Date',
-            'Total Assets', 'YTD', 'Total YTD', 'Profit Since Inception', 'Total Profit Since Inception', 'Linked', 'Last Login',
+            'Total Assets', 'YTD', 'Total YTD', 'Profit Since Inception', 'Total Profit Since Inception',
+            'Net Deposits', 'Linked', 'Last Login',
             'Beneficiaries', 'Notes'
         ];
         
@@ -183,26 +184,33 @@ const ClientsTable = () => {
         );
         
         // Format client data into CSV rows with all properties except excluded ones
-        const rows = sortedClients.map(client => [
-            `="${client.cid}"`, // Preserve leading zeros in CID
-            formatCSVValue(client.firstName),
-            formatCSVValue(client.lastName),
-            formatCSVValue(client.initEmail),
-            formatCSVValue(client.appEmail),
-            formatCSVValue(client.phoneNumber),
-            formatCSVValue(client.address),
-            formatCSVValue(formatDate(client.dob)),
-            formatCSVValue(formatDate(client.firstDepositDate)),
-            formatCSVValue(client.totalAssets),
-            formatCSVValue(client.ytd),
-            formatCSVValue(client.totalYTD),
-            formatCSVValue(client.psi),
-            formatCSVValue(client.totalPSI),
-            formatCSVValue(isClientLinked(client) ? 'Yes' : 'No'),
-            formatCSVValue(client.lastLoggedIn || ''),
-            formatCSVValue(client.beneficiaries),
-            formatCSVValue(client.notes)
-        ]);
+        const rows = sortedClients.map(client => {
+            const totalAssets = Number(client.totalAssets) || 0;
+            const totalProfitSinceInception = Number(client.totalPSI ?? client.psi) || 0;
+            const netDeposits = totalAssets - totalProfitSinceInception;
+
+            return [
+                `="${client.cid}"`, // Preserve leading zeros in CID
+                formatCSVValue(client.firstName),
+                formatCSVValue(client.lastName),
+                formatCSVValue(client.initEmail),
+                formatCSVValue(client.appEmail),
+                formatCSVValue(client.phoneNumber),
+                formatCSVValue(client.address),
+                formatCSVValue(formatDate(client.dob)),
+                formatCSVValue(formatDate(client.firstDepositDate)),
+                formatCSVValue(client.totalAssets),
+                formatCSVValue(client.ytd),
+                formatCSVValue(client.totalYTD),
+                formatCSVValue(client.psi),
+                formatCSVValue(client.totalPSI),
+                formatCSVValue(netDeposits),
+                formatCSVValue(isClientLinked(client) ? 'Yes' : 'No'),
+                formatCSVValue(client.lastLoggedIn || ''),
+                formatCSVValue(client.beneficiaries),
+                formatCSVValue(client.notes)
+            ];
+        });
         
         // Combine headers and rows
         const csvContent = [
