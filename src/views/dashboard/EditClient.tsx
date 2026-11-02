@@ -1,4 +1,4 @@
-import { CButton, CLoadingButton, CModal, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro"
+import { CAlert, CFormCheck, CButton, CLoadingButton, CModal, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro"
 import { useEffect, useState } from "react";
 // import { IMaskMixin } from 'react-imask'
 import React from "react";
@@ -23,7 +23,7 @@ interface ShowModalProps {
         clients?: Client[];
         setClients: (clients: Client[]) => void;
         activeClient?: Client;
-        onSubmit?: (updatedClient: Client) => void;
+        onSubmit?: (updatedClient: Client, override: boolean, setClientState: (client: Client) => void) => void | Promise<void>;
         reload?: boolean;
 }
 
@@ -48,23 +48,31 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
     const initialClientState: Client = {...activeClient ?? emptyClient};
     const [clientState, setClientState] = useState<Client>(initialClientState);
     const [isLoading, setIsLoading] = useState(false);
+    const [saveError, setSaveError] = useState('');
 
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [clientOptions, setClientOptions] = useState<(Option | OptionsGroup)[]>(clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (activeClient?.connectedUsers?.includes(client.cid))})))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
+    const saveClient = async (allowOverride: boolean) => {
+        setIsLoading(true);
+        setSaveError('');
+        try {
+            await onSubmit(clientState, allowOverride, setClientState);
+            const updatedClients = await new DatabaseService().getClients();
+            setClients(updatedClients);
+            setShowModal(false);
+        } catch (error) {
+            setSaveError('Could not save this client. Please try again.');
+        } finally {
+            setIsLoading(false);
+            setOverride(false);
+        }
+    };
+
     useEffect(() => {
-        const editClientIfOverride = async () => {
-            if (override) {
-                await onSubmit(clientState, override, setClientState);
-                const db = new DatabaseService();
-                setShowModal(false);
-                const updatedClients = await db.getClients()
-                setClients(updatedClients);
-            }
-        };
-        editClientIfOverride();
+        if (override) void saveClient(true);
     }, [override]);
 
     return (
@@ -91,24 +99,27 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
                     setClientOptions={setClientOptions}
                     clients={clients}
                     viewOnly={false}/>
+                <div className="px-4 pb-3">
+                    <CFormCheck
+                        id="edit-client-test"
+                        label="Test client"
+                        checked={clientState.isTestClient === true}
+                        disabled={isLoading}
+                        onChange={(event) => setClientState({ ...clientState, isTestClient: event.target.checked })}
+                    />
+                    <div className="small text-body-secondary">Test clients are excluded from AUM balances and history. Use Hide test clients on the dashboard to hide their rows.</div>
+                    {saveError && <CAlert color="danger" className="mt-2">{saveError}</CAlert>}
+                </div>
                 <CModalFooter>
                     <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancel</CButton>
                     <CLoadingButton color="primary" 
                         loading={isLoading}
                         onClick={async () => {
-                            setIsLoading(true);
                             if (!ValidateClient(clientState, setInvalidInputFields) && !override) {
                                 setShowErrorModal(true);
                             } else {
-                                onSubmit(clientState, override, setClientState);
-                                const db = new DatabaseService();
-                                const updatedClients = await db.getClients()
-                                setClients(updatedClients);
-                                setIsLoading(false);
-                                setShowModal(false);
-                                return;
+                                await saveClient(override);
                             }
-                            setIsLoading(false);
                         }}
                         >Update</CLoadingButton>
                 </CModalFooter>

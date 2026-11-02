@@ -14,7 +14,7 @@ import CIcon from '@coreui/icons-react';
 import { usePermissions } from '../../contexts/PermissionContext';
 import { isClientLinked } from 'src/utils/utilities';
 
-const ClientsTable = () => {
+const ClientsTable = ({ hideTestClients = true, onClientsChanged }: { hideTestClients?: boolean; onClientsChanged?: () => void }) => {
     const { canWrite, isAdmin, admin, adminService } = usePermissions();
     const [showUnlinkClientModal, setShowUnlinkClientModal] = useState(false);
     const [showLinkClientModal, setShowLinkClientModal] = useState(false);
@@ -25,6 +25,11 @@ const ClientsTable = () => {
     const [showEditClientModal, setShowEditClientModal] = useState(false);
     const [showSendInviteModal, setShowSendInviteModal] = useState(false);
     const [clients, setClients] = useState<Client[]>([]);
+    const visibleClients = clients.filter(client => !hideTestClients || client.isTestClient !== true);
+    const updateClients = (updated: Client[]) => {
+        setClients(updated);
+        onClientsChanged?.();
+    };
     const [currentClient, setCurrentClient] = useState<Client | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [details, setDetails] = useState<string[]>([])
@@ -71,6 +76,7 @@ const ClientsTable = () => {
     }
     
     const columns = [
+        { key: 'isTestClient', label: 'Test client', filter: false },
         {
             key: 'cid',
             _style: { width: '5%' },
@@ -179,7 +185,7 @@ const ClientsTable = () => {
         };
         
         // Sort clients by firstName before generating CSV
-        const sortedClients = [...clients].sort((a, b) => 
+        const sortedClients = [...visibleClients].sort((a, b) => 
             a.firstName.localeCompare(b.firstName)
         );
         
@@ -232,13 +238,13 @@ const ClientsTable = () => {
     
     return (
         <CContainer>
-            {showUnlinkClientModal && <UnlinkClient showModal={showUnlinkClientModal} setShowModal={setShowUnlinkClientModal} client={currentClient} setClients={setClients}/>}
-            {showLinkClientModal && <LinkClient showModal={showLinkClientModal} setShowModal={setShowLinkClientModal} client={currentClient} setClients={setClients}/>}
+            {showUnlinkClientModal && <UnlinkClient showModal={showUnlinkClientModal} setShowModal={setShowUnlinkClientModal} client={currentClient} setClients={updateClients}/>}
+            {showLinkClientModal && <LinkClient showModal={showLinkClientModal} setShowModal={setShowLinkClientModal} client={currentClient} setClients={updateClients}/>}
             {showImportClientsModal && <ImportClients showModal={showImportClientsModal} setShowModal={setShowImportClientsModal} clients={clients}/>}
-            {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} setClients={setClients} activeClient={currentClient}/>}
+            {showEditClientModal && <EditClient showModal={showEditClientModal} setShowModal={setShowEditClientModal} clients={clients} setClients={updateClients} activeClient={currentClient}/>}
             {showDisplayDetailsModal && <DisplayClient showModal={showDisplayDetailsModal} setShowModal={setShowDisplayDetailsModal} clients={clients} currentClient={currentClient ?? emptyClient}/>}
-            {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} client={currentClient} setClients={setClients}/>}
-            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients} setClients={setClients}/>}
+            {showDeleteClientModal && <DeleteClient showModal={showDeleteClientModal} setShowModal={setShowDeleteClientModal} client={currentClient} setClients={updateClients}/>}
+            {showCreateNewClientModal && <CreateClient showModal={showCreateNewClientModal} setShowModal={setShowCreateNewClientModal} clients={clients} setClients={updateClients}/>}
             {showSendInviteModal && <SendInviteModal showModal={showSendInviteModal} setShowModal={setShowSendInviteModal} client={currentClient}/>} 
             <CRow className="mb-3">
               <CCol>
@@ -265,12 +271,13 @@ const ClientsTable = () => {
                 columns={columns}
                 columnFilter
                 columnSorter
-                items={clients}
+                items={visibleClients}
                 itemsPerPageSelect
                 itemsPerPage={50}
                 pagination
                 sorterValue={{ column: 'firstName', state: 'asc' }}
                 scopedColumns={{
+                    isTestClient: (item: Client) => <td>{item.isTestClient ? 'Test' : '—'}</td>,
                     linked: (item: Client) => (
                         <td className="text-center">
                             {isClientLinked(item) ? (

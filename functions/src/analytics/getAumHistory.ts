@@ -3,6 +3,7 @@ import { getDatabase } from '../helpers/database'
 import { checkAdminPermission } from '../helpers/adminPermissions'
 import config from '../../config.json'
 import { aggregateAum, BalancePoint, Fund } from './aum'
+import { activityBalances, Reconciliation } from './reconcile'
 
 export const getAumHistory = functions
   .runWith({ memory: '512MB', timeoutSeconds: 120 })
@@ -10,6 +11,9 @@ export const getAumHistory = functions
     checkAdminPermission(context, 'read')
     const db = getDatabase()
     const users = await db.collection(config.FIRESTORE_ACTIVE_USERS_COLLECTION).get()
+    const clients = users.docs.filter(user => user.data().isTestClient !== true)
+    const mismatches: Reconciliation[] = []
+    let invalidActivities = 0
     const points: BalancePoint[] = []
     const currentCents = { AGQ: 0, AK1: 0 }
     let missingHistory = 0
@@ -17,10 +21,10 @@ export const getAumHistory = functions
     const now = Date.now()
     // Only active client paths: archive/test collections and linked access lists
     // cannot introduce a second copy of the same client's assets.
-    for (let i = 0; i < users.docs.length; i += 10) {
+    for (let i = 0; i < clients.length; i += 10) {
       await Promise.all(
-        users.docs.slice(i, i + 10).map(async (user) => {
-          const [graphs, assets] = await Promise.all([
+        clients.slice(i, i + 10).map(async (user) => {
+          const [graphs, assets, activities] = await Promise.all([
             user.ref
               // Match the mobile app's current history. Some portal configs still
               // name the separate, older graphPoints collection.
@@ -28,7 +32,12 @@ export const getAumHistory = functions
               .where('account', '==', 'Cumulative')
               .get(),
             user.ref.collection(config.ASSETS_SUBCOLLECTION).get(),
+            user.ref.collection('activities').get(),
           ])
+          const activity = activityBalances(activities.docs.map(doc => doc.data()), now)
+          invalidActivities += activity.invalid
+          const person = user.data()
+          const clientName = person.clientName?.trim() || [person.name?.first, person.name?.last].filter(Boolean).join(' ') || user.id
           const covered = new Set<string>()
           for (const doc of graphs.docs) {
             const data = doc.data()
@@ -62,7 +71,15 @@ export const getAumHistory = functions
               invalidCurrentBalances++
               continue
             }
-            currentCents[fund] += Math.round(value * 100)
+            const balanceCents = Math.round(value * 100)
+            currentCents[fund] += balanceCents
+            const difference = balanceCents - activity.cents[fund]
+            if (difference !== 0) mismatches.push({
+              clientId: user.id, clientName, fund,
+              balance: balanceCents / 100,
+              activities: activity.cents[fund] / 100,
+              difference: difference / 100,
+            })
             if (value !== 0 && !covered.has(fund)) missingHistory++
           }
         }),
@@ -76,7 +93,10 @@ export const getAumHistory = functions
         AK1: currentCents.AK1 / 100,
         combined: (currentCents.AGQ + currentCents.AK1) / 100,
       },
-      clients: users.size,
+      clients: clients.length,
+      excludedTestClients: users.size - clients.length,
+      mismatches: mismatches.sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference) || a.clientId.localeCompare(b.clientId)),
+      invalidActivities,
       missingHistory,
       invalidCurrentBalances,
       asOf: new Date(now).toISOString(),
