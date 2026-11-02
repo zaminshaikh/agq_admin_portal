@@ -79,7 +79,7 @@ const UserAuthentication: React.FC = () => {
       if (uid && uid !== '') return
       out.push({
         cid: docSnap.id,
-        accountName: data?.accountName ?? '',
+        clientName: data?.clientName ?? '',
         firstName: data?.name?.first ?? '',
         lastName: data?.name?.last ?? '',
         companyName: data?.name?.company ?? '',

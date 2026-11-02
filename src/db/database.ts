@@ -261,7 +261,7 @@ export class DatabaseService {
           uid: data?.uid ?? '',
           uidGrantedAccess: data?.uidGrantedAccess ?? [],
           linked: Boolean(data?.uid && data.uid !== ''),
-          accountName: data?.accountName ?? '',
+          clientName: data?.clientName ?? '',
           firstName: data?.name?.first ?? '',
           lastName: data?.name?.last ?? '',
           companyName: data?.name?.company ?? '',
@@ -359,7 +359,7 @@ export class DatabaseService {
       // Always derive `linked` from uid so edits never persist a stale false when a UID exists.
       let newClientDocData: DocumentData = {
           ...client,
-          accountName: client.accountName?.trim() ?? '',
+          clientName: client.clientName?.trim() ?? '',
           linked: Boolean(client.uid && client.uid.trim() !== ''),
           name: {
               first: client.firstName.trimEnd(),
@@ -369,7 +369,7 @@ export class DatabaseService {
       };
 
       // Delete these unused properties from the newClientDocData object
-      ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints', 'ytd', 'totalYTD', 'psi', 'totalPSI'].forEach(key => {
+      ['accountName', 'firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints', 'ytd', 'totalYTD', 'psi', 'totalPSI'].forEach(key => {
               delete newClientDocData[key];
       });
 

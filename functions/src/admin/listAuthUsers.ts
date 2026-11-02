@@ -30,7 +30,7 @@ interface AuthUserSummary {
 interface UnlinkedClientSummary {
   cid: string;
   firstName: string;
-  accountName?: string;
+  clientName?: string;
   lastName: string;
   companyName: string;
   email: string;
@@ -66,7 +66,7 @@ export const listAuthUsers = functions.https.onCall(
         const first: string = data?.name?.first ?? "";
         const last: string = data?.name?.last ?? "";
         const company: string = data?.name?.company ?? "";
-        const displayName = data.accountName?.trim() || [first, last].filter(Boolean).join(" ") || company || "";
+        const displayName = data.clientName?.trim() || [first, last].filter(Boolean).join(" ") || company || "";
         const uid: string | undefined = data.uid;
 
         if (uid && uid !== "") {
@@ -74,7 +74,7 @@ export const listAuthUsers = functions.https.onCall(
         } else {
           unlinkedClients.push({
             cid: docSnap.id,
-            accountName: data.accountName ?? "",
+            clientName: data.clientName ?? "",
             firstName: first,
             lastName: last,
             companyName: company,

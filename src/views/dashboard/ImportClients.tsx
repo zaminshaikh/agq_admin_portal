@@ -74,7 +74,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
     const createClientState = (row: any): Client => {
         const newState: Client = {
             ...emptyClient,
-            accountName: String(row['ACCOUNT NAME'] ?? row['Account Name'] ?? ''),
+            clientName: String(row['CLIENT NAME'] ?? row['Client Name'] ?? ''),
             firstName: row["CLIENT'S FIRST NAME"] || '',
             lastName: row["CLIENT'S LAST NAME"] || '',
             companyName: row["COMPANY NAME"] || '',
@@ -231,7 +231,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                         <CTableHead >
                             <CTableRow>
                                 <CTableHeaderCell>Index</CTableHeaderCell>
-                                <CTableHeaderCell>Account Name</CTableHeaderCell>
+                                <CTableHeaderCell>Client Name</CTableHeaderCell>
                                 <CTableHeaderCell>First Name</CTableHeaderCell>
                                 <CTableHeaderCell>Last Name</CTableHeaderCell>
                                 <CTableHeaderCell>Actions</CTableHeaderCell>
@@ -241,7 +241,7 @@ export const ImportClients: React.FC<ShowModalProps> = ({ showModal, setShowModa
                             {clientStates.map((client, index) => (
                                 <CTableRow key={index}>
                                     <CTableDataCell>{index + 1}</CTableDataCell>
-                                    <CTableDataCell>{client.accountName || `${client.firstName} ${client.lastName}`}</CTableDataCell>
+                                    <CTableDataCell>{client.clientName || `${client.firstName} ${client.lastName}`}</CTableDataCell>
                                     <CTableDataCell>{client.firstName}</CTableDataCell>
                                     <CTableDataCell>{client.lastName}</CTableDataCell>
                                     <CTableDataCell>

@@ -80,8 +80,8 @@ const ClientsTable = () => {
             sorter: false,
         },
         {
-            key: 'accountName',
-            label: 'Account Name',
+            key: 'clientName',
+            label: 'Client Name',
             _style: { width: '15%' },
         },
         {
@@ -149,7 +149,7 @@ const ClientsTable = () => {
     const exportToCSV = () => {
         // Define CSV headers for all relevant client properties, excluding specified fields
         const headers = [
-            'CID', 'Account Name', 'First Name', 'Last Name', 'Email', 'App Email',
+            'CID', 'Client Name', 'First Name', 'Last Name', 'Email', 'App Email',
             'Phone Number', 'Address', 'Date of Birth', 'First Deposit Date',
             'Total Assets', 'YTD', 'Total YTD', 'Profit Since Inception', 'Total Profit Since Inception',
             'Net Deposits', 'Linked', 'Last Login',
@@ -272,11 +272,11 @@ const ClientsTable = () => {
                 columns={columns}
                 columnFilter
                 columnSorter
-                items={clients.map(client => ({ ...client, accountName: getClientDisplayName(client) }))}
+                items={clients.map(client => ({ ...client, clientName: getClientDisplayName(client) }))}
                 itemsPerPageSelect
                 itemsPerPage={50}
                 pagination
-                sorterValue={{ column: 'accountName', state: 'asc' }}
+                sorterValue={{ column: 'clientName', state: 'asc' }}
                 scopedColumns={{
                     linked: (item: Client) => (
                         <td className="text-center">

@@ -370,17 +370,17 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
     return (
             <CModalBody className="px-5">
             <CInputGroup className="mb-3 py-3">
-                <CInputGroupText as="label" htmlFor="account-name">Account Name</CInputGroupText>
+                <CInputGroupText as="label" htmlFor="client-name">Client Name</CInputGroupText>
                 <CFormInput
-                    id="account-name"
-                    value={clientState.accountName ?? ''}
-                    placeholder={getClientDisplayName({ ...clientState, accountName: '' })}
+                    id="client-name"
+                    value={clientState.clientName ?? ''}
+                    placeholder={getClientDisplayName({ ...clientState, clientName: '' })}
                     disabled={viewOnly}
-                    onChange={(event) => setClientState({ ...clientState, accountName: event.target.value })}
-                    aria-describedby="account-name-help"
+                    onChange={(event) => setClientState({ ...clientState, clientName: event.target.value })}
+                    aria-describedby="client-name-help"
                 />
             </CInputGroup>
-            <div id="account-name-help" className="text-body-secondary mb-3">
+            <div id="client-name-help" className="text-body-secondary mb-3">
                 Used in the portal. Leave blank to use the client's first and last name.
             </div>
             <CInputGroup className="mb-3 py-3">
