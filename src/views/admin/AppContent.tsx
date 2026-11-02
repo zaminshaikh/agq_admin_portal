@@ -11,6 +11,7 @@ import {
 } from '@coreui/react-pro'
 import { usePermissions } from '../../contexts/PermissionContext'
 import catalog from '../../content/catalog.json'
+import { preservesPlaceholders } from '../../content/placeholders'
 import { ContentEntry, fieldLabel, location, sections } from '../../content/contentOrganization'
 import {
   ContentSnapshot,
@@ -37,6 +38,7 @@ export default function AppContent() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [protectedField, setProtectedField] = useState('')
   const [pendingImage, setPendingImage] = useState<{
     id: string
     file: File
@@ -161,8 +163,15 @@ export default function AppContent() {
     setKind('all')
     setOnlyChanged(false)
   }
-  const editText = (id: string, value: string) =>
+  const editText = (id: string, value: string) => {
+    const entry = catalog.find(item => item.id === id)
+    if (entry && !preservesPlaceholders(value, entry.placeholders)) {
+      setProtectedField(id)
+      return
+    }
+    setProtectedField('')
     setDraft((previous) => ({ ...previous, [id]: value }))
+  }
   if (permissionLoading) return <CSpinner />
   if (!isAdmin)
     return <CAlert color="warning">Administrator access is required to edit app content.</CAlert>
@@ -406,6 +415,7 @@ export default function AppContent() {
                               value={value}
                               disabled={busy || !snapshot || !!pendingImage}
                               maxLength={12000}
+                              aria-describedby={entry.placeholders.length ? `protected-${entry.id}` : undefined}
                               onChange={(event) => editText(entry.id, event.target.value)}
                             />
                           ) : (
@@ -414,6 +424,7 @@ export default function AppContent() {
                               value={value}
                               disabled={busy || !snapshot || !!pendingImage}
                               maxLength={12000}
+                              aria-describedby={entry.placeholders.length ? `protected-${entry.id}` : undefined}
                               onChange={(event) => editText(entry.id, event.target.value)}
                             />
                           )}
@@ -431,12 +442,15 @@ export default function AppContent() {
                             </p>
                           )}
                           {entry.placeholders.length > 0 && (
-                            <p className="small text-body-secondary mt-2 mb-0">
-                              The app fills in{' '}
-                              {entry.placeholders.map((token) => `{${token}}`).join(', ')}. Keep
-                              these values in your message.
-                            </p>
+                            <div id={`protected-${entry.id}`} className="small mt-2">
+                              <span className="text-body-secondary">Protected app values: </span>
+                              {entry.placeholders.map(token => <code className="content-protected-token" key={token}>{`{${token}}`}</code>)}
+                              <span className="text-body-secondary">Edit the surrounding wording; these values stay in the message.</span>
+                            </div>
                           )}
+                          {protectedField === entry.id && <p role="status" className="small text-warning-emphasis mt-2 mb-0">
+                            That edit would change a protected app value, so the text was kept. Keep each value exactly as shown when pasting replacement text.
+                          </p>}
                           <details className="content-default">
                             <summary>Original wording</summary>
                             <p>{entry.defaultValue}</p>
