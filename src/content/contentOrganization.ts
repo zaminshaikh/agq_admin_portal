@@ -149,6 +149,8 @@ export function location(entry: ContentEntry): { section: string; group: string 
 export function fieldLabel(entry: ContentEntry): string {
   if (entry.id === 'signup.cid_help') return 'Client ID help message'
   if (entry.id === 'contact.email_subject') return 'Email subject'
+  if (entry.kind === 'email_message') return 'Email contact line'
+  if (entry.kind === 'phone_message') return 'Phone contact line'
   if (entry.kind === 'email') return 'Email address & email link'
   if (entry.kind === 'phone') return 'Phone number & call link'
   if (entry.kind === 'image')

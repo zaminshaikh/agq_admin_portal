@@ -24,7 +24,7 @@ beforeEach(() => {published=undefined; uploads=[]; deleted=[];});
 test('admin migration seeds all defaults once and preserves existing edits on rerun', async () => {
   published={version:2,texts:{'contact.support_email':'custom@example.com'},images:{'image.sonny_headshot_png':{url:'existing-photo'}}};
   assert.deepEqual(await seedAppContentDefaults('migration:test'),{changed:true,version:3});
-  assert.equal(Object.keys(published.texts).length,330);
+  assert.equal(Object.keys(published.texts).length,catalog.filter(e=>e.kind!=='image').length+1);
   assert.equal(Object.keys(published.images).length,42);
   assert.equal(published.texts['contact.support_email'],'custom@example.com');
   assert.match(published.texts['signup.cid_help'],/custom@example.com/);
@@ -64,7 +64,7 @@ test('text updates preserve other content and stale edits cannot overwrite it', 
 });
 test('invalid text, unknown keys, and missing dynamic placeholders are rejected', async () => {
   const template=catalog.find(e=>e.placeholders.length);
-  for (const texts of [{'contact.sonny_email':'not an email'}, {'unknown':'test'}, {[template.id]:'missing placeholders'}, {'signup.cid_help':''}]) {
+  for (const texts of [{'contact.sonny_email_message':'not an email'}, {'unknown':'test'}, {[template.id]:'missing placeholders'}, {'signup.cid_help':''}]) {
     await assert.rejects(saveAppContent.run({baseVersion:0,texts},admin),error=>error.code==='invalid-argument');
   }
   assert.equal(uploads.length,0);
@@ -95,4 +95,13 @@ test('legacy CID text and custom contact become one editable message without los
   assert.equal(saved.texts['signup.cid_help'],'Need your Client ID? Email another@example.com.');
   assert.equal(saved.texts[old],published.texts[old]);
   assert.equal(catalog.some(e=>e.id==='contact.support_email'||e.id===old),false);
+});
+
+test('full contact lines preserve old wording, keep actions valid, and reject ambiguous targets',()=>{
+  const {withInlineContact}=require('../lib/src/content/inlineText');
+  const result=withInlineContact({'contact.sonny_email':'custom@example.com','text.screens.profile.pages.help.email_sonny_agqconsulting_com_58c8a4':'Reach us at {email}'});
+  assert.equal(result['contact.sonny_email_message'],'Reach us at custom@example.com');
+  assert.equal(validation.validateText('contact.sonny_email_message','Write to changed@example.com'),'Write to changed@example.com');
+  assert.equal(validation.validateText('contact.sonny_phone_message','Call +1 (555) 123-4567'),'Call +1 (555) 123-4567');
+  for(const [key,text] of [['contact.sonny_email_message','No email'],['contact.sonny_email_message','a@example.com or b@example.com'],['contact.sonny_phone_message','No phone'],['contact.sonny_phone_message','555-123-4567 or 555-987-6543']])assert.throws(()=>validation.validateText(key,text));
 });
