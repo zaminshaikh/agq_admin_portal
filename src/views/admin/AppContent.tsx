@@ -277,7 +277,7 @@ export default function AppContent() {
       <div className="content-workspace">
         <nav className="content-screen-nav" aria-label="App screens">
           <div className="content-nav-title">APP SCREENS</div>
-          {sections.map((item) => {
+          {sections.filter(item => catalog.some(entry => location(entry).section === item.id)).map((item) => {
             const items = catalog.filter((entry) => location(entry).section === item.id)
             const edited = items.filter((entry) =>
               Object.prototype.hasOwnProperty.call(changes, entry.id),
