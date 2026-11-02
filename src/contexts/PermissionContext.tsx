@@ -1,18 +1,6 @@
-import React, { createContext, useContext, ReactNode } from 'react'
-import { useCurrentAdmin, Admin, AdminService, AdminPermission } from '../db/adminService'
-
-interface PermissionContextType {
-  admin: Admin | null
-  permissions: AdminPermission
-  loading: boolean
-  hasPermission: (permission: AdminPermission) => boolean
-  canWrite: boolean
-  canRead: boolean
-  isAdmin: boolean
-  adminService: AdminService
-}
-
-const PermissionContext = createContext<PermissionContextType | undefined>(undefined)
+import { PermissionContext, type PermissionContextType } from './permissionState'
+import React, { useContext, ReactNode } from 'react'
+import { useCurrentAdmin, AdminPermission } from '../db/adminService'
 
 interface PermissionProviderProps {
   children: ReactNode
