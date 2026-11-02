@@ -1,0 +1,73 @@
+const {test, beforeEach} = require('node:test');
+const assert = require('node:assert/strict');
+const Module = require('node:module');
+const validation = require('../lib/src/content/validation');
+const catalog = require('../src/content/catalog.json');
+let published, uploads, deleted;
+const ref = {};
+const snapshot = () => ({data: () => published});
+const firestore = () => ({doc: () => ({...ref, get: async () => snapshot()}), runTransaction: async callback => callback({
+  get: async () => snapshot(), set: (_ref, value) => { published = value; }, update: (_ref, value) => { published = {...published, ...value}; },
+})});
+firestore.FieldValue = {serverTimestamp: () => 'timestamp'};
+const fakeAdmin = {firestore, storage: () => ({bucket: () => ({name: 'test-bucket',file: path => ({
+  save: async (bytes, options) => {uploads.push({path,bytes,options});},
+  delete: async () => {deleted.push(path);},
+})})})};
+const originalLoad = Module._load;
+Module._load = function(request, parent, main) { return request === 'firebase-admin' ? fakeAdmin : originalLoad.call(this,request,parent,main); };
+const {getAppContentForAdmin, saveAppContent, updateAppImage} = require('../lib/src/content/appContent');
+Module._load = originalLoad;
+const admin = {auth: {uid: 'admin-user', token: {adminPermissions: 'admin'}}};
+beforeEach(() => {published=undefined; uploads=[]; deleted=[];});
+
+test('catalog copies match and every default validates', () => {
+  assert.deepEqual(catalog, require('../../src/content/catalog.json'));
+  assert.equal(new Set(catalog.map(e=>e.id)).size, catalog.length);
+  for (const entry of catalog) if(entry.kind !== 'image') assert.equal(validation.validateText(entry.id,entry.defaultValue),entry.defaultValue);
+});
+test('all editing endpoints enforce administrator claims', async () => {
+  for (const endpoint of [getAppContentForAdmin, saveAppContent, updateAppImage]) {
+    await assert.rejects(endpoint.run({},{}), error=>error.code==='unauthenticated');
+    await assert.rejects(endpoint.run({}, {auth:{uid:'reader',token:{adminPermissions:'read'}}}), error=>error.code==='permission-denied');
+  }
+  assert.equal(uploads.length,0); assert.equal(published,undefined);
+});
+test('initial publish stores the full text catalog and all default images', async () => {
+  const data=await saveAppContent.run({baseVersion:0,texts:{'contact.support_email':'carter@agqconsulting.com'}},admin);
+  assert.equal(data.version,1);
+  assert.equal(Object.keys(data.texts).length,catalog.filter(e=>e.kind!=='image').length);
+  assert.equal(Object.keys(data.images).length,catalog.filter(e=>e.kind==='image').length);
+  assert.equal(uploads.length,Object.keys(data.images).length);
+  assert.equal(published.updatedBy,'admin-user');
+  assert.match(data.images['image.sonny_headshot_png'].url,/firebasestorage.googleapis.com/);
+});
+test('text updates preserve other content and stale edits cannot overwrite it', async () => {
+  published={version:4,texts:{...validation.defaultTexts,'contact.support_email':'existing@example.com'},images:{portrait:{url:'saved'}}};
+  const data=await saveAppContent.run({baseVersion:4,texts:{'contact.support_email':'new@example.com'}},admin);
+  assert.equal(data.version,5); assert.deepEqual(data.images,{portrait:{url:'saved'}});
+  await assert.rejects(saveAppContent.run({baseVersion:4,texts:{'contact.support_email':'stale@example.com'}},admin),error=>error.code==='aborted');
+  assert.equal(published.texts['contact.support_email'],'new@example.com');
+});
+test('invalid text, unknown keys, and missing dynamic placeholders are rejected', async () => {
+  const template=catalog.find(e=>e.placeholders.length);
+  for (const texts of [{'contact.support_email':'not an email'}, {'unknown':'test'}, {[template.id]:'missing placeholders'}, {'contact.support_email':''}]) {
+    await assert.rejects(saveAppContent.run({baseVersion:0,texts},admin),error=>error.code==='invalid-argument');
+  }
+  assert.equal(uploads.length,0);
+});
+test('photo uploads validate bytes and preserve unrelated settings', async () => {
+  published={version:1,texts:validation.defaultTexts,images:{}};
+  await assert.rejects(updateAppImage.run({baseVersion:1,id:'image.sonny_headshot_png',base64:Buffer.from('<svg><script/></svg>').toString('base64')},admin),error=>error.code==='invalid-argument');
+  const png=require('node:fs').readFileSync(require('node:path').resolve(__dirname,'../assets/app-content/sonny_headshot.png'));
+  const result=await updateAppImage.run({baseVersion:1,id:'image.sonny_headshot_png',base64:png.toString('base64')},admin);
+  assert.equal(result.version,2);assert.equal(result.images['image.sonny_headshot_png'].contentType,'image/png');
+  assert.equal(result.texts['contact.support_email'],'carter@agqconsulting.com');
+  const reset=await updateAppImage.run({baseVersion:2,id:'image.sonny_headshot_png',reset:true},admin);
+  assert.equal(reset.version,3);assert.match(reset.images['image.sonny_headshot_png'].url,/defaults/);
+});
+test('image uploads reject stale sessions before uploading any bytes', async () => {
+  published={version:2,texts:validation.defaultTexts,images:{}};
+  await assert.rejects(updateAppImage.run({baseVersion:1,id:'image.sonny_headshot_png',reset:true},admin),error=>error.code==='aborted');
+  assert.equal(uploads.length,0);
+});
