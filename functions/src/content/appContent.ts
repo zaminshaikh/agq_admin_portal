@@ -1,4 +1,5 @@
 import { getDatabase, contentStoragePath } from '../helpers/database';
+import { withInlineContact } from './inlineText';
 import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import { createHash, randomUUID } from 'crypto';
@@ -54,7 +55,7 @@ export async function seedAppContentDefaults(actor: string): Promise<{ changed: 
     const version = (previous?.version ?? 0) + 1;
     transaction.set(document(), {
       ...previous, version,
-      texts: { ...defaultTexts, ...previous?.texts },
+      texts: { ...defaultTexts, ...withInlineContact(previous?.texts) },
       images: { ...images, ...previous?.images },
       updatedAt: admin.firestore.FieldValue.serverTimestamp(), updatedBy: actor,
     });
@@ -67,7 +68,7 @@ export const getAppContentForAdmin = functions.https.onCall(async (_data, contex
   checkAdminPermission(context, 'admin');
   const snapshot = await document().get();
   const data = snapshot.data();
-  return { version: data?.version ?? 0, texts: { ...defaultTexts, ...data?.texts }, images: data?.images ?? {} };
+  return { version: data?.version ?? 0, texts: { ...defaultTexts, ...withInlineContact(data?.texts) }, images: data?.images ?? {} };
 });
 
 export const saveAppContent = functions.runWith(options).https.onCall(async (data, context) => {
@@ -84,7 +85,7 @@ export const saveAppContent = functions.runWith(options).https.onCall(async (dat
     const snapshot = await transaction.get(document());
     const previous = snapshot.data();
     if ((previous?.version ?? 0) !== version) throw new functions.https.HttpsError('aborted', 'Content changed since you opened it. Reload before saving.');
-    const texts = { ...defaultTexts, ...previous?.texts, ...changes };
+    const texts = { ...defaultTexts, ...withInlineContact(previous?.texts), ...changes };
     if (Buffer.byteLength(JSON.stringify(texts), 'utf8') > 350000) throw new functions.https.HttpsError('invalid-argument', 'The text catalog is too large');
     const next = { version: version + 1, texts, images: { ...defaults, ...previous?.images }, updatedAt: admin.firestore.FieldValue.serverTimestamp(), updatedBy: context.auth!.uid };
     transaction.set(document(), next);
@@ -118,7 +119,7 @@ export const updateAppImage = functions.runWith(options).https.onCall(async (dat
       if (previous?.version !== version) throw new functions.https.HttpsError('aborted', 'Content changed. Reload before saving.');
       const images = { ...previous.images, [data.id]: image };
       transaction.update(document(), { images, version: version + 1, updatedAt: admin.firestore.FieldValue.serverTimestamp(), updatedBy: context.auth!.uid });
-      return { version: version + 1, texts: { ...defaultTexts, ...previous.texts }, images };
+      return { version: version + 1, texts: { ...defaultTexts, ...withInlineContact(previous.texts) }, images };
     });
   } catch (error) {
     // Delete only this unreferenced upload; never delete the prior published image.
