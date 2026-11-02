@@ -5,7 +5,8 @@ import { createHash, randomUUID } from 'crypto';
 import { readFile } from 'fs/promises';
 import { basename, resolve } from 'path';
 import { checkAdminPermission } from '../helpers/adminPermissions';
-import catalog from './catalog.json';
+import fullCatalog from './catalog.json';
+const catalog = fullCatalog.filter(entry => entry.editable);
 import { defaultTexts, entries, expectedVersion, imageType, ImageValue, validateText } from './validation';
 
 const document = () => admin.firestore().doc('appContent/published');

@@ -2,7 +2,8 @@ const {test, beforeEach} = require('node:test');
 const assert = require('node:assert/strict');
 const Module = require('node:module');
 const validation = require('../lib/src/content/validation');
-const catalog = require('../src/content/catalog.json');
+const fullCatalog = require('../src/content/catalog.json');
+const catalog = fullCatalog.filter(entry => entry.editable);
 let published, uploads, deleted;
 const ref = {};
 const snapshot = () => ({data: () => published});
@@ -25,17 +26,17 @@ test('admin migration seeds all defaults once and preserves existing edits on re
   published={version:2,texts:{'contact.support_email':'custom@example.com'},images:{'image.sonny_headshot_png':{url:'existing-photo'}}};
   assert.deepEqual(await seedAppContentDefaults('migration:test'),{changed:true,version:3});
   assert.equal(Object.keys(published.texts).length,catalog.filter(e=>e.kind!=='image').length+1);
-  assert.equal(Object.keys(published.images).length,42);
+  assert.equal(Object.keys(published.images).length,2);
   assert.equal(published.texts['contact.support_email'],'custom@example.com');
   assert.match(published.texts['signup.cid_help'],/custom@example.com/);
   assert.equal(published.images['image.sonny_headshot_png'].url,'existing-photo');
-  assert.equal(uploads.length,41);
+  assert.equal(uploads.length,1);
   assert.deepEqual(await seedAppContentDefaults('migration:test'),{changed:false,version:3});
-  assert.equal(uploads.length,41);
+  assert.equal(uploads.length,1);
 });
 
 test('catalog copies match and every default validates', () => {
-  assert.deepEqual(catalog, require('../../src/content/catalog.json'));
+  assert.deepEqual(fullCatalog, require('../../src/content/catalog.json')); 
   assert.equal(new Set(catalog.map(e=>e.id)).size, catalog.length);
   for (const entry of catalog) if(entry.kind !== 'image') assert.equal(validation.validateText(entry.id,entry.defaultValue),entry.defaultValue);
 });
@@ -113,4 +114,25 @@ test('renamed and unknown placeholders are rejected before any publish', async (
     await assert.rejects(saveAppContent.run({baseVersion:0,texts:{[template.id]:value}},admin),error=>error.code==='invalid-argument');
   }
   assert.equal(published,undefined);assert.equal(uploads.length,0);
+});
+
+test('button labels and non-profile images cannot be published',async()=>{
+  const logout=fullCatalog.find(entry=>entry.defaultValue==='Logout');
+  assert.equal(logout.editable,false);
+  await assert.rejects(saveAppContent.run({baseVersion:0,texts:{[logout.id]:'Different action'}},admin),error=>error.code==='invalid-argument');
+  await assert.rejects(updateAppImage.run({baseVersion:1,id:'image.agq_logo_png',reset:true},admin),error=>error.code==='invalid-argument');
+  assert.equal(uploads.length,0);assert.equal(published,undefined);
+});
+test('descriptive editor tokens round-trip every saved message without changing its meaning',()=>{
+  const esbuild=require('../../node_modules/esbuild');const vm=require('node:vm');
+  const output=esbuild.buildSync({entryPoints:[require('node:path').resolve(__dirname,'../../src/content/editorText.ts')],bundle:true,platform:'node',format:'cjs',write:false}).outputFiles[0].text;
+  const module={exports:{}};vm.runInNewContext(output,{module,exports:module.exports});
+  const {toEditorText,toStoredText}=module.exports;
+  for(const entry of catalog.filter(entry=>entry.kind!=='image')){
+    const custom='Custom wording: '+entry.defaultValue;
+    const editor=toEditorText(entry.id,custom);
+    assert.doesNotMatch(editor,/\{value\d+\}/);
+    assert.equal(toStoredText(entry.id,editor),custom);
+    assert.equal(validation.validateText(entry.id,toStoredText(entry.id,editor)),custom);
+  }
 });

@@ -10,7 +10,8 @@ import {
   CSpinner,
 } from '@coreui/react-pro'
 import { usePermissions } from '../../contexts/PermissionContext'
-import catalog from '../../content/catalog.json'
+import storedCatalog from '../../content/catalog.json'
+import { editorPlaceholder, mapEditorTexts, toEditorText, toStoredText } from '../../content/editorText'
 import { preservesPlaceholders } from '../../content/placeholders'
 import { ContentEntry, fieldLabel, location, sections } from '../../content/contentOrganization'
 import {
@@ -21,6 +22,12 @@ import {
 } from '../../content/appContentService'
 import './AppContent.css'
 
+const catalog = storedCatalog.filter(entry => entry.editable).map(entry => ({
+  ...entry,
+  label: toEditorText(entry.id, entry.label),
+  defaultValue: toEditorText(entry.id, entry.defaultValue),
+  placeholders: entry.placeholders.map(token => editorPlaceholder(entry.id, token)),
+}))
 const defaults = Object.fromEntries(
   catalog.filter((entry) => entry.kind !== 'image').map((entry) => [entry.id, entry.defaultValue]),
 )
@@ -45,8 +52,9 @@ export default function AppContent() {
     preview: string
   } | null>(null)
   const accept = (next: ContentSnapshot) => {
-    setSnapshot(next)
-    setDraft({ ...defaults, ...next.texts })
+    const texts = mapEditorTexts(next.texts)
+    setSnapshot({ ...next, texts })
+    setDraft({ ...defaults, ...texts })
   }
   const reload = async () => {
     setBusy(true)
@@ -122,7 +130,9 @@ export default function AppContent() {
     setError('')
     setNotice('')
     try {
-      accept(await saveAppContent(snapshot.version, changes))
+      accept(await saveAppContent(snapshot.version, Object.fromEntries(
+        Object.entries(changes).map(([id, text]) => [id, toStoredText(id, text)]),
+      )))
       setNotice('Changes published to the mobile app.')
     } catch (err) {
       setError(errorText(err))
@@ -179,7 +189,7 @@ export default function AppContent() {
     <div className="app-content-editor">
       <h2>App content</h2>
       <p className="text-body-secondary">
-        Choose a screen to edit its messages, labels, and images.
+        Edit app messages, help content, and team profile photos. Button labels and navigation stay fixed.
       </p>
       {error && (
         <CAlert color="danger" role="alert">
