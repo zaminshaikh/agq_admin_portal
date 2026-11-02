@@ -194,20 +194,6 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
                 </details>}
               </CAlert>
             )}
-            {(Math.abs(discrepancy) > 0.01 ||
-              history.missingHistory > 0 ||
-              history.invalid > 0 ||
-              history.invalidCurrentBalances > 0) && (
-              <CAlert color="warning">
-                Historical graphpoints may not include every balance adjustment.
-                {Math.abs(discrepancy) > 0.01 &&
-                  ` The latest recorded ${title.toLowerCase()} balance differs from current assets by ${currency(discrepancy)}.`}
-                {history.missingHistory > 0 &&
-                  ` ${history.missingHistory} funded client/fund combinations have no history.`}
-                {(history.invalid > 0 || history.invalidCurrentBalances > 0) &&
-                  ' Some invalid or missing records were excluded.'}
-              </CAlert>
-            )}
             {start > end ? (
               <CAlert color="warning">Choose an end date on or after the start date.</CAlert>
             ) : points.length ? (
@@ -281,6 +267,20 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
               updates. Combined = AGQ + AK1. Dates are UTC. Last loaded{' '}
               {new Date(history.asOf).toLocaleString()}.
             </p>
+            {(Math.abs(discrepancy) > 0.01 ||
+              history.missingHistory > 0 ||
+              history.invalid > 0 ||
+              history.invalidCurrentBalances > 0) && (
+              <p className="small text-body-secondary mt-2 mb-0">
+                Historical graphpoints may not include every balance adjustment.
+                {Math.abs(discrepancy) > 0.01 &&
+                  ` The latest recorded ${title.toLowerCase()} balance differs from current assets by ${currency(discrepancy)}.`}
+                {history.missingHistory > 0 &&
+                  ` ${history.missingHistory} funded client/fund combinations have no history.`}
+                {(history.invalid > 0 || history.invalidCurrentBalances > 0) &&
+                  ' Some invalid or missing records were excluded.'}
+              </p>
+            )}
           </>
         )}
       </CCardBody>
