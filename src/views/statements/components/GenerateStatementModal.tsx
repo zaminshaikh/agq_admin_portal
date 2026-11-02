@@ -17,7 +17,7 @@ const GenerateStatementModal: React.FC<GenerateStatementModalProps> = ({showModa
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [uploadToDocuments, setUploadToDocuments] = React.useState(false);
+  const [uploadToDocuments, setUploadToDocuments] = React.useState(true);
   const [error, setError] = React.useState('');
   const clientRequest = React.useRef(0);
 
