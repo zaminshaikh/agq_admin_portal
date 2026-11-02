@@ -97,7 +97,9 @@ export default function AppContent() {
     return (
       (searching || place.section === section) &&
       (kind === 'all' || (kind === 'images' ? entry.kind === 'image' : entry.kind !== 'image')) &&
-      (!onlyChanged || Object.prototype.hasOwnProperty.call(changes, entry.id) || pendingImage?.id === entry.id) &&
+      (!onlyChanged ||
+        Object.prototype.hasOwnProperty.call(changes, entry.id) ||
+        pendingImage?.id === entry.id) &&
       `${fieldLabel(entry)} ${entry.label} ${place.group} ${sections.find((item) => item.id === place.section)?.label} ${draft[entry.id] ?? ''}`
         .toLowerCase()
         .includes(query.trim().toLowerCase())
@@ -258,7 +260,9 @@ export default function AppContent() {
           <div className="content-nav-title">APP SCREENS</div>
           {sections.map((item) => {
             const items = catalog.filter((entry) => location(entry).section === item.id)
-            const edited = items.filter((entry) => Object.prototype.hasOwnProperty.call(changes, entry.id)).length
+            const edited = items.filter((entry) =>
+              Object.prototype.hasOwnProperty.call(changes, entry.id),
+            ).length
             return (
               <button
                 type="button"
@@ -412,6 +416,13 @@ export default function AppContent() {
                               maxLength={12000}
                               onChange={(event) => editText(entry.id, event.target.value)}
                             />
+                          )}
+                          {(entry.kind === 'email_message' || entry.kind === 'phone_message') && (
+                            <p className="small text-body-secondary mt-2 mb-0">
+                              Edit the complete line. Tapping it in the app uses the{' '}
+                              {entry.kind === 'email_message' ? 'email address' : 'phone number'}{' '}
+                              written here.
+                            </p>
                           )}
                           {entry.id === 'signup.cid_help' && (
                             <p className="small text-body-secondary mt-2 mb-0">
