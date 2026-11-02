@@ -1,4 +1,5 @@
-import catalog from './catalog.json';
+import fullCatalog from './catalog.json';
+const catalog = fullCatalog.filter(entry => entry.editable);
 export type ImageValue = { url: string; contentType: string };
 export const entries = new Map(catalog.map(entry => [entry.id, entry]));
 export const defaultTexts = Object.fromEntries(catalog.filter(e => e.kind !== 'image').map(e => [e.id, e.defaultValue]));
