@@ -1,3 +1,4 @@
+import { getAccountLabel } from 'src/db/clientNames';
 import { CCol, CContainer, CFormInput, CFormSelect, CFormSwitch, CInputGroup, CInputGroupText, CModalBody, CMultiSelect, CRow, CTooltip, CFormTextarea } from "@coreui/react-pro";
 import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import React, { useEffect, useState, useMemo } from "react";
@@ -178,7 +179,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
             // i === 0
             //     ? { label: title, value: title, selected: true }
             //     : 
-            ({ label: title, value: title })
+            ({ label: getAccountLabel(clientState, title), value: title })
         );
     }, [clientState]);
 
@@ -267,7 +268,6 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                       }
                       
                       const cid = selectedValue.map(selected => selected.value as string)[0];
-                      const clientName = selectedValue.map(selected => selected.label as string)[0];
                       
                       // Get the client before setting state
                       const client = await db.getClient(cid);
@@ -275,6 +275,7 @@ export const ActivityInputModalBody: React.FC<ActivityInputProps> = ({
                       // This avoids mutating the original object
                       setInitialClientState(structuredClone(client));
                       if (client) {
+                          const clientName = `${client.firstName} ${client.lastName}`;
                           const changedAssets = scheduledActivity?.changedAssets;
                           // Clone the client object to avoid mutating the original object
                           const newClientState = structuredClone(client);

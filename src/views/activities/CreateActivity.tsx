@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import { CButton, CModal, CModalFooter, CModalHeader, CModalTitle} from "@coreui/react-pro"
 import { useEffect, useState } from "react";
 import React from "react";
@@ -39,7 +40,7 @@ export const CreateActivity: React.FC<ShowModalProps> = ({showModal, setShowModa
     const [override, setOverride] = useState(false);
 
     const clientOptions = clients!
-        .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: selectedClient === client.cid }))
+        .map(client => ({value: client.cid, label: getClientDisplayName(client), selected: selectedClient === client.cid }))
         .sort((a, b) => a.label.localeCompare(b.label));
 
     const [initialClientState, setInitialClientState] = useState<Client | null>(null);

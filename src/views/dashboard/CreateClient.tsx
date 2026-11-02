@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import { CButton, CModal, CModalHeader, CModalTitle, CModalFooter} from "@coreui/react-pro"
 import { useEffect, useState } from "react";
 import React from "react";
@@ -33,7 +34,7 @@ const CreateClient: React.FC<ShowModalProps> = ({showModal, setShowModal, client
     const [clientState, setClientState] = useState<Client>(initialClientState);
 
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [clientOptions, setClientOptions] = useState<(Option | OptionsGroup)[]>(clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName})))
+    const [clientOptions, setClientOptions] = useState<(Option | OptionsGroup)[]>(clients!.map(client => ({value: client.cid, label: getClientDisplayName(client)})))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 

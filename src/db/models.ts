@@ -42,6 +42,7 @@ export type Client = {
   uid: string
   uidGrantedAccess: string[]
   linked: boolean
+  accountName?: string
   firstName: string
   lastName: string
   companyName: string
@@ -240,6 +241,7 @@ export type Assets = {
 }
 
 export const emptyClient: Client = {
+  accountName: '',
   firstName: '',
   lastName: '',
   companyName: '',

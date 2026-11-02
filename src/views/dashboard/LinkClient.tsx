@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import {
   CAlert,
   CButton,
@@ -146,7 +147,7 @@ export const LinkClient: React.FC<LinkClientProps> = ({
         <p className="mb-3">
           Link a Firebase Auth account to{' '}
           <strong>
-            {client?.firstName} {client?.lastName}
+            {getClientDisplayName(client)}
           </strong>{' '}
           (CID {client?.cid}). This will set the client&rsquo;s UID and email, mark the
           Firebase email as verified, and finish the sign-up flow that the mobile app
@@ -164,7 +165,7 @@ export const LinkClient: React.FC<LinkClientProps> = ({
         <CInputGroup className="mb-2">
           <CInputGroupText>Client</CInputGroupText>
           <CFormInput
-            value={`${client?.firstName ?? ''} ${client?.lastName ?? ''} (${client?.cid ?? ''})`}
+            value={`${getClientDisplayName(client)} (${client?.cid ?? ''})`}
             disabled
           />
         </CInputGroup>

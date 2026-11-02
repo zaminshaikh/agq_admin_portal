@@ -1,3 +1,4 @@
+import { getAccountLabel } from 'src/db/clientNames';
 import { CModal, CModalHeader, CModalTitle, CModalBody, CMultiSelect, CFormInput, CAlert, CModalFooter, CButton, CDateRangePicker, CInputGroup, CInputGroupText, CLoadingButton } from '@coreui/react-pro';
 import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import React, { useMemo } from 'react';
@@ -36,7 +37,7 @@ const GenerateStatementModal: React.FC<GenerateStatementModalProps> = ({showModa
     const arr = [...titles];
 
     return arr.map((title) =>
-        ({ label: title, value: title })
+        ({ label: getAccountLabel(currentClient, title), value: title })
     );
   }, [currentClient]);
 

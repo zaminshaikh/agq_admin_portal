@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import React, { useEffect, useState } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalFooter, CButton } from '@coreui/react-pro';
 import { Activity, emptyActivity, Client, emptyClient, ScheduledActivity, getChangedAssets } from 'src/db/database';
@@ -29,7 +30,7 @@ const EditActivity: React.FC<EditActivityProps> = ({ showModal, setShowModal, cl
     const [override, setOverride] = useState(false);
     
     const clientOptions = clients!
-    .map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: activity?.parentDocId === client.cid }))
+    .map(client => ({value: client.cid, label: getClientDisplayName(client), selected: activity?.parentDocId === client.cid }))
     .sort((a, b) => a.label.localeCompare(b.label));;
 
     const [initialClientState, setInitialClientState] = useState<Client | null>(null);

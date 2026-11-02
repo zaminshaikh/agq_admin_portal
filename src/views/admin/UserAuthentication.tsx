@@ -30,6 +30,7 @@ import { app } from '../../App'
 import config from '../../../config.json'
 import { usePermissions } from '../../contexts/PermissionContext'
 import { AuthUserSummary, UnlinkedClientSummary } from '../../db/adminService'
+import { getClientDisplayName } from '../../db/clientNames'
 
 type FilterMode = 'all' | 'unlinked' | 'linked' | 'admins'
 
@@ -45,7 +46,7 @@ const formatTimestamp = (value: number): string => {
 }
 
 const buildClientLabel = (c: UnlinkedClientSummary): string => {
-  const name = [c.firstName, c.lastName].filter(Boolean).join(' ') || c.companyName || 'Unnamed'
+  const name = getClientDisplayName(c)
   const emailPart = c.email ? ` (${c.email})` : ''
   return `${name} — ${c.cid}${emailPart}`
 }
@@ -78,6 +79,7 @@ const UserAuthentication: React.FC = () => {
       if (uid && uid !== '') return
       out.push({
         cid: docSnap.id,
+        accountName: data?.accountName ?? '',
         firstName: data?.name?.first ?? '',
         lastName: data?.name?.last ?? '',
         companyName: data?.name?.company ?? '',
@@ -85,8 +87,8 @@ const UserAuthentication: React.FC = () => {
       })
     })
     out.sort((a, b) => {
-      const an = `${a.firstName} ${a.lastName} ${a.companyName}`.toLowerCase()
-      const bn = `${b.firstName} ${b.lastName} ${b.companyName}`.toLowerCase()
+      const an = getClientDisplayName(a).toLowerCase()
+      const bn = getClientDisplayName(b).toLowerCase()
       return an.localeCompare(bn)
     })
     return out
@@ -106,7 +108,7 @@ const UserAuthentication: React.FC = () => {
       ])
       setUsers(authResult.users)
       setUnlinkedClients(
-        authResult.unlinkedClients.length > 0 ? authResult.unlinkedClients : directClients,
+        directClients,
       )
     } catch (err: any) {
       console.error('Error loading user links data:', err)

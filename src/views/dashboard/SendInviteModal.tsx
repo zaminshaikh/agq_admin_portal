@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import React, { useState } from 'react';
 import {
   CModal,
@@ -107,7 +108,7 @@ const SendInviteModal: React.FC<SendInviteModalProps> = ({
     return null;
   }
 
-  const clientName = `${client.firstName} ${client.lastName}`.trim();
+  const clientName = getClientDisplayName(client);
   const emailToUse = client.initEmail || client.appEmail;
 
   return (

@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import React, { useState, useEffect } from 'react';
 import {
   CModal,
@@ -55,13 +56,13 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
   useEffect(() => {
     const filtered = clients.filter(
       (client) =>
-        (client.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || client.lastName.toLowerCase().includes(searchTerm.toLowerCase())) ?? false
+        (getClientDisplayName(client).toLowerCase().includes(searchTerm.toLowerCase()) || client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || client.lastName.toLowerCase().includes(searchTerm.toLowerCase())) ?? false
     );
     setFilteredClients(filtered);
   }, [searchTerm, clients]);
 
   const clientOptions = clients.map((client) => ({
-    label: `${client.firstName} ${client.lastName}`,
+    label: getClientDisplayName(client),
     value: client.cid,
   }));
 

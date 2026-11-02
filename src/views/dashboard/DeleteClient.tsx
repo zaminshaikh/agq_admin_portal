@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import { CButton, CFormInput, CInputGroup, CInputGroupText, CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro";
 import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -46,7 +47,7 @@ export const DeleteClient: React.FC<ShowModalProps> = ({showModal, setShowModal,
             </CModalTitle>
         </CModalHeader>
             <CModalBody className="px-5">
-                You are about to delete the client {client?.firstName} {client?.lastName}. THIS ACTION IS IRREVERSIBLE. To delete this client, type their first and last name below:
+                You are about to delete the client {getClientDisplayName(client)}. THIS ACTION IS IRREVERSIBLE. To delete this client, type their first and last name below:
                 <div className="py-3">
                     <CInputGroup>
                         <CInputGroupText>Client's First Name</CInputGroupText>

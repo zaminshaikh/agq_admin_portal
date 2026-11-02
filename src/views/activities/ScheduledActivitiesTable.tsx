@@ -9,6 +9,7 @@ import CIcon from "@coreui/icons-react";
 import type { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import Activities from './Activities';
 import { usePermissions } from "../../contexts/PermissionContext";
+import { getAccountLabel, getClientDisplayName } from 'src/db/clientNames';
 
 interface TableProps {
     scheduledActivities: ScheduledActivity[];
@@ -123,7 +124,7 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
                     ),
                     parentName: (item: ScheduledActivity) => (
                         <td>
-                            {item.activity.parentName}
+                            {getClientDisplayName(clients.find(client => client.cid === item.cid)) || item.activity.parentName}
                         </td>
                     ),
                     scheduledTime: (item: ScheduledActivity) => (
@@ -133,7 +134,7 @@ const ScheduledActivitiesTable: React.FC<TableProps> = ({scheduledActivities, se
                     ),
                     recipient: (item: ScheduledActivity) => (
                         <td>
-                            {item.activity.recipient}
+                            {getAccountLabel(clients.find(client => client.cid === item.cid), item.activity.recipient ?? '')}
                         </td>
                     ),
                     amount: (item: ScheduledActivity) => (

@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 // Statements.tsx
 
 import React, { useEffect, useState } from 'react';
@@ -39,7 +40,7 @@ const Statements: React.FC = () => {
 
         setClientOptions(
             clients!
-                .map(client => ({ value: client.cid, label: client.firstName + ' ' + client.lastName }))
+                .map(client => ({ value: client.cid, label: getClientDisplayName(client) }))
                 .sort((a, b) => a.label.localeCompare(b.label))
         ); 
         setClients(clients);

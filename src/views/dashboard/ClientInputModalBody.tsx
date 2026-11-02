@@ -10,6 +10,7 @@ import { Timestamp } from 'firebase/firestore';
 import countries from '../../utils/countries.json';
 import states from '../../utils/states.json';
 import provinces from '../../utils/provinces.json';
+import { getAccountLabel, getClientDisplayName } from '../../db/clientNames';
 
 // Helper function to safely format dates from either Date objects or Firestore Timestamps
 const formatAuditDate = (date: Date | Timestamp | undefined | null): string => {
@@ -368,6 +369,20 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
 
     return (
             <CModalBody className="px-5">
+            <CInputGroup className="mb-3 py-3">
+                <CInputGroupText as="label" htmlFor="account-name">Account Name</CInputGroupText>
+                <CFormInput
+                    id="account-name"
+                    value={clientState.accountName ?? ''}
+                    placeholder={getClientDisplayName({ ...clientState, accountName: '' })}
+                    disabled={viewOnly}
+                    onChange={(event) => setClientState({ ...clientState, accountName: event.target.value })}
+                    aria-describedby="account-name-help"
+                />
+            </CInputGroup>
+            <div id="account-name-help" className="text-body-secondary mb-3">
+                Used in the portal. Leave blank to use the client's first and last name.
+            </div>
             <CInputGroup className="mb-3 py-3">
                 <CInputGroupText>Client's First Name</CInputGroupText>
                 <CFormInput
@@ -931,7 +946,7 @@ export const ClientInputModalBody: React.FC<ClientInputProps> = ({
                         <>
                         <CTableDataCell>{activity.fund}</CTableDataCell>
                         <CTableDataCell>{toTitleCase(activity.type)}</CTableDataCell>
-                        <CTableDataCell>{activity.recipient}</CTableDataCell>
+                        <CTableDataCell>{getAccountLabel(clientState, activity.recipient ?? '')}</CTableDataCell>
                         <CTableDataCell>{activity.formattedTime}</CTableDataCell>
                         <CTableDataCell>{formatCurrency(activity.amount)}</CTableDataCell>
                         <CTableDataCell className="d-flex gap-2">

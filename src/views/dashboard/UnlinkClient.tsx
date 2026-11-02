@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import {
   CButton,
   CFormInput,
@@ -74,7 +75,7 @@ export const UnlinkClient: React.FC<ShowModalProps> = ({
         </CModalTitle>
       </CModalHeader>
       <CModalBody className="px-5">
-        You are about to unlink the client <strong>{client?.firstName} {client?.lastName}</strong> (
+        You are about to unlink the client <strong>{getClientDisplayName(client)}</strong> (
         {client?.initEmail}). THIS ACTION IS IRREVERSIBLE. To confirm, please type the
         client's email below:
         <div className="py-3">
