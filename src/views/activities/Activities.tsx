@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import ActivitiesTable from "./ActivitiesTable";
 import { useEffect, useState } from "react";
 import { DatabaseService, Client, ScheduledActivity, Activity } from "src/db/database";
-import { CButton, CCol, CRow, CSpinner } from "@coreui/react-pro";
+import { CAlert, CButton, CCol, CRow, CSpinner } from "@coreui/react-pro";
 import ScheduledActivitiesTable from "./ScheduledActivitiesTable";
 import { CreateActivity } from "./CreateActivity";
 import ExportActivitiesModal from "./ExportActivitiesModal";
@@ -12,8 +12,10 @@ import { usePermissions } from "../../contexts/PermissionContext";
 
 const Activities = () => {
     useTranslation();
-    const { canWrite, admin } = usePermissions();
+    const { canWrite, admin, loading: permissionLoading } = usePermissions();
     const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+    const [retry, setRetry] = useState(0);
 
     // Initialize database service with current admin
     useEffect(() => {
@@ -35,7 +37,12 @@ const Activities = () => {
     const [clientOptions, setClientOptions] = useState<{ label: string; value: string }[]>([]);
 
     useEffect(() => {
+      if (permissionLoading || !admin) return;
+      let active = true;
       const fetchActivities = async () => {
+        setIsLoading(true);
+        setLoadError('');
+        try {
           const db = new DatabaseService();
           if (admin) {
               db.setCurrentAdmin(admin);
@@ -46,6 +53,7 @@ const Activities = () => {
 
           const clients = await db.getClients();
 
+          if (!active) return;
           setScheduledActivities(newScheduledActivities); // Store the original activities
           setFilteredActivities(activities);
           setAllActivities(activities); // Store the original activities
@@ -58,10 +66,17 @@ const Activities = () => {
           }));
           setClientOptions(options);
 
-          setIsLoading(false);
+        } catch (error) {
+          if (active) setLoadError((error as { code?: string }).code === 'permission-denied'
+            ? 'Activities could not be loaded because access was denied. Please retry after your access is restored.'
+            : 'Activities could not be loaded. Check your connection and try again.');
+        } finally {
+          if (active) setIsLoading(false);
+        }
       };
-      fetchActivities();
-    }, [admin]);
+      void fetchActivities();
+      return () => { active = false; };
+    }, [admin, permissionLoading, retry]);
 
 
     if (isLoading) {
@@ -71,6 +86,11 @@ const Activities = () => {
           </div>
       )
     }
+
+    if (loadError) return <CAlert color="danger">
+      <p>{loadError}</p>
+      <CButton color="secondary" onClick={() => setRetry(value => value + 1)}>Retry</CButton>
+    </CAlert>;
 
     return (
         <div>
