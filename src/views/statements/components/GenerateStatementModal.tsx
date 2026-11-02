@@ -1,7 +1,7 @@
-import { getAccountLabel } from 'src/db/clientNames';
 import { CModal, CModalHeader, CModalTitle, CModalBody, CMultiSelect, CFormInput, CAlert, CModalFooter, CButton, CDateRangePicker, CInputGroup, CInputGroupText, CLoadingButton } from '@coreui/react-pro';
 import { Option } from "@coreui/react-pro/dist/esm/components/multi-select/types";
 import React, { useMemo } from 'react';
+import { getAccountLabel } from 'src/db/clientNames';
 import { Client, DatabaseService } from 'src/db/database';
 
 interface GenerateStatementModalProps {
