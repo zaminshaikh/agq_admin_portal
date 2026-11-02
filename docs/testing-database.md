@@ -38,4 +38,6 @@ The clone is a snapshot, not continuous synchronization. Future production edits
 
 ## Backup database
 
-The separate named database `backup` retains the full original snapshot, including the legacy `backup` and `testUsers` collections. Those legacy collections can be removed from the live default database only after the snapshot has been verified. The backup database has administrator-only client reads and no client writes, using `firestore.backup.rules`. It is never selected by the localhost preview. Original Storage files are also archived under `backup/`; the private copy manifest maps original paths to archived files for restoration. These are point-in-time backups, not automatic future backups.
+The separate named database `backup` mirrors the regular database. The retired top-level `backup`, `testUsers`, and `graphpoints` collections are removed from the regular, testing, and backup databases after the initial full copies were verified. Client-level graphpoint histories remain intact. The backup database has administrator-only client reads and no client writes, using `firestore.backup.rules`, and is never selected by localhost.
+
+Original Storage files are copied under `backup/`. The separate monthly-backup codebase refreshes the backup on the first of each month at 02:00 America/Los_Angeles, verifies copied documents, and removes stale target records. Testing is never refreshed by that job.
