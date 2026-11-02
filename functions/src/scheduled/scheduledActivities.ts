@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file scheduledActivities.ts
  * @description Cloud Function (Pub/Sub scheduled) that processes scheduled
@@ -9,7 +10,7 @@ import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import config from "../../config.json";
 
-const db = admin.firestore();
+const db = getDatabase();
 
 /**
  * Scheduled: Runs every 1 hour to check for scheduled activities

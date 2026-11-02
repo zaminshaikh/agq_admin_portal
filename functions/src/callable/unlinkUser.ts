@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file unlinkUser.ts
  * @description Contains callable functions for unlinking a user from Firebase Auth and 
@@ -29,7 +30,7 @@ export const unlinkUser = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userRef = admin.firestore().collection(usersCollectionID).doc(cid);
+    const userRef = getDatabase().collection(usersCollectionID).doc(cid);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {

@@ -1,3 +1,4 @@
+import { getDatabase } from './database';
 /**
  * @file ytd.ts
  * @description Contains helper functions for calculating and updating Year-To-Date (YTD)
@@ -73,7 +74,7 @@ export async function calculateTotalYTDForUser(cid: string, usersCollectionID: s
       totalYTD += ytd;
 
       // Retrieve doc to find further connected users
-      const userDoc = await admin.firestore().collection(usersCollectionID).doc(currentUserCid).get();
+      const userDoc = await getDatabase().collection(usersCollectionID).doc(currentUserCid).get();
       const userData = userDoc.data();
 
       // If this user has connectedUsers, add them to the queue
@@ -119,14 +120,14 @@ export async function updateYTD(cid: string, usersCollectionID: string): Promise
     await userGeneralAssetRef.update({ ytd, totalYTD });
 
     // Update parent client document with audit trail
-    const userDocRef = admin.firestore().collection(usersCollectionID).doc(cid);
+    const userDocRef = getDatabase().collection(usersCollectionID).doc(cid);
     await userDocRef.update({ 
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedBy: "System" 
     });
 
     // 3. Find all parent users (those who have 'cid' in their connectedUsers array)
-    const usersCollectionRef = admin.firestore().collection(usersCollectionID);
+    const usersCollectionRef = getDatabase().collection(usersCollectionID);
     const parentUsersSnapshot = await usersCollectionRef
       .where("connectedUsers", "array-contains", cid)
       .get();
@@ -146,7 +147,7 @@ export async function updateYTD(cid: string, usersCollectionID: string): Promise
       await parentUserGeneralAssetRef.update({ totalYTD: parentUserTotalYTD });
 
       // Update parent client document with audit trail
-      const parentUserDocRef = admin.firestore().collection(usersCollectionID).doc(parentUserCID);
+      const parentUserDocRef = getDatabase().collection(usersCollectionID).doc(parentUserCID);
       await parentUserDocRef.update({ 
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedBy: "System" 

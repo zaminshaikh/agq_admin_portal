@@ -1,6 +1,7 @@
+import { getPortalFunctions, isTesting } from '../../../db/firebaseEnvironment'
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { httpsCallable, getFunctions } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
 import { auth, app } from '../../../App';
 import { 
   CCard, 
@@ -31,7 +32,7 @@ const AdminSignup: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const functions = getFunctions(app);
+  const functions = getPortalFunctions(app);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +60,12 @@ const AdminSignup: React.FC = () => {
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (isTesting) {
+      setError('Account creation is disabled in the testing environment. Sign in with your existing account.');
       setLoading(false);
       return;
     }

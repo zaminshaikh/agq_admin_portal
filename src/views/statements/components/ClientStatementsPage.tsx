@@ -1,3 +1,4 @@
+import { portalStoragePath } from '../../../db/firebaseEnvironment'
 import React, { useEffect, useState } from 'react';
 import '@coreui/icons/css/all.min.css'; // Ensure this import is present
 import {
@@ -49,7 +50,7 @@ const ClientStatementsPage = () => {
           const cid = client.cid;
 
           // Reference to the client's documents folder
-          const listRef = ref(storage, `${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}/`);
+          const listRef = ref(storage, portalStoragePath(`${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}/`));
 
           try {
             // List all items in the folder

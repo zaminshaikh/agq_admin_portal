@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file listAuthUsers.ts
  * @description Admin-only callable function that lists all Firebase Auth users along
@@ -50,7 +51,7 @@ export const listAuthUsers = functions.https.onCall(
 
     try {
       const usersCollectionID = config.FIRESTORE_ACTIVE_USERS_COLLECTION;
-      const firestore = admin.firestore();
+      const firestore = getDatabase();
 
       // Single pass over the clients collection to build both:
       // 1. A uid -> client lookup for already-linked clients.

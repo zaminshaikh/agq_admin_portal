@@ -1,3 +1,4 @@
+import { getPortalDatabase } from '../../db/firebaseEnvironment'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   CAlert,
@@ -25,7 +26,7 @@ import {
 import type { Option } from '@coreui/react-pro/dist/esm/components/multi-select/types'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilLinkAlt, cilXCircle } from '@coreui/icons'
-import { collection, getDocs, getFirestore } from 'firebase/firestore'
+import { collection, getDocs } from 'firebase/firestore'
 import { app } from '../../App'
 import config from '../../../config.json'
 import { usePermissions } from '../../contexts/PermissionContext'
@@ -69,7 +70,7 @@ const UserAuthentication: React.FC = () => {
   const [selectKey, setSelectKey] = useState(0)
 
   const fetchUnlinkedClientsDirect = async (): Promise<UnlinkedClientSummary[]> => {
-    const db = getFirestore(app)
+    const db = getPortalDatabase(app)
     const snap = await getDocs(collection(db, config.FIRESTORE_ACTIVE_USERS_COLLECTION))
     const out: UnlinkedClientSummary[] = []
     snap.forEach((docSnap) => {

@@ -1,3 +1,4 @@
+import { getDatabase } from './database';
 /**
  * @file notifications.ts
  * @description Provides helper functions to create and send push notifications
@@ -56,7 +57,7 @@ export async function createNotif(
   activityId: string,
   usersCollectionID: string
 ): Promise<{ title: string; body: string; userRef: FirebaseFirestore.DocumentReference }> {
-  const userRef = admin.firestore().doc(`${usersCollectionID}/${cid}`);
+  const userRef = getDatabase().doc(`${usersCollectionID}/${cid}`);
   const notificationsCollectionRef = userRef.collection(config.NOTIFICATIONS_SUBCOLLECTION);
 
   // Derive an appropriate message from the activity type

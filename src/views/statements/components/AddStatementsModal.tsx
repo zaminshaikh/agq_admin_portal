@@ -1,3 +1,4 @@
+import { portalStoragePath } from '../../../db/firebaseEnvironment'
 import React, { useState, useEffect } from 'react';
 import {
   CModal,
@@ -116,7 +117,7 @@ export const AddStatementModal: React.FC<AddStatementModalProps> = ({
     setUploading(true);
     const cid = clientState.cid;
     const uploadPromises = files.map((file) => {
-      const storagePath = `${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}/${file.name}`;
+      const storagePath = portalStoragePath(`${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${cid}/${file.name}`);
       console.log(`Uploading file to: ${storagePath}`);
       const storageRef = ref(getStorage(), storagePath);
       return uploadBytes(storageRef, file);

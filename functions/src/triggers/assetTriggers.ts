@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file assetTriggers.ts
  * @description Contains a Firestore trigger to update the `recipient` field in
@@ -5,10 +6,9 @@
  */
 
 import * as functions from "firebase-functions/v1";
-import * as admin from "firebase-admin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
-const db = admin.firestore();
+const db = getDatabase();
 
 /**
  * Trigger: onUpdate of a user's asset document (e.g., assets/agq or assets/ak1).

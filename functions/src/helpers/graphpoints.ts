@@ -1,3 +1,4 @@
+import { getDatabase } from './database';
 /**
  * @file graphpoints.ts
  * @description Provides helper functions to generate and update "graphpoints"
@@ -5,11 +6,10 @@
  *              graphical charts in the client application.
  */
 
-import * as admin from "firebase-admin";
 import config from "../../config.json";
 import { Activity } from "../interfaces/activity.interface";
 
-const db = admin.firestore();
+const db = getDatabase();
 
 /**
  * Rebuilds the "graphpoints" subcollection for a given user. It:

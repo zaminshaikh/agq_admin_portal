@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { checkAdminPermission, getAdminNameByUid } from "../helpers/adminPermissions";
@@ -29,7 +30,7 @@ export const deleteAdmin = functions.https.onCall(
 
     try {
       // Verify the target admin exists
-      const adminDoc = await admin.firestore()
+      const adminDoc = await getDatabase()
         .collection('admins')
         .doc(adminId)
         .get();
@@ -43,7 +44,7 @@ export const deleteAdmin = functions.https.onCall(
       console.log(`Cleared custom claims for admin ${adminId}`);
 
       // Delete admin document from Firestore
-      await admin.firestore()
+      await getDatabase()
         .collection('admins')
         .doc(adminId)
         .delete();

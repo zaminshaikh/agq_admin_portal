@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 
@@ -34,7 +35,7 @@ export const createAdminAccount = functions.https.onCall(
 
     try {
       // Check if admin document already exists
-      const existingAdmin = await admin.firestore()
+      const existingAdmin = await getDatabase()
         .collection('admins')
         .doc(context.auth.uid)
         .get();
@@ -54,7 +55,7 @@ export const createAdminAccount = functions.https.onCall(
       };
 
       // Save to Firestore using UID as document ID
-      await admin.firestore()
+      await getDatabase()
         .collection('admins')
         .doc(context.auth.uid)
         .set(adminDoc);

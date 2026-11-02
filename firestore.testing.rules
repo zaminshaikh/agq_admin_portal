@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/testing/documents {
+    match /appContent/published {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /{collection}/{document=**} {
+      allow read: if collection != 'appContent' && request.auth != null
+        && request.auth.token.adminPermissions in ['read', 'write', 'admin'];
+      allow write: if collection != 'appContent' && request.auth != null
+        && request.auth.token.adminPermissions in ['write', 'admin'];
+    }
+  }
+}

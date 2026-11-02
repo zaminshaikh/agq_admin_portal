@@ -1,3 +1,4 @@
+import { getDatabase } from './database';
 /**
  * @file psi.ts
  * @description Contains helper functions for calculating and updating Profit Since Inception (PSI)
@@ -60,7 +61,7 @@ export async function calculateTotalPSIForUser(cid: string, usersCollectionID: s
       const psi = await calculatePSIForUser(currentUserCid, usersCollectionID);
       totalPSI += psi;
 
-      const userDoc = await admin.firestore().collection(usersCollectionID).doc(currentUserCid).get();
+      const userDoc = await getDatabase().collection(usersCollectionID).doc(currentUserCid).get();
       const userData = userDoc.data();
 
       if (userData && userData.connectedUsers) {
@@ -97,13 +98,13 @@ export async function updatePSI(cid: string, usersCollectionID: string): Promise
 
     await userGeneralAssetRef.update({ psi, totalPSI });
 
-    const userDocRef = admin.firestore().collection(usersCollectionID).doc(cid);
+    const userDocRef = getDatabase().collection(usersCollectionID).doc(cid);
     await userDocRef.update({ 
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedBy: "System" 
     });
 
-    const usersCollectionRef = admin.firestore().collection(usersCollectionID);
+    const usersCollectionRef = getDatabase().collection(usersCollectionID);
     const parentUsersSnapshot = await usersCollectionRef
       .where("connectedUsers", "array-contains", cid)
       .get();
@@ -121,7 +122,7 @@ export async function updatePSI(cid: string, usersCollectionID: string): Promise
 
       await parentUserGeneralAssetRef.update({ totalPSI: parentUserTotalPSI });
 
-      const parentUserDocRef = admin.firestore().collection(usersCollectionID).doc(parentUserCID);
+      const parentUserDocRef = getDatabase().collection(usersCollectionID).doc(parentUserCID);
       await parentUserDocRef.update({ 
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedBy: "System" 

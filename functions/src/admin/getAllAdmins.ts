@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { checkAdminPermission } from "../helpers/adminPermissions";
@@ -13,7 +14,7 @@ export const getAllAdmins = functions.https.onCall(
 
     try {
       // Get all admin documents
-      const adminsSnapshot = await admin.firestore()
+      const adminsSnapshot = await getDatabase()
         .collection('admins')
         .get();
 

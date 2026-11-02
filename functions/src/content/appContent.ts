@@ -1,3 +1,4 @@
+import { getDatabase, contentStoragePath } from '../helpers/database';
 import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import { createHash, randomUUID } from 'crypto';
@@ -7,13 +8,14 @@ import { checkAdminPermission } from '../helpers/adminPermissions';
 import catalog from './catalog.json';
 import { defaultTexts, entries, expectedVersion, imageType, ImageValue, validateText } from './validation';
 
-const document = () => admin.firestore().doc('appContent/published');
+const document = () => getDatabase().doc('appContent/published');
 const options = { memory: '512MB' as const, timeoutSeconds: 120 };
 function invalid(error: unknown): never {
   if (error instanceof functions.https.HttpsError) throw error;
   throw new functions.https.HttpsError('invalid-argument', error instanceof Error ? error.message : 'Invalid content');
 }
 async function storeImage(path: string, bytes: Buffer, contentType: string, token: string = randomUUID()): Promise<ImageValue> {
+  path = contentStoragePath(path);
   const bucket = admin.storage().bucket();
   await bucket.file(path).save(bytes, { resumable: false, metadata: {
     contentType, cacheControl: 'public,max-age=31536000,immutable',
@@ -44,7 +46,7 @@ async function initialImages(existing: Record<string, ImageValue> = {}): Promise
 export async function seedAppContentDefaults(actor: string): Promise<{ changed: boolean; version: number }> {
   const before = (await document().get()).data();
   const images = await initialImages(before?.images ?? {});
-  return admin.firestore().runTransaction(async transaction => {
+  return getDatabase().runTransaction(async transaction => {
     const previous = (await transaction.get(document())).data();
     const complete = catalog.every(entry => Object.prototype.hasOwnProperty.call(
       entry.kind === 'image' ? previous?.images ?? {} : previous?.texts ?? {}, entry.id));
@@ -78,7 +80,7 @@ export const saveAppContent = functions.runWith(options).https.onCall(async (dat
     for (const [id, value] of Object.entries(data.texts)) changes[id] = validateText(id, value);
   } catch (error) { return invalid(error); }
   const defaults = version === 0 ? await initialImages() : {};
-  return admin.firestore().runTransaction(async transaction => {
+  return getDatabase().runTransaction(async transaction => {
     const snapshot = await transaction.get(document());
     const previous = snapshot.data();
     if ((previous?.version ?? 0) !== version) throw new functions.https.HttpsError('aborted', 'Content changed since you opened it. Reload before saving.');
@@ -110,7 +112,7 @@ export const updateAppImage = functions.runWith(options).https.onCall(async (dat
   const uploadPath = `app-content/uploads/${data.id}/${randomUUID()}`;
   const image = data.reset === true ? await defaultImage(data.id) : await storeImage(uploadPath, bytes!, contentType!);
   try {
-    return await admin.firestore().runTransaction(async transaction => {
+    return await getDatabase().runTransaction(async transaction => {
       const snapshot = await transaction.get(document());
       const previous = snapshot.data();
       if (previous?.version !== version) throw new functions.https.HttpsError('aborted', 'Content changed. Reload before saving.');
@@ -121,7 +123,7 @@ export const updateAppImage = functions.runWith(options).https.onCall(async (dat
   } catch (error) {
     // Delete only this unreferenced upload; never delete the prior published image.
     if (data.reset !== true && error instanceof functions.https.HttpsError && error.code === 'aborted') {
-      await admin.storage().bucket().file(uploadPath).delete().catch(() => undefined);
+      await admin.storage().bucket().file(contentStoragePath(uploadPath)).delete().catch(() => undefined);
     }
     throw error;
   }

@@ -1,3 +1,4 @@
+import { isTesting, databaseId } from './db/firebaseEnvironment'
 import React, { Suspense, useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -91,6 +92,7 @@ const App = () => {
           </div>
         }
       >
+        {isTesting && <div role="status" style={{ padding: "10px 16px", background: "#fff3cd", color: "#664d03" }}>Testing: {databaseId}. Login is shared; account changes and email delivery are disabled.</div>}
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

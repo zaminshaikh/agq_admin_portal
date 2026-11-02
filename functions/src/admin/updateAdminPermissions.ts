@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { checkAdminPermission, AdminPermission, isValidPermission, getAdminNameByUid } from "../helpers/adminPermissions";
@@ -34,7 +35,7 @@ export const updateAdminPermissions = functions.https.onCall(
 
     try {
       // Verify the target admin exists
-      const adminDoc = await admin.firestore()
+      const adminDoc = await getDatabase()
         .collection('admins')
         .doc(adminId)
         .get();
@@ -52,7 +53,7 @@ export const updateAdminPermissions = functions.https.onCall(
       const updatedByName = await getAdminNameByUid(context.auth!.uid);
 
       // Update admin document timestamp and updatedBy
-      await admin.firestore()
+      await getDatabase()
         .collection('admins')
         .doc(adminId)
         .update({
