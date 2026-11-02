@@ -36,7 +36,7 @@ test('admin migration seeds all defaults once and preserves existing edits on re
 });
 
 test('catalog copies match and every default validates', () => {
-  assert.deepEqual(fullCatalog, require('../../src/content/catalog.json')); 
+  assert.deepEqual(fullCatalog, require('../../src/content/catalog.json'));
   assert.equal(new Set(catalog.map(e=>e.id)).size, catalog.length);
   for (const entry of catalog) if(entry.kind !== 'image') assert.equal(validation.validateText(entry.id,entry.defaultValue),entry.defaultValue);
 });
