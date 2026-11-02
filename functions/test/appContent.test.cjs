@@ -27,6 +27,7 @@ test('admin migration seeds all defaults once and preserves existing edits on re
   assert.equal(Object.keys(published.texts).length,330);
   assert.equal(Object.keys(published.images).length,42);
   assert.equal(published.texts['contact.support_email'],'custom@example.com');
+  assert.match(published.texts['signup.cid_help'],/custom@example.com/);
   assert.equal(published.images['image.sonny_headshot_png'].url,'existing-photo');
   assert.equal(uploads.length,41);
   assert.deepEqual(await seedAppContentDefaults('migration:test'),{changed:false,version:3});
@@ -46,7 +47,7 @@ test('all editing endpoints enforce administrator claims', async () => {
   assert.equal(uploads.length,0); assert.equal(published,undefined);
 });
 test('initial publish stores the full text catalog and all default images', async () => {
-  const data=await saveAppContent.run({baseVersion:0,texts:{'contact.support_email':'carter@agqconsulting.com'}},admin);
+  const data=await saveAppContent.run({baseVersion:0,texts:{'signup.cid_help':'carter@agqconsulting.com'}},admin);
   assert.equal(data.version,1);
   assert.equal(Object.keys(data.texts).length,catalog.filter(e=>e.kind!=='image').length);
   assert.equal(Object.keys(data.images).length,catalog.filter(e=>e.kind==='image').length);
@@ -55,15 +56,15 @@ test('initial publish stores the full text catalog and all default images', asyn
   assert.match(data.images['image.sonny_headshot_png'].url,/firebasestorage.googleapis.com/);
 });
 test('text updates preserve other content and stale edits cannot overwrite it', async () => {
-  published={version:4,texts:{...validation.defaultTexts,'contact.support_email':'existing@example.com'},images:{portrait:{url:'saved'}}};
-  const data=await saveAppContent.run({baseVersion:4,texts:{'contact.support_email':'new@example.com'}},admin);
+  published={version:4,texts:{...validation.defaultTexts,'signup.cid_help':'existing@example.com'},images:{portrait:{url:'saved'}}};
+  const data=await saveAppContent.run({baseVersion:4,texts:{'signup.cid_help':'new@example.com'}},admin);
   assert.equal(data.version,5); assert.deepEqual(data.images,{portrait:{url:'saved'}});
-  await assert.rejects(saveAppContent.run({baseVersion:4,texts:{'contact.support_email':'stale@example.com'}},admin),error=>error.code==='aborted');
-  assert.equal(published.texts['contact.support_email'],'new@example.com');
+  await assert.rejects(saveAppContent.run({baseVersion:4,texts:{'signup.cid_help':'stale@example.com'}},admin),error=>error.code==='aborted');
+  assert.equal(published.texts['signup.cid_help'],'new@example.com');
 });
 test('invalid text, unknown keys, and missing dynamic placeholders are rejected', async () => {
   const template=catalog.find(e=>e.placeholders.length);
-  for (const texts of [{'contact.support_email':'not an email'}, {'unknown':'test'}, {[template.id]:'missing placeholders'}, {'contact.support_email':''}]) {
+  for (const texts of [{'contact.sonny_email':'not an email'}, {'unknown':'test'}, {[template.id]:'missing placeholders'}, {'signup.cid_help':''}]) {
     await assert.rejects(saveAppContent.run({baseVersion:0,texts},admin),error=>error.code==='invalid-argument');
   }
   assert.equal(uploads.length,0);
@@ -74,7 +75,7 @@ test('photo uploads validate bytes and preserve unrelated settings', async () =>
   const png=require('node:fs').readFileSync(require('node:path').resolve(__dirname,'../assets/app-content/sonny_headshot.png'));
   const result=await updateAppImage.run({baseVersion:1,id:'image.sonny_headshot_png',base64:png.toString('base64')},admin);
   assert.equal(result.version,2);assert.equal(result.images['image.sonny_headshot_png'].contentType,'image/png');
-  assert.equal(result.texts['contact.support_email'],'carter@agqconsulting.com');
+  assert.equal(result.texts['signup.cid_help'],validation.defaultTexts['signup.cid_help']);
   const reset=await updateAppImage.run({baseVersion:2,id:'image.sonny_headshot_png',reset:true},admin);
   assert.equal(reset.version,3);assert.match(reset.images['image.sonny_headshot_png'].url,/defaults/);
 });
@@ -82,4 +83,16 @@ test('image uploads reject stale sessions before uploading any bytes', async () 
   published={version:2,texts:validation.defaultTexts,images:{}};
   await assert.rejects(updateAppImage.run({baseVersion:1,id:'image.sonny_headshot_png',reset:true},admin),error=>error.code==='aborted');
   assert.equal(uploads.length,0);
+});
+
+test('legacy CID text and custom contact become one editable message without losing wording', async()=>{
+  const old='text.screens.authenticate.create_account.create_account.your_client_id_number_cid_is_an_8_digi_1450b8';
+  published={version:8,texts:{[old]:'For your code, write to {supportEmail}. Thank you!','contact.support_email':'custom@example.com'},images:{}};
+  const data=await getAppContentForAdmin.run({},admin);
+  assert.equal(data.texts['signup.cid_help'],'For your code, write to custom@example.com. Thank you!');
+  assert.equal(published.version,8);
+  const saved=await saveAppContent.run({baseVersion:8,texts:{'signup.cid_help':'Need your Client ID? Email another@example.com.'}},admin);
+  assert.equal(saved.texts['signup.cid_help'],'Need your Client ID? Email another@example.com.');
+  assert.equal(saved.texts[old],published.texts[old]);
+  assert.equal(catalog.some(e=>e.id==='contact.support_email'||e.id===old),false);
 });

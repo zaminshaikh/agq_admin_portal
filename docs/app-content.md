@@ -1,6 +1,6 @@
 # Mobile app content
 
-Administrators can edit mobile app copy, contact details, and artwork at **App Content** in the portal. The catalog contains 330 text settings and 42 images, including the Sonny and Kash portraits. Existing content is the default. Text uses plain text, with named placeholders for client-specific values. Changing content never changes client records, authentication error codes, transaction identifiers, navigation routes, or formatting rules.
+Administrators can edit mobile app copy, contact details, and artwork at **App Content** in the portal. The catalog contains 329 editable text settings and 42 images, including the Sonny and Kash portraits. Existing content is the default. Text uses plain text, with named placeholders for client-specific values. Changing content never changes client records, authentication error codes, transaction identifiers, navigation routes, or formatting rules.
 
 The first **Publish content** stores the full text catalog in `appContent/published` and uploads all default artwork to Firebase Storage. The Firestore document holds text and image URLs/MIME types; binary images remain in Storage. It contains public content only and is readable before login. Writes use administrator-only callable functions, validate the catalog, and require the editor's current version. Reload after a conflict; unpublished edits remain visible until you reload.
 
@@ -37,3 +37,9 @@ The first command invocation is a read-only preview. Applying saves the previous
 ## Catalog maintenance
 
 The source catalog lives in the mobile repository at `lib/content/catalog.json`. When adding visible copy or a bundled image, add a stable catalog entry and use `AppContent.text` or `AppContentImage` at the display site. Do not replace programmatic identifiers with editable values. The mobile helper `tool/sync_content.py --portal /path/to/agq_admin_portal` regenerates Dart defaults and copies the catalog/default images into the portal and functions. Keep matching catalog updates in linked PRs. Tests verify the portal/backend catalogs agree.
+
+## Editing by screen
+
+The editor groups content by app screen, with subsections for messages, controls, team contact cards, and artwork. Search spans all screens and current published/draft wording. Text/image and edited-only filters narrow results without losing drafts. Team portraits appear alongside their contact cards. Image publication is blocked while text changes are unpublished, and text editing waits for a pending image preview to be published or canceled.
+
+Client ID help is now one complete message (`signup.cid_help`), including the contact email. The old standalone support email and split template are no longer editor settings. Reads and seeding combine previously published template/contact values if the complete-message field is missing; existing full-message edits always win. Legacy stored keys remain untouched for compatibility. The mobile reader also supports the old document shape during rollout. Genuine dynamic client values still use validated placeholders; email/phone fields used by contact-card actions remain with those cards.
