@@ -1,0 +1,56 @@
+{
+  "text.database.auth_helper.a_verification_email_has_been_sent_to__fe463c": {
+    "value1": "email"
+  },
+  "text.screens.authenticate.utils.google_auth_service.email_value1_is_already_associated_wit_ceaaf1": {
+    "value1": "email"
+  },
+  "text.screens.authenticate.utils.apple_auth_service.failed_to_process_sign_up_value1_766de4": {
+    "value1": "errorMessage"
+  },
+  "text.screens.authenticate.email_verification_screen.verification_email_sent_to_value1_22ce48": {
+    "value1": "email"
+  },
+  "text.screens.authenticate.email_verification_screen.we_sent_a_verification_email_to_value1_d80f36": {
+    "value1": "email"
+  },
+  "text.screens.authenticate.create_account.create_account.there_is_no_record_of_the_client_id_va_96674c": {
+    "value1": "clientId"
+  },
+  "text.screens.authenticate.create_account.create_account.user_already_exists_for_given_client_i_e4c8b5": {
+    "value1": "clientId"
+  },
+  "text.screens.authenticate.create_account.create_account.authentication_failed_value1_e19ef8": {
+    "value1": "errorMessage"
+  },
+  "text.main.error_value1_54e519": {
+    "value1": "errorMessage"
+  },
+  "text.database.database.error_updating_field_e_2075b0": {
+    "e": "errorMessage"
+  },
+  "text.screens.authenticate.utils.google_auth_service.user_already_exists_for_given_client_i_ec27db": {
+    "cid": "clientId"
+  },
+  "text.screens.authenticate.utils.apple_auth_service.no_record_found_for_client_id_cid_plea_025e5d": {
+    "cid": "clientId"
+  },
+  "text.screens.authenticate.create_account.components.email_verification_dialog.an_error_occurred_e_7cfb3f": {
+    "e": "errorMessage"
+  },
+  "text.screens.authenticate.login.login.error_signing_in_please_check_your_ema_cefa55": {
+    "e": "errorMessage"
+  },
+  "text.screens.dashboard.components.dashboard_app_bar.welcome_shortername_4e6d4e": {
+    "shorterName": "clientName"
+  },
+  "text.screens.dashboard.components.dashboard_app_bar.welcome_fullname_75f547": {
+    "fullName": "clientName"
+  },
+  "text.screens.profile.pages.settings.error_updating_email_e_a4dcc5": {
+    "e": "errorMessage"
+  },
+  "text.screens.profile.pages.settings.error_updating_password_e_3e4e91": {
+    "e": "errorMessage"
+  }
+}
