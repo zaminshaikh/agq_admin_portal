@@ -45,3 +45,28 @@ test('AUM endpoint denies unauthenticated and non-admin callers before any reads
   await assert.rejects(endpoint.run({},{}),error=>error.code==='unauthenticated');
   await assert.rejects(endpoint.run({},{auth:{uid:'client',token:{}}}),error=>error.code==='permission-denied');
 });
+test('AUM endpoint reads current lowercase client histories, never legacy graphPoints',async()=>{
+  const database=require('../lib/src/helpers/database');
+  const previous=database.getDatabase;
+  const reads=[];
+  database.getDatabase=()=>({collection:name=>{
+    assert.equal(name,'users');
+    return {get:async()=>({size:1,docs:[{id:'a',ref:{collection:child=>{
+      reads.push(child);
+      if(child==='graphpoints')return {where:(field,op,value)=>{
+        assert.deepEqual([field,op,value],['account','==','Cumulative']);
+        return {get:async()=>({docs:[{id:'p',createTime:{seconds:1,nanoseconds:0},data:()=>({account:'Cumulative',fund:'AGQ',amount:100,time:{toMillis:()=>Date.parse('2026-01-01')}})}]})};
+      }};
+      assert.equal(child,'assets');
+      return {get:async()=>({docs:[{id:'agq',data:()=>({total:125})},{id:'ak1',data:()=>({total:0})}]})};
+    }}}]})};
+  }});
+  try {
+    const endpoint=require('../lib/src/analytics/getAumHistory').getAumHistory;
+    const result=await endpoint.run({},{auth:{uid:'admin',token:{adminPermissions:'read'}}});
+    assert.deepEqual(reads,['graphpoints','assets']);
+    assert.equal(result.points.at(-1).AGQ,100);
+    assert.equal(result.current.AGQ,125);
+    assert.equal(result.missingHistory,0);
+  }finally{database.getDatabase=previous;}
+});

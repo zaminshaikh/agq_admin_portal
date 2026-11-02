@@ -11,3 +11,5 @@ Historical data is not silently reconciled to current assets. The UI reports dif
 Deploy `getAumHistory` with the portal for production. It is also exported by the isolated localhost testing server. Existing unrelated portal type-check errors remain.
 
 Validation: build functions and run `node --test functions/test/aum.test.cjs`; build the portal with `npm run build -- --mode testing`. The tests cover cumulative replacement, duplicate/account-point exclusion, fund carry-forward, same-time updates, invalid/future data, withdrawals, cents, range boundaries, and endpoint permissions.
+
+The AUM reader explicitly uses lowercase `users/{cid}/graphpoints`, matching the mobile app. Some portal configurations still specify the separate legacy `graphPoints` collection; that collection is not used or combined with the current history.

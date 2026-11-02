@@ -22,7 +22,9 @@ export const getAumHistory = functions
         users.docs.slice(i, i + 10).map(async (user) => {
           const [graphs, assets] = await Promise.all([
             user.ref
-              .collection(config.GRAPHPOINTS_SUBCOLLECTION)
+              // Match the mobile app's current history. Some portal configs still
+              // name the separate, older graphPoints collection.
+              .collection('graphpoints')
               .where('account', '==', 'Cumulative')
               .get(),
             user.ref.collection(config.ASSETS_SUBCOLLECTION).get(),
