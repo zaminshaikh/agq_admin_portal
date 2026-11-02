@@ -6,7 +6,7 @@ The dashboard offers Combined, AGQ, and AK1 views, plus YTD, one-year, all-time,
 
 Each graphpoint replaces that client's balance for its fund. Other client/fund balances are carried forward. Multiple points at the same event timestamp use Firestore creation time to select the last written cumulative balance, matching the existing sequential graphpoint generator. The latest combined value at each UTC day is AGQ plus AK1; currency arithmetic uses integer cents. Range changes retain the opening balance rather than resetting to zero.
 
-Historical data is not silently reconciled to current assets. The UI reports differences, invalid points, and funded client/fund combinations without history. The old root graphpoints series is tagged `playground`, stops in January 2025, and has invalid negative totals; it is deliberately excluded. This feature reads existing records without regenerating or editing history.
+Historical data is not silently reconciled to current assets. The UI reports differences, invalid points, and funded client/fund combinations without history. The old root graphpoints series is tagged `playground`, stops in January 2025, and has invalid negative totals; it is deliberately excluded. This feature reads existing records without regenerating or editing history. The old admin script no longer writes the retired root collection or runs a rebuild implicitly.
 
 Deploy `getAumHistory` with the portal for production. It is also exported by the isolated localhost testing server. Existing unrelated portal type-check errors remain.
 
