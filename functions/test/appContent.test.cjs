@@ -105,3 +105,12 @@ test('full contact lines preserve old wording, keep actions valid, and reject am
   assert.equal(validation.validateText('contact.sonny_phone_message','Call +1 (555) 123-4567'),'Call +1 (555) 123-4567');
   for(const [key,text] of [['contact.sonny_email_message','No email'],['contact.sonny_email_message','a@example.com or b@example.com'],['contact.sonny_phone_message','No phone'],['contact.sonny_phone_message','555-123-4567 or 555-987-6543']])assert.throws(()=>validation.validateText(key,text));
 });
+
+test('renamed and unknown placeholders are rejected before any publish', async () => {
+  const template=catalog.find(e=>e.placeholders.length);
+  const token=template.placeholders[0];
+  for(const value of [template.defaultValue.replace(`{${token}}`,'{renamedValue}'),template.defaultValue+' {unknownValue}']) {
+    await assert.rejects(saveAppContent.run({baseVersion:0,texts:{[template.id]:value}},admin),error=>error.code==='invalid-argument');
+  }
+  assert.equal(published,undefined);assert.equal(uploads.length,0);
+});
