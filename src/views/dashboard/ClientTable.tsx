@@ -76,7 +76,6 @@ const ClientsTable = ({ hideTestClients = true, onClientsChanged }: { hideTestCl
     }
     
     const columns = [
-        { key: 'isTestClient', label: 'Test client', filter: false },
         {
             key: 'cid',
             _style: { width: '5%' },
@@ -277,7 +276,6 @@ const ClientsTable = ({ hideTestClients = true, onClientsChanged }: { hideTestCl
                 pagination
                 sorterValue={{ column: 'firstName', state: 'asc' }}
                 scopedColumns={{
-                    isTestClient: (item: Client) => <td>{item.isTestClient ? 'Test' : '—'}</td>,
                     linked: (item: Client) => (
                         <td className="text-center">
                             {isClientLinked(item) ? (
