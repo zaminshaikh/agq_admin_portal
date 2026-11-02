@@ -75,3 +75,4 @@ export {
   adminLinkUser,
 }
 export { getAppContentForAdmin, saveAppContent, updateAppImage } from './content/appContent';
+export { getAumHistory } from './analytics/getAumHistory';
