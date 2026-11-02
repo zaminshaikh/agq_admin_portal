@@ -51,11 +51,6 @@ export const sections = [
     label: 'Shared messages',
     description: 'Connection issues, progress messages, and common dialogs.',
   },
-  {
-    id: 'design',
-    label: 'Logos & icons',
-    description: 'Shared branding, navigation icons, and app artwork.',
-  },
 ]
 
 export function location(entry: ContentEntry): { section: string; group: string } {
