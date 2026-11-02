@@ -35,3 +35,7 @@ node --test functions/test/appContent.test.cjs functions/test/testingEnvironment
 ```
 
 The clone is a snapshot, not continuous synchronization. Future production edits do not appear in testing automatically. Do not run a refresh over test edits without deciding what to preserve first.
+
+## Backup database
+
+The separate named database `backup` retains the full original snapshot, including the legacy `backup` and `testUsers` collections. Those legacy collections can be removed from the live default database only after the snapshot has been verified. The backup database has administrator-only client reads and no client writes, using `firestore.backup.rules`. It is never selected by the localhost preview. Original Storage files are also archived under `backup/`; the private copy manifest maps original paths to archived files for restoration. These are point-in-time backups, not automatic future backups.
