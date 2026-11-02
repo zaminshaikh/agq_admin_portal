@@ -25,8 +25,7 @@ export async function calculateYTDForUser(userCid: string, usersCollectionID: st
   const endOfYear = new Date(currentYear + 1, 0, 1);
 
   // Reference to the user's "activities" subcollection
-  const activitiesRef = admin
-    .firestore()
+  const activitiesRef = getDatabase()
     .collection(`/${usersCollectionID}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
 
   // Query for relevant activities that fall within YTD range
@@ -110,8 +109,7 @@ export async function updateYTD(cid: string, usersCollectionID: string): Promise
     const totalYTD = await calculateTotalYTDForUser(cid, usersCollectionID);
 
     // 2. Update the user’s general doc in the assets subcollection
-    const userGeneralAssetRef = admin
-      .firestore()
+    const userGeneralAssetRef = getDatabase()
       .collection(usersCollectionID)
       .doc(cid)
       .collection(config.ASSETS_SUBCOLLECTION)
@@ -137,8 +135,7 @@ export async function updateYTD(cid: string, usersCollectionID: string): Promise
       const parentUserCID = doc.id;
       const parentUserTotalYTD = await calculateTotalYTDForUser(parentUserCID, usersCollectionID);
 
-      const parentUserGeneralAssetRef = admin
-        .firestore()
+      const parentUserGeneralAssetRef = getDatabase()
         .collection(usersCollectionID)
         .doc(parentUserCID)
         .collection(config.ASSETS_SUBCOLLECTION)

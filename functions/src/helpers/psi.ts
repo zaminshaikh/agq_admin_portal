@@ -21,8 +21,7 @@ import { Activity } from "../interfaces/activity.interface";
  * @returns {Promise<number>} The numeric total PSI amount for the specified user.
  */
 export async function calculatePSIForUser(userCid: string, usersCollectionID: string): Promise<number> {
-  const activitiesRef = admin
-    .firestore()
+  const activitiesRef = getDatabase()
     .collection(`/${usersCollectionID}/${userCid}/${config.ACTIVITIES_SUBCOLLECTION}`);
 
   const snapshot = await activitiesRef
@@ -89,8 +88,7 @@ export async function updatePSI(cid: string, usersCollectionID: string): Promise
     const psi = await calculatePSIForUser(cid, usersCollectionID);
     const totalPSI = await calculateTotalPSIForUser(cid, usersCollectionID);
 
-    const userGeneralAssetRef = admin
-      .firestore()
+    const userGeneralAssetRef = getDatabase()
       .collection(usersCollectionID)
       .doc(cid)
       .collection(config.ASSETS_SUBCOLLECTION)
@@ -113,8 +111,7 @@ export async function updatePSI(cid: string, usersCollectionID: string): Promise
       const parentUserCID = doc.id;
       const parentUserTotalPSI = await calculateTotalPSIForUser(parentUserCID, usersCollectionID);
 
-      const parentUserGeneralAssetRef = admin
-        .firestore()
+      const parentUserGeneralAssetRef = getDatabase()
         .collection(usersCollectionID)
         .doc(parentUserCID)
         .collection(config.ASSETS_SUBCOLLECTION)

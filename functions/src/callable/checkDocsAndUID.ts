@@ -95,8 +95,7 @@ export const isUIDLinked = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userSnapshot = await admin
-      .firestore()
+    const userSnapshot = await getDatabase()
       .collection(usersCollectionID)
       .where("uid", "==", uid)
       .get();
