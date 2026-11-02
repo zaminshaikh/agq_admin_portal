@@ -1286,7 +1286,9 @@ export class DatabaseService {
       const fileName = `Statement-${client.cid}-${safeAccount}-${startDate.toISOString().slice(0, 10)}-to-${endDate.toISOString().slice(0, 10)}-${crypto.randomUUID()}.pdf`;
 
       if (uploadToDocuments) {
-          const storageRef = ref(getStorage(), `${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${client.cid}/${fileName}`);
+          const databaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID || '(default)';
+          const storagePrefix = databaseId === '(default)' ? '' : `${databaseId}/`;
+          const storageRef = ref(getStorage(), `${storagePrefix}${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${client.cid}/${fileName}`);
           await uploadBytes(storageRef, blob, { contentType: 'application/pdf' });
       }
 
