@@ -14,6 +14,7 @@ import { httpsCallable } from 'firebase/functions'
 import { app } from '../../App'
 import { getPortalFunctions } from '../../db/firebaseEnvironment'
 import { AumPoint, selectAumRange } from './aumRange'
+import './AumChart.css'
 
 type View = 'combined' | 'AGQ' | 'AK1'
 type History = {
@@ -183,7 +184,7 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
                 {mismatches.length > 0 && <details>
                   <summary>View {mismatches.length} fund balance differences</summary>
                   <div className="table-responsive mt-2" style={{ maxHeight: 320, overflowY: 'auto' }}>
-                    <table className="table table-sm mb-0">
+                    <table className="table table-sm mb-0 aum-reconciliation-table">
                       <thead><tr><th>Client</th><th>CID</th><th>Fund</th><th>Balance</th><th>Activities</th><th>Difference</th></tr></thead>
                       <tbody>{mismatches.map(item => <tr key={`${item.clientId}-${item.fund}`}>
                         <td>{item.clientName}</td><td>{item.clientId}</td><td>{item.fund}</td>
