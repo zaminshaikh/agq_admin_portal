@@ -15,6 +15,19 @@ Image replacement accepts PNG, JPEG, and WebP up to 5 MB. Bundled SVG defaults c
 
 No deployment or live content writes are performed by the tests.
 
+### Initialize with the Admin SDK
+
+To populate the database before releasing the portal, build functions and set `GOOGLE_APPLICATION_CREDENTIALS` to the project's service account JSON path. From the portal root:
+
+```sh
+npm --prefix functions run build
+node functions/scripts/seed-app-content.cjs
+node functions/scripts/seed-app-content.cjs --apply --backup /absolute/private/path/app-content.json
+node functions/scripts/seed-app-content.cjs
+```
+
+The first command invocation is a read-only preview. Applying saves the previous published document to a private file, uploads missing bundled defaults to Storage, and adds missing text/image entries in a transaction. Existing edits are preserved. Rerunning against a complete catalog performs no writes. The script checks the credential project against `.firebaserc` and uses the default Firestore database. This initializes data only; callable functions and rules still need deployment for the released portal. After seeding, skip the initial Publish step above.
+
 ## Validation
 
 - `npm --prefix functions run test:content` tests permission checks, catalog validation, first publish, conflicts, and image replacement/reset using mocked Firestore and Storage.

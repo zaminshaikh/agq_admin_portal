@@ -16,10 +16,22 @@ const fakeAdmin = {firestore, storage: () => ({bucket: () => ({name: 'test-bucke
 })})})};
 const originalLoad = Module._load;
 Module._load = function(request, parent, main) { return request === 'firebase-admin' ? fakeAdmin : originalLoad.call(this,request,parent,main); };
-const {getAppContentForAdmin, saveAppContent, updateAppImage} = require('../lib/src/content/appContent');
+const {getAppContentForAdmin, saveAppContent, updateAppImage, seedAppContentDefaults} = require('../lib/src/content/appContent');
 Module._load = originalLoad;
 const admin = {auth: {uid: 'admin-user', token: {adminPermissions: 'admin'}}};
 beforeEach(() => {published=undefined; uploads=[]; deleted=[];});
+
+test('admin migration seeds all defaults once and preserves existing edits on rerun', async () => {
+  published={version:2,texts:{'contact.support_email':'custom@example.com'},images:{'image.sonny_headshot_png':{url:'existing-photo'}}};
+  assert.deepEqual(await seedAppContentDefaults('migration:test'),{changed:true,version:3});
+  assert.equal(Object.keys(published.texts).length,330);
+  assert.equal(Object.keys(published.images).length,42);
+  assert.equal(published.texts['contact.support_email'],'custom@example.com');
+  assert.equal(published.images['image.sonny_headshot_png'].url,'existing-photo');
+  assert.equal(uploads.length,41);
+  assert.deepEqual(await seedAppContentDefaults('migration:test'),{changed:false,version:3});
+  assert.equal(uploads.length,41);
+});
 
 test('catalog copies match and every default validates', () => {
   assert.deepEqual(catalog, require('../../src/content/catalog.json'));

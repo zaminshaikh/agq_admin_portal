@@ -30,14 +30,34 @@ async function defaultImage(id: string): Promise<ImageValue> {
   const type = name.endsWith('.svg') ? 'image/svg+xml' : imageType(bytes);
   return storeImage(`app-content/defaults/${digest}/${name}`, bytes, type, digest);
 }
-async function initialImages(): Promise<Record<string, ImageValue>> {
+async function initialImages(existing: Record<string, ImageValue> = {}): Promise<Record<string, ImageValue>> {
   const result: Record<string, ImageValue> = {};
   // Bounded batches avoid overloading storage on the first publish.
-  const images = catalog.filter(entry => entry.kind === 'image');
+  const images = catalog.filter(entry => entry.kind === 'image' && !Object.prototype.hasOwnProperty.call(existing, entry.id));
   for (let i = 0; i < images.length; i += 6) {
     await Promise.all(images.slice(i, i + 6).map(async e => { result[e.id] = await defaultImage(e.id); }));
   }
   return result;
+}
+
+/** Admin SDK migration helper, not a deployed endpoint. Preserves all published edits. */
+export async function seedAppContentDefaults(actor: string): Promise<{ changed: boolean; version: number }> {
+  const before = (await document().get()).data();
+  const images = await initialImages(before?.images ?? {});
+  return admin.firestore().runTransaction(async transaction => {
+    const previous = (await transaction.get(document())).data();
+    const complete = catalog.every(entry => Object.prototype.hasOwnProperty.call(
+      entry.kind === 'image' ? previous?.images ?? {} : previous?.texts ?? {}, entry.id));
+    if (complete) return { changed: false, version: previous?.version ?? 0 };
+    const version = (previous?.version ?? 0) + 1;
+    transaction.set(document(), {
+      ...previous, version,
+      texts: { ...defaultTexts, ...previous?.texts },
+      images: { ...images, ...previous?.images },
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(), updatedBy: actor,
+    });
+    return { changed: true, version };
+  });
 }
 
 /** Admin-only editing; readers (including signup screens) use the public document. */
