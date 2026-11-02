@@ -8,7 +8,6 @@ import { getDatabase } from '../helpers/database';
  */
 
 import * as functions from "firebase-functions/v1";
-import * as admin from "firebase-admin";
 
 /**
  * Callable: checkDocumentExists
