@@ -12,6 +12,7 @@ import * as pdfFontsModule from 'pdfmake/build/vfs_fonts';
 import { formatCurrency, formatPDFDate } from './utils.ts'
 import { agqTopLogo, agqWatermarkLogo } from './logos.ts'
 import { Admin } from './adminService'
+import { getStorage, ref, uploadBytes } from 'firebase/storage';
 
 /**
  * DatabaseService
@@ -30,8 +31,9 @@ import { Admin } from './adminService'
 
 // Get the correct reference to pdfMake
 const pdfMake = (pdfMakeModule as any).default || pdfMakeModule as any;
-// Properly initialize the virtual file system
-pdfMake.vfs = (pdfFontsModule as any).pdfMake?.vfs;
+// pdfmake 0.2.x exports the font files directly in newer releases.
+const pdfFonts = (pdfFontsModule as any).default || pdfFontsModule;
+pdfMake.addVirtualFileSystem(pdfFonts.pdfMake?.vfs || pdfFonts);
 
 // Initialize Firebase Functions
 const functions = getFunctions();
@@ -976,12 +978,14 @@ export class DatabaseService {
    * @param startDate - Beginning date for the statement period
    * @param endDate - Ending date for the statement period
    * @param selectedAccount - Account to filter transactions for
+   * @param uploadToDocuments - Also save the PDF in the client's documents folder
    */
   public async generateStatementPDF(
       client: Client,
       startDate: Date,
       endDate: Date,
-      selectedAccount: string
+      selectedAccount: string,
+      uploadToDocuments = false
   ): Promise<void> {
       // 1. Find starting balance from graph points
       const graphPoints = await this.getClientGraphPoints(client.cid);
@@ -1275,9 +1279,25 @@ export class DatabaseService {
           },
       };
   
-      // 4. Generate and open the PDF
+      // Generate once so the client document and downloaded statement are identical.
       const pdfDocGenerator = pdfMake.createPdf(docDefinition);
-      pdfDocGenerator.open();
+      const blob = await new Promise<Blob>((resolve) => pdfDocGenerator.getBlob(resolve));
+      const safeAccount = selectedAccount.replace(/[^a-zA-Z0-9_-]+/g, '-');
+      const fileName = `Statement-${client.cid}-${safeAccount}-${startDate.toISOString().slice(0, 10)}-to-${endDate.toISOString().slice(0, 10)}-${crypto.randomUUID()}.pdf`;
+
+      if (uploadToDocuments) {
+          const storageRef = ref(getStorage(), `${config.FIRESTORE_ACTIVE_USERS_COLLECTION}/${client.cid}/${fileName}`);
+          await uploadBytes(storageRef, blob, { contentType: 'application/pdf' });
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 }
 

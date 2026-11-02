@@ -18,6 +18,7 @@ const Statements: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false);
   const [showGenerateStatementModal, setShowGenerateStatementModal] = useState(false);
+  const [documentsVersion, setDocumentsVersion] = useState(0);
 
   const handleOpenModal = () => {
     setIsAddModalVisible(true);
@@ -29,7 +30,7 @@ const Statements: React.FC = () => {
 
   const handleUploadSuccess = () => {
     setIsAddModalVisible(false);
-    window.location.reload();
+    setDocumentsVersion((version) => version + 1);
   };
 
   useEffect(() => {
@@ -87,11 +88,12 @@ const Statements: React.FC = () => {
           showModal={showGenerateStatementModal}
           setShowModal={setShowGenerateStatementModal}
           clientOptions={clientOptions}
+          onUploadSuccess={() => setDocumentsVersion((version) => version + 1)}
         />
       }
 
       {/* Client Statements Page */}
-      <ClientStatementsPage />
+      <ClientStatementsPage key={documentsVersion} />
     </CContainer>
   );
 };
