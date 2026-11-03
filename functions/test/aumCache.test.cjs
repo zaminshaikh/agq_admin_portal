@@ -53,3 +53,14 @@ test('cache expiry is bounded by request start, not completion', async () => {
   assert.equal(await cache.get(), 1)
   assert.equal(await cache.get(), 2)
 })
+
+
+test('default cache lifetime is ten minutes', async () => {
+  let now = 0, reads = 0
+  const cache = createAsyncCache(async () => ++reads, undefined, () => now)
+  assert.equal(await cache.get(), 1)
+  now = 599_999
+  assert.equal(await cache.get(), 1)
+  now = 600_000
+  assert.equal(await cache.get(), 2)
+})

@@ -28,6 +28,8 @@ export type Reconciliation = {
   asOf: string
 }
 
+export const AUM_CACHE_TTL_MS = 10 * 60_000
+
 // Memory only: no financial data in localStorage. Scope to signed-in user/database.
 let scope = ''
 let revision = -1
@@ -73,7 +75,11 @@ export function loadAum<T extends History | Reconciliation>(name: string): Promi
   // Each generation must be fetched once even when old data remains displayed.
   const key = `${scope}:${generation}`
   const tagged = entry as typeof entry & { key?: string }
-  if (tagged.key === key && entry.data && Date.parse(entry.data.asOf) + 60_000 > Date.now())
+  if (
+    tagged.key === key &&
+    entry.data &&
+    Date.parse(entry.data.asOf) + AUM_CACHE_TTL_MS > Date.now()
+  )
     return Promise.resolve(entry.data as T)
   if (entry.pending) return entry.pending as Promise<T>
   const request = httpsCallable<{ refreshToken?: string }, T>(getPortalFunctions(app), name, {

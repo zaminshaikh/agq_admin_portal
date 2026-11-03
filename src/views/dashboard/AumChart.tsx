@@ -11,7 +11,14 @@ import {
 } from '@coreui/react-pro'
 import { CChartLine } from '@coreui/react-chartjs'
 import { selectAumRange } from './aumRange'
-import { cachedAum, loadAum, refreshAum, History, Reconciliation } from './aumData'
+import {
+  AUM_CACHE_TTL_MS,
+  cachedAum,
+  loadAum,
+  refreshAum,
+  History,
+  Reconciliation,
+} from './aumData'
 import { subscribeAumChanges } from '../../db/aumChanges'
 import './AumChart.css'
 
@@ -52,7 +59,7 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
         refreshAum()
         setRefresh((value) => value + 1)
       }
-    }, 60_000)
+    }, AUM_CACHE_TTL_MS)
     const onVisible = () => {
       if (document.visibilityState === 'visible') setRefresh((value) => value + 1)
     }

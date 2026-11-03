@@ -1,5 +1,5 @@
 // Bounded per-instance cache. Authentication must be checked before calling get.
-export function createAsyncCache<T>(load: () => Promise<T>, ttlMs = 60_000, now = Date.now) {
+export function createAsyncCache<T>(load: () => Promise<T>, ttlMs = 10 * 60_000, now = Date.now) {
   let cached: { value: T; expires: number } | undefined
   let pending: Promise<T> | undefined
   let refreshToken: string | undefined
