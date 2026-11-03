@@ -72,11 +72,17 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
       refreshAum()
     }
     setLoading(true)
-    setError('')
     loadAum<History>('getAumHistory')
       .then((data) => {
         if (!active) return
-        setHistory(data)
+        setError('')
+        setHistory((previous) => ({
+          ...data,
+          points:
+            previous && JSON.stringify(previous.points) === JSON.stringify(data.points)
+              ? previous.points
+              : data.points,
+        }))
         setStart((value) => value || data.points[0]?.date || today())
       })
       .catch(() => {
@@ -89,16 +95,17 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
         if (active) setLoading(false)
       })
     setReconciliationLoading(true)
-    setReconciliationError('')
-    setReconciliation(null)
     loadAum<Reconciliation>('getAumReconciliation')
       .then((data) => {
-        if (active) setReconciliation(data)
+        if (active) {
+          setReconciliationError('')
+          setReconciliation(data)
+        }
       })
       .catch(() => {
         if (active)
           setReconciliationError(
-            'Could not load balance reconciliation. Refresh to retry the checks.',
+            'Could not refresh balance reconciliation. Any displayed results are from the last successful check. Refresh to retry.',
           )
       })
       .finally(() => {
@@ -118,6 +125,67 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
   const mismatches = (reconciliation?.mismatches || []).filter(
     (item) => view === 'combined' || item.fund === view,
   )
+  const chart = useMemo(
+    () => (
+      <CChartLine
+        style={{ height: '100%' }}
+        data={{
+          datasets: [
+            {
+              label: title,
+              data: points.map((point) => ({
+                x: Date.parse(point.date),
+                y: point[view],
+              })),
+              borderColor: view === 'AK1' ? '#00877a' : '#164b91',
+              backgroundColor: 'rgba(22,75,145,0.10)',
+              fill: true,
+              stepped: true,
+              pointRadius: points.length === 1 ? 3 : 0,
+              borderWidth: 2,
+            },
+          ],
+        }}
+        options={{
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => new Date(items[0].parsed.x).toISOString().slice(0, 10),
+                label: (context) => currency(Number(context.parsed.y)),
+              },
+            },
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min: Date.parse(start),
+              max: Date.parse(end),
+              ticks: {
+                maxTicksLimit: 8,
+                callback: (value) => new Date(Number(value)).toISOString().slice(0, 10),
+              },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) =>
+                  new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    notation: 'compact',
+                  }).format(Number(value)),
+              },
+            },
+          },
+        }}
+      />
+    ),
+    [points, view, title, start, end],
+  )
   const chooseRange = (range: 'all' | 'year' | 'ytd') => {
     const date = new Date()
     setEnd(today())
@@ -131,7 +199,14 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
   return (
     <CCard className="mb-4">
       <CCardHeader className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <strong>Assets under management</strong>
+        <div className="d-flex align-items-center gap-2">
+          <strong>Assets under management</strong>
+          <span className="d-inline-flex align-items-center" style={{ width: 16, height: 16 }}>
+            {(loading || reconciliationLoading) && (
+              <CSpinner size="sm" aria-label="Refreshing AUM data" />
+            )}
+          </span>
+        </div>
         <CButton
           color="secondary"
           variant="outline"
@@ -194,12 +269,12 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
           </div>
         </div>
         {error && <CAlert color="danger">{error}</CAlert>}
-        {loading && (
+        {loading && !history && (
           <div role="status" className="py-4">
-            <CSpinner size="sm" /> {history ? 'Updating fund history…' : 'Loading fund history…'}
+            Loading fund history…
           </div>
         )}
-        {reconciliationLoading && (
+        {reconciliationLoading && !reconciliation && (
           <p role="status" className="small text-body-secondary">
             Checking balance reconciliation…
           </p>
@@ -285,62 +360,7 @@ export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: numb
                 role="img"
                 aria-label={`${title} historical assets from ${start} to ${end}`}
               >
-                <CChartLine
-                  style={{ height: '100%' }}
-                  data={{
-                    datasets: [
-                      {
-                        label: title,
-                        data: points.map((point) => ({
-                          x: Date.parse(point.date),
-                          y: point[view],
-                        })),
-                        borderColor: view === 'AK1' ? '#00877a' : '#164b91',
-                        backgroundColor: 'rgba(22,75,145,0.10)',
-                        fill: true,
-                        stepped: true,
-                        pointRadius: points.length === 1 ? 3 : 0,
-                        borderWidth: 2,
-                      },
-                    ],
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    animation: false,
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        callbacks: {
-                          title: (items) => new Date(items[0].parsed.x).toISOString().slice(0, 10),
-                          label: (context) => currency(Number(context.parsed.y)),
-                        },
-                      },
-                    },
-                    scales: {
-                      x: {
-                        type: 'linear',
-                        min: Date.parse(start),
-                        max: Date.parse(end),
-                        ticks: {
-                          maxTicksLimit: 8,
-                          callback: (value) => new Date(Number(value)).toISOString().slice(0, 10),
-                        },
-                      },
-                      y: {
-                        beginAtZero: true,
-                        ticks: {
-                          callback: (value) =>
-                            new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD',
-                              notation: 'compact',
-                            }).format(Number(value)),
-                        },
-                      },
-                    },
-                  }}
-                />
+                {chart}
               </div>
             ) : (
               <p className="text-body-secondary py-4">No recorded balances for this date range.</p>
