@@ -85,16 +85,6 @@ const ClientsTable = () => {
             _style: { width: '15%' },
         },
         {
-            key: 'firstName',
-            label: 'First',
-            _style: { width: '10%'},
-        },
-        {
-            key: 'lastName',
-            label: 'Last',
-            _style: { width: '10%'},
-        },
-        {
             key: 'initEmail',
             label: 'Email',
         },
