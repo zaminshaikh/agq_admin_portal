@@ -37,3 +37,5 @@ export const unlinkUser = blocked;
 export const verifyUserEmail = blocked;
 export const sendInviteEmail = blocked;
 export { getUserEmailVerified } from './callable/verifyUserEmail';
+
+export { getAumReconciliation } from './analytics/getAumReconciliation';
