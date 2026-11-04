@@ -1292,13 +1292,21 @@ export class DatabaseService {
           await uploadBytes(storageRef, blob, { contentType: 'application/pdf' });
       }
 
+      // Browsers download an in-memory Blob through a temporary URL and an <a>
+      // element with a download filename. Triggering its click starts the normal
+      // browser download; it does not show a button or require another user click.
+      // Reuse the Blob from the optional upload so both copies have identical bytes.
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
+      // Attach the link for browser compatibility, then remove it after clicking.
       document.body.appendChild(link);
       link.click();
       link.remove();
+      // Removing the link does not release its Blob URL. Give the browser time
+      // to consume it, then release the reference after 60 seconds (60,000 ms).
+      // This is cleanup only; the download starts immediately above.
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 }
