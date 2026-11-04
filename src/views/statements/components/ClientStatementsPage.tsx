@@ -27,7 +27,11 @@ interface Document {
   storagePath: string;
 }
 
-const ClientStatementsPage = () => {
+interface ClientStatementsPageProps {
+  refreshVersion?: number;
+}
+
+const ClientStatementsPage = ({ refreshVersion = 0 }: ClientStatementsPageProps) => {
   const { canWrite } = usePermissions();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -35,6 +39,8 @@ const ClientStatementsPage = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 
   useEffect(() => {
+    let active = true;
+    // Keep the current table and preview mounted while refreshing documents.
     const fetchDocuments = async () => {
       try {
         // Fetch all clients
@@ -98,16 +104,17 @@ const ClientStatementsPage = () => {
         console.log('Total documents fetched:', documentsData.length);
         console.log('Documents:', documentsData);
 
-        setDocuments(documentsData);
-        setIsLoading(false);
+        if (active) setDocuments(documentsData);
       } catch (error) {
         console.error('Error fetching documents:', error);
-        setIsLoading(false);
+      } finally {
+        if (active) setIsLoading(false);
       }
     };
 
     fetchDocuments();
-  }, []);
+    return () => { active = false; };
+  }, [refreshVersion]);
 
   const handlePreview = (document: Document) => {
     setSelectedDocument(document);

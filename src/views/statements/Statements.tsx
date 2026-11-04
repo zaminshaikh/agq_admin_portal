@@ -93,7 +93,7 @@ const Statements: React.FC = () => {
       }
 
       {/* Client Statements Page */}
-      <ClientStatementsPage key={documentsVersion} />
+      <ClientStatementsPage refreshVersion={documentsVersion} />
     </CContainer>
   );
 };
