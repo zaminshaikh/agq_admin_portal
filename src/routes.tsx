@@ -15,7 +15,10 @@ const Statements = React.lazy(() => import('./views/statements/Statements'))
 const AdminManagement = React.lazy(() => import('./views/admin/AdminManagement'))
 const UserAuthentication = React.lazy(() => import('./views/admin/UserAuthentication'))
 
+const AppContent = React.lazy(() => import('./views/admin/AppContent'))
+
 const routes: Route[] = [
+  { path: '/app-content', name: 'App Content', element: AppContent },
   { path: '/', exact: true, name: <Translation>{(t) => t('home')}</Translation> },
   {
     path: '/dashboard',

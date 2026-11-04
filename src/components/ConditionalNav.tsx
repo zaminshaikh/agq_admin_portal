@@ -4,6 +4,7 @@ import {
   cilLayers,
   cilLinkAlt,
   cilPeople,
+  cilPencil,
   cilSpeedometer,
 } from '@coreui/icons'
 import { CNavItem } from '@coreui/react-pro'
@@ -41,6 +42,7 @@ export const useConditionalNav = (): NavItem[] => {
 
   // Admin-only tabs
   if (isAdmin) {
+    baseNav.push({ component: CNavItem, name: 'App Content', to: '/app-content', icon: <CIcon icon={cilPencil} customClassName="nav-icon" /> })
     baseNav.push({
       component: CNavItem,
       name: "User Authentication",
