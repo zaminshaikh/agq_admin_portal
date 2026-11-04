@@ -1,3 +1,4 @@
+import { notifyAumChanged } from './aumChanges'
 import { getPortalDatabase, getPortalFunctions } from './firebaseEnvironment'
 import { collection, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, where, query, writeBatch} from 'firebase/firestore'
 import { app } from '../App.tsx'
@@ -386,6 +387,7 @@ export class DatabaseService {
 
       // Updates/Creates the document with the CID
       await setDoc(clientRef, newClientDocData, { merge: true });
+      notifyAumChanged();
       
       // Update/Create the assets subcollection for client
       await this.setAssets(client); 
@@ -413,6 +415,7 @@ export class DatabaseService {
           });
           // Use Promise.all to add all activities concurrently
           await Promise.all(promise);
+          notifyAumChanged();
       }
           
       // If graph points exist, add them to the subcollection
@@ -421,6 +424,7 @@ export class DatabaseService {
           const promise = client.graphPoints.map((graphPoint) => addDoc(graphCollectionRef, graphPoint));
           // Use Promise.all to add all graph points concurrently
           await Promise.all(promise);
+          notifyAumChanged();
       }
   }
 
@@ -487,7 +491,9 @@ export class DatabaseService {
 
       // Write the asset documents without audit trail
       await setDoc(agqRef, agqDoc);
+      notifyAumChanged();
       await setDoc(ak1Ref, ak1Doc);
+      notifyAumChanged();
       await setDoc(genRef, general);
 
       // Update the parent client document with audit trail for asset changes
@@ -507,6 +513,7 @@ export class DatabaseService {
       }
       const clientRef = doc(this.db, config.FIRESTORE_ACTIVE_USERS_COLLECTION, cid);
       await deleteDoc(clientRef);
+      notifyAumChanged();
   }
 
   /**
@@ -734,6 +741,7 @@ export class DatabaseService {
       
       // Add the activity to the subcollection
       await addDoc(activityCollectionRef, activityWithAudit);
+      notifyAumChanged();
   }
 
   /**
@@ -754,6 +762,7 @@ export class DatabaseService {
       const activityWithAudit = this.addAuditTrail(activity, true);
       // Set the activity document with new data
       await setDoc(activityRef, activityWithAudit);
+      notifyAumChanged();
   }
 
   /**
@@ -770,6 +779,7 @@ export class DatabaseService {
           const activityCollectionRef = collection(clientRef, config.ACTIVITIES_SUBCOLLECTION);
           const activityRef = doc(activityCollectionRef, activityDocID);
           await deleteDoc(activityRef);
+      notifyAumChanged();
       } catch (error) {
           console.error('Failed to delete activity, CID or activityDocID does not exist for the activity:', error);
           console.error('Activity:', activity);

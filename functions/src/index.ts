@@ -76,3 +76,5 @@ export {
 }
 export { getAppContentForAdmin, saveAppContent, updateAppImage } from './content/appContent';
 export { getAumHistory } from './analytics/getAumHistory';
+
+export { getAumReconciliation } from './analytics/getAumReconciliation';

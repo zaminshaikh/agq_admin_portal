@@ -43,7 +43,7 @@ test('range filtering carries the opening balance and does not invent history be
 test('AUM endpoint denies unauthenticated and non-admin callers before any reads',async()=>{
   const endpoint=require('../lib/src/analytics/getAumHistory').getAumHistory;
   await assert.rejects(endpoint.run({},{}),error=>error.code==='unauthenticated');
-  await assert.rejects(endpoint.run({},{auth:{uid:'client',token:{}}}),error=>error.code==='permission-denied');
+  await assert.rejects(endpoint.run({refreshToken:'history-fixture'},{auth:{uid:'client',token:{}}}),error=>error.code==='permission-denied');
 });
 test('AUM endpoint reads current lowercase client histories, never legacy graphPoints',async()=>{
   const database=require('../lib/src/helpers/database');
@@ -64,9 +64,11 @@ test('AUM endpoint reads current lowercase client histories, never legacy graphP
   }});
   try {
     const endpoint=require('../lib/src/analytics/getAumHistory').getAumHistory;
-    const result=await endpoint.run({},{auth:{uid:'admin',token:{adminPermissions:'read'}}});
-    assert.deepEqual(reads,['graphpoints','assets','activities']);
-    assert.deepEqual(result.mismatches,[{clientId:'a',clientName:'Actual Client',fund:'AGQ',balance:125,activities:0,difference:125}]);
+    const result=await endpoint.run({refreshToken:'history-fixture'},{auth:{uid:'admin',token:{adminPermissions:'read'}}});
+    assert.deepEqual(reads,['graphpoints','assets']);
+    assert.equal(result.mismatches,undefined,'history must not wait for activity reconciliation');
+    const reconciliation=await require('../lib/src/analytics/getAumReconciliation').getAumReconciliation.run({refreshToken:'reconciliation-fixture'},{auth:{uid:'admin',token:{adminPermissions:'read'}}});
+    assert.deepEqual(reconciliation.mismatches,[{clientId:'a',clientName:'Actual Client',fund:'AGQ',balance:125,activities:0,difference:125}]);
     assert.equal(result.points.at(-1).AGQ,100);
     assert.equal(result.current.AGQ,125);
     assert.equal(result.missingHistory,0);
@@ -82,10 +84,12 @@ test('test clients never enter final balances, history, warnings, or client coun
   }}});
   database.getDatabase=()=>({collection:()=>({get:async()=>({size:3,docs:[user('legacy',undefined),user('real',false),user('test',true)]})})});
   try {
-    const result=await require('../lib/src/analytics/getAumHistory').getAumHistory.run({},{auth:{uid:'admin',token:{adminPermissions:'read'}}});
+    const result=await require('../lib/src/analytics/getAumHistory').getAumHistory.run({refreshToken:'test-clients'},{auth:{uid:'admin',token:{adminPermissions:'read'}}});
     assert.equal(result.clients,2);assert.equal(result.excludedTestClients,1);
     assert.deepEqual(result.current,{AGQ:20,AK1:0,combined:20});
-    assert.equal(result.points.at(-1).combined,20);assert.deepEqual(result.mismatches,[]);
+    assert.equal(result.points.at(-1).combined,20);
+    const reconciliation=await require('../lib/src/analytics/getAumReconciliation').getAumReconciliation.run({refreshToken:'test-clients'},{auth:{uid:'admin',token:{adminPermissions:'read'}}});
+    assert.deepEqual(reconciliation.mismatches,[]);
   }finally{database.getDatabase=previous;}
 });
 test('activity reconciliation counts reinvestment, excludes paid profits/future events, and reports bad input',()=>{
@@ -96,4 +100,10 @@ test('activity reconciliation counts reinvestment, excludes paid profits/future 
     row('AGQ','profit',5,{isDividend:true}),row('AK1','deposit',0.015),row('AK1','deposit',0.015),
     row('AGQ','deposit',999,{time:{toMillis:()=>1000}}),row('AGQ','deposit',NaN),
   ],100),{cents:{AGQ:8000,AK1:3},invalid:1});
+});
+
+test('reconciliation endpoint denies unauthenticated and non-admin callers before reads',async()=>{
+  const endpoint=require('../lib/src/analytics/getAumReconciliation').getAumReconciliation;
+  await assert.rejects(endpoint.run({},{}),error=>error.code==='unauthenticated');
+  await assert.rejects(endpoint.run({},{auth:{uid:'client',token:{}}}),error=>error.code==='permission-denied');
 });
