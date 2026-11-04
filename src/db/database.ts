@@ -1,3 +1,4 @@
+import { getClientDisplayName } from './clientNames';
 import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, where, query, writeBatch} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
@@ -260,6 +261,7 @@ export class DatabaseService {
           uid: data?.uid ?? '',
           uidGrantedAccess: data?.uidGrantedAccess ?? [],
           linked: Boolean(data?.uid && data.uid !== ''),
+          clientName: data?.clientName ?? '',
           firstName: data?.name?.first ?? '',
           lastName: data?.name?.last ?? '',
           companyName: data?.name?.company ?? '',
@@ -357,6 +359,7 @@ export class DatabaseService {
       // Always derive `linked` from uid so edits never persist a stale false when a UID exists.
       let newClientDocData: DocumentData = {
           ...client,
+          clientName: client.clientName?.trim() ?? '',
           linked: Boolean(client.uid && client.uid.trim() !== ''),
           name: {
               first: client.firstName.trimEnd(),
@@ -366,7 +369,7 @@ export class DatabaseService {
       };
 
       // Delete these unused properties from the newClientDocData object
-      ['firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints', 'ytd', 'totalYTD', 'psi', 'totalPSI'].forEach(key => {
+      ['accountName', 'firstName', 'lastName', 'companyName', 'email', 'cid', 'assets', 'activities', 'totalAssets', 'graphPoints', 'ytd', 'totalYTD', 'psi', 'totalPSI'].forEach(key => {
               delete newClientDocData[key];
       });
 
@@ -1144,7 +1147,7 @@ export class DatabaseService {
                       body: [
                           [
                               { text: 'Investor:', style: 'labelText' }, 
-                              { text: `${client.firstName} ${client.lastName}`, style: 'valueText' }
+                              { text: getClientDisplayName(client), style: 'valueText' }
                           ],
                           [
                               { text: 'Client Since:', style: 'labelText' }, 

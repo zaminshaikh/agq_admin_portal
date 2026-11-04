@@ -1,3 +1,4 @@
+import { getAccountLabel, getClientDisplayName } from 'src/db/clientNames';
 import { SetStateAction, useEffect, useRef, useState } from "react";
 import { CBadge, CButton, CCol, CContainer, CMultiSelect, CRow, CSmartTable, CSpinner, CToaster } from "@coreui/react-pro";
 import { Activity, DatabaseService, Client, formatCurrency } from "src/db/database";
@@ -31,7 +32,7 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
 
     const [clientOptions, setClientOptions] = useState<Option[]>(
       clients
-        .map(client => ({ value: client.cid, label: client.firstName + ' ' + client.lastName }))
+        .map(client => ({ value: client.cid, label: getClientDisplayName(client) }))
           .sort((a, b) => a.label.localeCompare(b.label))
     ); 
 
@@ -237,6 +238,12 @@ const ActivitiesTable: React.FC<TableProps> = ({allActivities, setAllActivities,
                     }
                 }}
                 scopedColumns={{
+                    parentName: (item: Activity) => (
+                        <td>{getClientDisplayName(clients.find(client => client.cid === item.parentDocId)) || item.parentName}</td>
+                    ),
+                    recipient: (item: Activity) => (
+                        <td>{getAccountLabel(clients.find(client => client.cid === item.parentDocId), item.recipient ?? '')}</td>
+                    ),
                     type: (item: Activity) => (
                         <td>
                             <CBadge color={getBadge(item.type)}>{toSentenceCase(item.type)}</CBadge>

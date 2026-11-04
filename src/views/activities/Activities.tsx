@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import { useTranslation } from "react-i18next";
 import ActivitiesTable from "./ActivitiesTable";
 import { useEffect, useState } from "react";
@@ -53,7 +54,7 @@ const Activities = () => {
           
           // Create client options for the export modal
           const options = clients.map(client => ({
-            label: `${client.firstName} ${client.lastName}`,
+            label: getClientDisplayName(client),
             value: client.cid
           }));
           setClientOptions(options);

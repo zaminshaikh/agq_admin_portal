@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import { CModal, CModalHeader, CModalTitle } from "@coreui/react-pro"
 import { Client } from "src/db/database";
 import { ClientInputModalBody } from "./ClientInputModalBody";
@@ -11,7 +12,7 @@ interface ShowModalProps {
 }
 
 export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal, clients, currentClient: currentClient}) => {
-    const clientOptions = clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (currentClient?.connectedUsers?.includes(client.cid))}))
+    const clientOptions = clients!.map(client => ({value: client.cid, label: getClientDisplayName(client), selected: (currentClient?.connectedUsers?.includes(client.cid))}))
     return (
         <CModal         
             scrollable
@@ -21,7 +22,7 @@ export const DisplayClient: React.FC<ShowModalProps> = ({showModal, setShowModal
             size="xl" 
             onClose={() => setShowModal(false)}>
             <CModalHeader>
-                <CModalTitle>{currentClient?.firstName + ' ' + currentClient?.lastName}</CModalTitle>
+                <CModalTitle>{getClientDisplayName(currentClient)}</CModalTitle>
             </CModalHeader>
             <ClientInputModalBody 
                     clientState={currentClient} 

@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import { CButton, CLoadingButton, CModal, CModalFooter, CModalHeader, CModalTitle } from "@coreui/react-pro"
 import { useEffect, useState } from "react";
 // import { IMaskMixin } from 'react-imask'
@@ -50,7 +51,7 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
     const [isLoading, setIsLoading] = useState(false);
 
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [clientOptions, setClientOptions] = useState<(Option | OptionsGroup)[]>(clients!.map(client => ({value: client.cid, label: client.firstName + ' ' + client.lastName, selected: (activeClient?.connectedUsers?.includes(client.cid))})))
+    const [clientOptions, setClientOptions] = useState<(Option | OptionsGroup)[]>(clients!.map(client => ({value: client.cid, label: getClientDisplayName(client), selected: (activeClient?.connectedUsers?.includes(client.cid))})))
     const [invalidInputFields, setInvalidInputFields] = useState<string[]>([]);
     const [override, setOverride] = useState(false);
 
@@ -82,7 +83,7 @@ export const EditClient: React.FC<ShowModalProps> = ({showModal, setShowModal, c
                 size="xl" 
                 onClose={() => setShowModal(false)}>
                 <CModalHeader>
-                    <CModalTitle>Edit {activeClient?.firstName} {activeClient?.lastName}</CModalTitle>
+                    <CModalTitle>Edit {getClientDisplayName(activeClient)}</CModalTitle>
                 </CModalHeader>
                 <ClientInputModalBody 
                     clientState={clientState} 

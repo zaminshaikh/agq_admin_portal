@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Activity, Client, DatabaseService } from 'src/db/database';
 import { cilFile } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
+import { getAccountLabel, getClientDisplayName } from 'src/db/clientNames';
 
 interface ExportActivitiesModalProps {
   showModal: boolean,
@@ -71,7 +72,10 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
     const arr = [...titles];
     return arr
       .filter((value, index, self) => self.indexOf(value) === index) // ensure uniqueness
-      .map((title) => ({ label: title, value: title }));
+      .map((title) => {
+        const client = [...clients.values()].find(client => selectedClients.includes(client.cid) && title === `${client.firstName} ${client.lastName}`);
+        return { label: getAccountLabel(client, title), value: title };
+      });
   }, [selectedClients, clients]);
   
   // Activity type options
@@ -181,10 +185,10 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
           : (activity.time as any).toDate().getTime();
           
         return [
-          activity.parentName || '',
+          getClientDisplayName(clients.get(activity.parentDocId || '')) || activity.parentName || '',
           activity.type || '',
           activity.formattedTime || '',
-          activity.recipient || '',
+          getAccountLabel(clients.get(activity.parentDocId || ''), activity.recipient || ''),
           activity.amount?.toString() || '',
           activity.fund || '',
           // Handle different types of notes (string, number, string array)
@@ -206,7 +210,7 @@ const ExportActivitiesModal: React.FC<ExportActivitiesModalProps> = ({
       
       const csvContent = [
         visibleHeaders.join(','),
-        ...visibleRows.map(row => row.join(','))
+        ...visibleRows.map(row => row.map(value => `"${value.replace(/"/g, '""')}"`).join(','))
       ].join('\n');
       
       // Create and download the CSV file

@@ -39,6 +39,7 @@ export interface AuthUserSummary {
 export interface UnlinkedClientSummary {
   cid: string
   firstName: string
+  clientName?: string
   lastName: string
   companyName: string
   email: string

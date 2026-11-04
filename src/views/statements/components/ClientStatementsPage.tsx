@@ -1,3 +1,4 @@
+import { getClientDisplayName } from 'src/db/clientNames';
 import React, { useEffect, useState } from 'react';
 import '@coreui/icons/css/all.min.css'; // Ensure this import is present
 import {
@@ -65,7 +66,7 @@ const ClientStatementsPage = () => {
               const downloadURL = await getDownloadURL(itemRef);
 
               const document: Document = {
-                clientName: `${client.firstName} ${client.lastName}`,
+                clientName: getClientDisplayName(client),
                 documentTitle: metadata.name,
                 dateAdded: metadata.timeCreated,
                 downloadURL: downloadURL,

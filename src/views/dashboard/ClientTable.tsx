@@ -13,6 +13,7 @@ import { cilCheckCircle, cilCloudDownload, cilLinkAlt, cilXCircle, cilEnvelopeCl
 import CIcon from '@coreui/icons-react';
 import { usePermissions } from '../../contexts/PermissionContext';
 import { isClientLinked } from 'src/utils/utilities';
+import { getClientDisplayName } from 'src/db/clientNames';
 
 const ClientsTable = () => {
     const { canWrite, isAdmin, admin, adminService } = usePermissions();
@@ -79,14 +80,9 @@ const ClientsTable = () => {
             sorter: false,
         },
         {
-            key: 'firstName',
-            label: 'First',
-            _style: { width: '10%'},
-        },
-        {
-            key: 'lastName',
-            label: 'Last',
-            _style: { width: '10%'},
+            key: 'clientName',
+            label: 'Client Name',
+            _style: { width: '15%' },
         },
         {
             key: 'initEmail',
@@ -143,7 +139,7 @@ const ClientsTable = () => {
     const exportToCSV = () => {
         // Define CSV headers for all relevant client properties, excluding specified fields
         const headers = [
-            'CID', 'First Name', 'Last Name', 'Email', 'App Email',
+            'CID', 'Client Name', 'First Name', 'Last Name', 'Email', 'App Email',
             'Phone Number', 'Address', 'Date of Birth', 'First Deposit Date',
             'Total Assets', 'YTD', 'Total YTD', 'Profit Since Inception', 'Total Profit Since Inception',
             'Net Deposits', 'Linked', 'Last Login',
@@ -178,9 +174,9 @@ const ClientsTable = () => {
             return date.toLocaleDateString();
         };
         
-        // Sort clients by firstName before generating CSV
+        // Sort clients by their portal display name before generating CSV.
         const sortedClients = [...clients].sort((a, b) => 
-            a.firstName.localeCompare(b.firstName)
+            getClientDisplayName(a).localeCompare(getClientDisplayName(b))
         );
         
         // Format client data into CSV rows with all properties except excluded ones
@@ -191,6 +187,7 @@ const ClientsTable = () => {
 
             return [
                 `="${client.cid}"`, // Preserve leading zeros in CID
+                formatCSVValue(getClientDisplayName(client)),
                 formatCSVValue(client.firstName),
                 formatCSVValue(client.lastName),
                 formatCSVValue(client.initEmail),
@@ -265,11 +262,11 @@ const ClientsTable = () => {
                 columns={columns}
                 columnFilter
                 columnSorter
-                items={clients}
+                items={clients.map(client => ({ ...client, clientName: getClientDisplayName(client) }))}
                 itemsPerPageSelect
                 itemsPerPage={50}
                 pagination
-                sorterValue={{ column: 'firstName', state: 'asc' }}
+                sorterValue={{ column: 'clientName', state: 'asc' }}
                 scopedColumns={{
                     linked: (item: Client) => (
                         <td className="text-center">
