@@ -1,0 +1,5 @@
+.aum-reconciliation-table {
+  --cui-table-bg: transparent;
+  --cui-table-color: var(--cui-alert-color);
+  --cui-table-border-color: var(--cui-alert-border-color);
+}

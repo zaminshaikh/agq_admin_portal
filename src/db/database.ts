@@ -261,6 +261,7 @@ export class DatabaseService {
           uid: data?.uid ?? '',
           uidGrantedAccess: data?.uidGrantedAccess ?? [],
           linked: Boolean(data?.uid && data.uid !== ''),
+          isTestClient: data?.isTestClient === true,
           firstName: data?.name?.first ?? '',
           lastName: data?.name?.last ?? '',
           companyName: data?.name?.company ?? '',
@@ -358,6 +359,7 @@ export class DatabaseService {
       // Always derive `linked` from uid so edits never persist a stale false when a UID exists.
       let newClientDocData: DocumentData = {
           ...client,
+          isTestClient: client.isTestClient === true,
           linked: Boolean(client.uid && client.uid.trim() !== ''),
           name: {
               first: client.firstName.trimEnd(),

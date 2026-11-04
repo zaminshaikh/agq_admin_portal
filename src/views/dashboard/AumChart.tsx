@@ -14,12 +14,16 @@ import { httpsCallable } from 'firebase/functions'
 import { app } from '../../App'
 import { getPortalFunctions } from '../../db/firebaseEnvironment'
 import { AumPoint, selectAumRange } from './aumRange'
+import './AumChart.css'
 
 type View = 'combined' | 'AGQ' | 'AK1'
 type History = {
   points: AumPoint[]
   current: Omit<AumPoint, 'date'>
   clients: number
+  excludedTestClients: number
+  mismatches: { clientId: string; clientName: string; fund: 'AGQ' | 'AK1'; balance: number; activities: number; difference: number }[]
+  invalidActivities: number
   missingHistory: number
   invalidCurrentBalances: number
   invalid: number
@@ -33,7 +37,7 @@ const currency = (value: number) =>
   }).format(value)
 const today = () => new Date().toISOString().slice(0, 10)
 
-export default function AumChart() {
+export default function AumChart({ refreshVersion = 0 }: { refreshVersion?: number }) {
   const [history, setHistory] = useState<History | null>(null)
   const [view, setView] = useState<View>('combined')
   const [start, setStart] = useState('')
@@ -44,6 +48,7 @@ export default function AumChart() {
   useEffect(() => {
     let active = true
     setLoading(true)
+    setHistory(null)
     setError('')
     httpsCallable<void, History>(getPortalFunctions(app), 'getAumHistory', { timeout: 120000 })()
       .then((result) => {
@@ -60,7 +65,7 @@ export default function AumChart() {
     return () => {
       active = false
     }
-  }, [refresh])
+  }, [refresh, refreshVersion])
   const points = useMemo(
     () => selectAumRange(history?.points || [], start, end),
     [history, start, end],
@@ -68,6 +73,7 @@ export default function AumChart() {
   const latest = history?.points[history.points.length - 1]
   const discrepancy = history && latest ? history.current[view] - latest[view] : 0
   const title = view === 'combined' ? 'Both funds' : view
+  const mismatches = (history?.mismatches || []).filter(item => view === 'combined' || item.fund === view)
   const chooseRange = (range: 'all' | 'year' | 'ytd') => {
     const date = new Date()
     setEnd(today())
@@ -150,7 +156,7 @@ export default function AumChart() {
           <>
             <div className="d-flex flex-wrap gap-5 mb-3">
               <div>
-                <div className="text-body-secondary">{title} · Current assets</div>
+                <div className="text-body-secondary">{title} · Final balance</div>
                 <div className="fs-3 fw-semibold">{currency(history.current[view])}</div>
               </div>
               <div>
@@ -164,18 +170,29 @@ export default function AumChart() {
                 <div className="fs-3">{history.clients}</div>
               </div>
             </div>
-            {(Math.abs(discrepancy) > 0.01 ||
-              history.missingHistory > 0 ||
-              history.invalid > 0 ||
-              history.invalidCurrentBalances > 0) && (
+            <p className="small text-body-secondary">
+              Test clients are excluded from all AUM balances and history ({history.excludedTestClients || 0} excluded).
+            </p>
+            {(mismatches.length > 0 || history.invalidActivities > 0) && (
               <CAlert color="warning">
-                Historical graphpoints may not include every balance adjustment.
-                {Math.abs(discrepancy) > 0.01 &&
-                  ` The latest recorded ${title.toLowerCase()} balance differs from current assets by ${currency(discrepancy)}.`}
-                {history.missingHistory > 0 &&
-                  ` ${history.missingHistory} funded client/fund combinations have no history.`}
-                {(history.invalid > 0 || history.invalidCurrentBalances > 0) &&
-                  ' Some invalid or missing records were excluded.'}
+                <strong>Balance reconciliation warning</strong>
+                <p className="mb-2">
+                  {new Set(mismatches.map(item => item.clientId)).size} clients have balances that do not match their activities in this view.
+                  {' '}Activities = deposits − withdrawals + reinvested profits. These clients remain included in AUM.
+                </p>
+                {history.invalidActivities > 0 && <p>{history.invalidActivities} invalid activities could not be reconciled.</p>}
+                {mismatches.length > 0 && <details>
+                  <summary>View {mismatches.length} fund balance differences</summary>
+                  <div className="table-responsive mt-2" style={{ maxHeight: 320, overflowY: 'auto' }}>
+                    <table className="table table-sm mb-0 aum-reconciliation-table">
+                      <thead><tr><th>Client</th><th>CID</th><th>Fund</th><th>Balance</th><th>Activities</th><th>Difference</th></tr></thead>
+                      <tbody>{mismatches.map(item => <tr key={`${item.clientId}-${item.fund}`}>
+                        <td>{item.clientName}</td><td>{item.clientId}</td><td>{item.fund}</td>
+                        <td>{currency(item.balance)}</td><td>{currency(item.activities)}</td><td>{currency(item.difference)}</td>
+                      </tr>)}</tbody>
+                    </table>
+                  </div>
+                </details>}
               </CAlert>
             )}
             {start > end ? (
@@ -251,6 +268,20 @@ export default function AumChart() {
               updates. Combined = AGQ + AK1. Dates are UTC. Last loaded{' '}
               {new Date(history.asOf).toLocaleString()}.
             </p>
+            {(Math.abs(discrepancy) > 0.01 ||
+              history.missingHistory > 0 ||
+              history.invalid > 0 ||
+              history.invalidCurrentBalances > 0) && (
+              <p className="small text-body-secondary mt-2 mb-0">
+                Historical graphpoints may not include every balance adjustment.
+                {Math.abs(discrepancy) > 0.01 &&
+                  ` The latest recorded ${title.toLowerCase()} balance differs from current assets by ${currency(discrepancy)}.`}
+                {history.missingHistory > 0 &&
+                  ` ${history.missingHistory} funded client/fund combinations have no history.`}
+                {(history.invalid > 0 || history.invalidCurrentBalances > 0) &&
+                  ' Some invalid or missing records were excluded.'}
+              </p>
+            )}
           </>
         )}
       </CCardBody>
