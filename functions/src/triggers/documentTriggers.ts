@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import config from "../../config.json";
@@ -48,7 +49,7 @@ export const handleStorageDocumentUpload = functions.storage
     }
 
     try {
-      const userRef = admin.firestore().doc(`${usersCollection}/${cid}`);
+      const userRef = getDatabase().doc(`${usersCollection}/${cid}`);
       
       // Check if the user document actually exists before proceeding
       const userDoc = await userRef.get();

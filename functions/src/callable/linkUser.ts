@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file linkUser.ts
  * @description Contains a callable function that links a user’s Auth UID with 
@@ -5,7 +6,6 @@
  */
 
 import * as functions from "firebase-functions/v1";
-import * as admin from "firebase-admin";
 import { addUidToConnectedUsers } from "../helpers/addUidToConnectedUsers";
 
 /**
@@ -39,7 +39,7 @@ export const linkNewUser = functions.https.onCall(async (data, context): Promise
   }
 
   // Reference the correct user document
-  const usersCollection = admin.firestore().collection(usersCollectionID);
+  const usersCollection = getDatabase().collection(usersCollectionID);
   const userRef = usersCollection.doc(cid);
   const userSnapshot = await userRef.get();
 

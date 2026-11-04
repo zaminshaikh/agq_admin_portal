@@ -1,10 +1,11 @@
-import { collection, getFirestore, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, where, query, writeBatch} from 'firebase/firestore'
+import { getPortalDatabase, getPortalFunctions } from './firebaseEnvironment'
+import { collection, getDocs, getDoc, doc, Firestore, CollectionReference, DocumentData, addDoc, setDoc, deleteDoc, collectionGroup, DocumentSnapshot, where, query, writeBatch} from 'firebase/firestore'
 import { app } from '../App.tsx'
 import 'firebase/firestore'
 import config from '../../config.json'
 import 'firebase/firestore'
 import { Timestamp } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 import { formatDate, toSentenceCase } from 'src/utils/utilities.ts'
 import { Client, AssetDetails, Activity, ScheduledActivity, Assets, GraphPoint} from './models.ts'
 import * as pdfMakeModule from 'pdfmake/build/pdfmake';
@@ -34,7 +35,7 @@ const pdfMake = (pdfMakeModule as any).default || pdfMakeModule as any;
 pdfMake.vfs = (pdfFontsModule as any).pdfMake?.vfs;
 
 // Initialize Firebase Functions
-const functions = getFunctions();
+const functions = getPortalFunctions();
 
 // Export functions instance for use in other components
 export { functions };
@@ -43,7 +44,7 @@ export class DatabaseService {
   /**
    * Firestore database instance from the app initialization.
    */
-  private db: Firestore = getFirestore(app);
+  private db: Firestore = getPortalDatabase(app);
   
   /**
    * Collection reference for the active users/clients.

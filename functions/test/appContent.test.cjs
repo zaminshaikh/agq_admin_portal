@@ -16,7 +16,11 @@ const fakeAdmin = {firestore, storage: () => ({bucket: () => ({name: 'test-bucke
   delete: async () => {deleted.push(path);},
 })})})};
 const originalLoad = Module._load;
-Module._load = function(request, parent, main) { return request === 'firebase-admin' ? fakeAdmin : originalLoad.call(this,request,parent,main); };
+Module._load = function(request, parent, main) {
+  if (request === 'firebase-admin') return fakeAdmin;
+  if (request === 'firebase-admin/firestore') return { getFirestore: firestore };
+  return originalLoad.call(this,request,parent,main);
+};
 const {getAppContentForAdmin, saveAppContent, updateAppImage, seedAppContentDefaults} = require('../lib/src/content/appContent');
 Module._load = originalLoad;
 const admin = {auth: {uid: 'admin-user', token: {adminPermissions: 'admin'}}};

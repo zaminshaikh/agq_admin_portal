@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file checkDocsAndUID.ts
  * @description Provides callable functions to:
@@ -7,7 +8,6 @@
  */
 
 import * as functions from "firebase-functions/v1";
-import * as admin from "firebase-admin";
 
 /**
  * Callable: checkDocumentExists
@@ -30,7 +30,7 @@ export const checkDocumentExists = functions.https.onCall(async (data, context) 
   }
 
   try {
-    const docSnapshot = await admin.firestore().collection(usersCollectionID).doc(cid).get();
+    const docSnapshot = await getDatabase().collection(usersCollectionID).doc(cid).get();
     return { exists: docSnapshot.exists };
   } catch (error) {
     console.error("Error checking document existence:", error);
@@ -60,7 +60,7 @@ export const checkDocumentLinked = functions.https.onCall(async (data, context) 
   }
 
   try {
-    const docSnapshot = await admin.firestore().collection(usersCollectionID).doc(cid).get();
+    const docSnapshot = await getDatabase().collection(usersCollectionID).doc(cid).get();
     const docData = docSnapshot.data();
     const uid = docData?.uid;
     const isLinked = !!(docSnapshot.exists && uid && uid !== "" && uid !== null);
@@ -94,8 +94,7 @@ export const isUIDLinked = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userSnapshot = await admin
-      .firestore()
+    const userSnapshot = await getDatabase()
       .collection(usersCollectionID)
       .where("uid", "==", uid)
       .get();

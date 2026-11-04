@@ -1,4 +1,5 @@
-import { getFunctions, httpsCallable } from 'firebase/functions'
+import { getPortalFunctions } from '../db/firebaseEnvironment'
+import { httpsCallable } from 'firebase/functions'
 import { app } from '../App'
 
 export type ContentSnapshot = {
@@ -6,7 +7,7 @@ export type ContentSnapshot = {
   texts: Record<string, string>
   images: Record<string, { url: string; contentType: string }>
 }
-const functions = getFunctions(app)
+const functions = getPortalFunctions(app)
 export async function loadAppContent(): Promise<ContentSnapshot> {
   return (await httpsCallable<void, ContentSnapshot>(functions, 'getAppContentForAdmin')()).data
 }

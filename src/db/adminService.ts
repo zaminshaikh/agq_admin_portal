@@ -1,9 +1,10 @@
+import { getPortalDatabase, getPortalFunctions } from './firebaseEnvironment'
 import React from 'react'
-import { collection, getFirestore, getDocs, doc, getDoc, Firestore, CollectionReference, DocumentData, query, where } from 'firebase/firestore'
+import { collection, getDocs, doc, getDoc, Firestore, CollectionReference, DocumentData, query, where } from 'firebase/firestore'
 import { app, auth } from '../App'
 import { User } from 'firebase/auth'
 import { useAuthState } from 'react-firebase-hooks/auth'
-import { getFunctions, httpsCallable } from 'firebase/functions'
+import { httpsCallable } from 'firebase/functions'
 
 export interface Admin {
   id: string
@@ -45,9 +46,9 @@ export interface UnlinkedClientSummary {
 }
 
 export class AdminService {
-  private db: Firestore = getFirestore(app)
+  private db: Firestore = getPortalDatabase(app)
   private adminsCollection: CollectionReference<DocumentData, DocumentData>
-  private functions = getFunctions(app)
+  private functions = getPortalFunctions(app)
 
   constructor() {
     this.adminsCollection = collection(this.db, 'admins')

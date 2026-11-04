@@ -1,5 +1,6 @@
+import TestingBanner from './components/TestingBanner'
 import React, { Suspense, useEffect } from 'react'
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 import { CSpinner, useColorModes } from '@coreui/react-pro'
@@ -92,11 +93,13 @@ const App = () => {
         }
       >
         <Routes>
+          <Route element={<><TestingBanner /><Outlet /></>}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/admin-signup" element={<AdminSignup />} />
           <Route path="/404" element={<Page404 />} />
           <Route path="/500" element={<Page500 />} />
+          </Route>
           <Route path="*" element={<PermissionProvider><ProtectedRoute><DefaultLayout /></ProtectedRoute></PermissionProvider>}/>
           {/* <Route path="*" element={<DefaultLayout />} /> */}
         </Routes>

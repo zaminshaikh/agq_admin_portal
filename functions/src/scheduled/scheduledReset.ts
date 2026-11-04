@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file scheduledReset.ts
  * @description Cloud Function (Pub/Sub scheduled) that resets ytd and totalYTD to zero
@@ -17,7 +18,7 @@ export const scheduledYTDReset = functions.pubsub
   .schedule("0 0 1 1 *")
   .timeZone("America/New_York") 
   .onRun(async (context) => {
-    const db = admin.firestore();
+    const db = getDatabase();
     // Adjust userCollection if different from your config
     const userCollection = config.FIRESTORE_ACTIVE_USERS_COLLECTION; 
 

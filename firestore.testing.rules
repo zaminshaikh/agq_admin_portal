@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/testing/documents {
+    // Collection-group activity queries can reach arbitrary ancestor paths.
+    // Match that query shape explicitly, requiring both admin claims and the
+    // same active-user discriminator used by the portal query.
+    match /{path=**}/activities/{activity} {
+      allow read: if request.auth != null
+        && request.auth.token.adminPermissions in ['read', 'write', 'admin']
+        && resource.data.parentCollection == 'users';
+    }
+    match /appContent/published {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /{collection}/{document=**} {
+      allow read: if collection != 'appContent' && request.auth != null
+        && request.auth.token.adminPermissions in ['read', 'write', 'admin'];
+      allow write: if collection != 'appContent' && request.auth != null
+        && request.auth.token.adminPermissions in ['write', 'admin'];
+    }
+  }
+}

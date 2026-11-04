@@ -1,3 +1,4 @@
+import { getDatabase } from './database';
 import * as functions from "firebase-functions/v1";
 
 export type AdminPermission = 'none' | 'read' | 'write' | 'admin';
@@ -104,10 +105,9 @@ export function isValidPermission(permission: string): permission is AdminPermis
  * Get admin name from Firestore document by UID
  */
 export async function getAdminNameByUid(uid: string): Promise<string> {
-  const admin = await import('firebase-admin');
   
   try {
-    const adminDoc = await admin.firestore()
+    const adminDoc = await getDatabase()
       .collection('admins')
       .doc(uid)
       .get();

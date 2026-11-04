@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file adminLinkUser.ts
  * @description Admin-only callable that links a Firebase Auth UID to an existing
@@ -83,7 +84,7 @@ export const adminLinkUser = functions.https.onCall(
       }
     }
 
-    const firestore = admin.firestore();
+    const firestore = getDatabase();
     const usersCollection = firestore.collection(usersCollectionID);
     const userRef = usersCollection.doc(cid);
     const userSnapshot = await userRef.get();

@@ -1,3 +1,4 @@
+import { getDatabase } from '../helpers/database';
 /**
  * @file connectedUsersTrigger.ts
  * @description Contains a Firestore trigger for user documents that automatically
@@ -5,7 +6,6 @@
  */
 
 import * as functions from "firebase-functions/v1";
-import * as admin from "firebase-admin";
 import { addUidToConnectedUsers } from "../helpers/addUidToConnectedUsers";
 
 /**
@@ -34,7 +34,7 @@ export const onConnectedUsersChange = functions.firestore
     const addedConnectedUsers = afterConnectedUsers.filter((id: string) => !beforeConnectedUsers.includes(id));
     const removedConnectedUsers = beforeConnectedUsers.filter((id: string) => !afterConnectedUsers.includes(id));
 
-    const db = admin.firestore();
+    const db = getDatabase();
     const currentUserUid = afterData.uid;
 
     if (!currentUserUid) {
