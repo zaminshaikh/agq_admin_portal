@@ -26,7 +26,8 @@
     "zip": "git archive -o $npm_package_config_zipPrefix-$npm_package_config_theme-$npm_package_config_bundler-v$npm_package_version.zip -9 HEAD",
     "deploy:functions": "npm --prefix functions install && npm --prefix functions run build && npx --yes firebase-tools deploy --only functions",
     "deploy:invite": "npm --prefix functions install && npm --prefix functions run build && npx --yes firebase-tools deploy --only functions:sendInviteEmail",
-    "deploy:hosting": "npm run build && npx --yes firebase-tools deploy --only hosting"
+    "deploy:hosting": "npm run build && npx --yes firebase-tools deploy --only hosting",
+    "test:preservation": "node tests/regression/run.cjs"
   },
   "dependencies": {
     "@coreui/chartjs": "^4.0.0",
