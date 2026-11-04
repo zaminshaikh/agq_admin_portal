@@ -10,6 +10,7 @@ admin.initializeApp({ storageBucket: 'team-shaikh-app-52dc5.appspot.com' });
 export { getAppContentForAdmin, saveAppContent, updateAppImage } from './content/appContent';
 export { getAllAdmins } from './admin/getAllAdmins';
 export { listAuthUsers } from './admin/listAuthUsers';
+export { getAumHistory } from './analytics/getAumHistory';
 
 import * as ytd from './callable/ytd';
 import * as psi from './callable/psi';

@@ -151,109 +151,16 @@ async function generateGraphpoints(usersCollectionID) {
     await Promise.all(userPromises);
     console.log(`Successfully generated graphpoints for all users in collection '${usersCollectionID}'`);
 
-    // Generate overall graphpoints
-    await generateOverallGraphpoints();
   } catch (error) {
     console.error(`Error generating graphpoints for collection '${usersCollectionID}':`, error);
     throw error;
   }
 }
 
-/**
- * Generates overall graphpoints for total assets under management using collectionGroup.
- *
- * @param {string} usersCollectionID - The name of the users collection.
- */
-async function generateOverallGraphpoints(usersCollectionID) {
-  console.log(`Starting overall graphpoints generation using collectionGroup`);
-
-  try {
-    const activitiesQuery = db.collectionGroup('activities').orderBy('time');
-    const activitiesSnapshot = await activitiesQuery.get();
-    console.log(`Retrieved ${activitiesSnapshot.size} activities using collectionGroup`);
-
-    const overallGraphpointsRef = db.collection('graphpoints');
-    const existingGraphpoints = await overallGraphpointsRef.get();
-    if (!existingGraphpoints.empty) {
-        const deletePromises = existingGraphpoints.docs.map(doc => {
-          console.log(`Deleting graphpoint ID: ${doc.id} in overall graphpoints`);
-          return doc.ref.delete();
-        });
-        await Promise.all(deletePromises);
-        console.log(`Cleared existing graphpoints`);
-    } else {
-        console.log(`No existing graphpoints found`);
-    }
-
-    let fundsMap = {};
-    let cumulativeBalance = 0;
-
-    const activityPromises = activitiesSnapshot.docs.map(async (activityDoc) => {
-        
-        const activity = activityDoc.data();
-
-        if (
-            activity.type === 'deposit' ||
-            activity.type === 'withdrawal' ||
-            activity.isDividend
-          )
-        {
-            const cashflow = activity.amount * (activity.type === 'withdrawal' ? -1 : 1);
-            const time = activity.time;
-            const fund = activity.fund || 'Unspecified';
-
-            if (!fundsMap[fund]) {
-                fundsMap[fund] = 0;
-            }
-            fundsMap[fund] += cashflow;
-            cumulativeBalance += cashflow;
-
-            // Prepare graphpoints
-            const cumulativeGraphpoint = {
-                fund: 'Cumulative',
-                amount: cumulativeBalance,
-                cashflow: cashflow,
-                time: time,
-                usersCollection: usersCollectionID,
-            };
-
-            const fundGraphpoint = {
-                fund: activity.fund,
-                amount: fundsMap[fund],
-                cashflow: cashflow,
-                time: time,
-                usersCollection: usersCollectionID,
-            };
-            // Add graphpoints
-            try {
-                await overallGraphpointsRef.add(cumulativeGraphpoint);
-                console.log(`Added cumulative graphpoint at time: ${time.toDate()}`);
-        
-                await overallGraphpointsRef.add(fundGraphpoint);
-                console.log(`Added graphpoint for fund '${fund}' at time: ${time.toDate()}`);
-              } catch (addError) {
-                console.error(`Error adding overall graphpoints:`, addError);
-                throw addError;
-              }
-        }
-    });
-
-    await Promise.all(activityPromises);
-    console.log(`Successfully generated overall graphpoints using collectionGroup`);
-  } catch (error) {
-    console.error(`Error generating overall graphpoints:`, error);
-    throw error;
-  }
+// Root graphpoints are retired. AUM is derived from client histories at read time.
+// Import this helper explicitly when a client-history rebuild is required.
+module.exports = { generateGraphpoints };
+if (require.main === module) {
+  console.error('Automatic root graphpoint generation is retired. The dashboard uses existing client histories.');
+  process.exitCode = 1;
 }
-
-// Example usage
-const usersCollectionID = 'playground'; // Replace with your actual users collection name
-generateOverallGraphpoints(usersCollectionID)
-  .then(() => {
-    console.log('Graphpoints generation completed successfully');
-    process.exit(0); // Exit successfully
-  })
-  .catch(error => {
-    console.error('Graphpoints generation failed:', error);
-    process.exit(1); // Exit with failure
-  });
